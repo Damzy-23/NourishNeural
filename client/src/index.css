@@ -1,0 +1,220 @@
+/* 
+ * Tailwind CSS file - ignore linter warnings for @tailwind and @apply directives
+ * These are valid Tailwind CSS directives that will be processed by PostCSS
+ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-neutral-50 text-neutral-900 font-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 shadow-sm hover:shadow-md active:scale-95;
+  }
+  
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-700 text-white hover:from-primary-700 hover:to-primary-800 focus-visible:ring-primary-500 shadow-primary-200/50 hover:shadow-primary-300/50;
+  }
+  
+  .btn-secondary {
+    @apply bg-gradient-to-r from-neutral-100 to-neutral-200 text-neutral-900 hover:from-neutral-200 hover:to-neutral-300 focus-visible:ring-neutral-500 shadow-neutral-200/50 hover:shadow-neutral-300/50;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-neutral-300 bg-white text-neutral-700 hover:bg-gradient-to-r hover:from-neutral-50 hover:to-neutral-100 hover:border-neutral-400 focus-visible:ring-neutral-500 shadow-neutral-200/50 hover:shadow-neutral-300/50;
+  }
+  
+  .btn-ghost {
+    @apply hover:bg-gradient-to-r hover:from-neutral-100 hover:to-neutral-200 hover:text-neutral-900 focus-visible:ring-neutral-500;
+  }
+  
+  .btn-sm {
+    @apply h-8 px-3 text-xs rounded-lg;
+  }
+  
+  .btn-lg {
+    @apply h-12 px-8 text-base rounded-xl;
+  }
+  
+  .input {
+    @apply flex h-11 w-full rounded-xl border-2 border-green-300 bg-green-50 px-4 py-3 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-green-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-green-400 focus:border-green-500 shadow-sm hover:shadow-md;
+  }
+  
+  .card {
+    @apply rounded-2xl border border-neutral-200/60 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 ease-out hover:-translate-y-1;
+  }
+  
+  .card-header {
+    @apply flex flex-col space-y-1.5 p-6;
+  }
+  
+  .card-title {
+    @apply text-2xl font-bold leading-none tracking-tight bg-gradient-to-r from-neutral-900 to-neutral-700 bg-clip-text text-transparent;
+  }
+  
+  .card-description {
+    @apply text-sm text-neutral-600;
+  }
+  
+  .card-content {
+    @apply p-6 pt-0;
+  }
+  
+  .card-footer {
+    @apply flex items-center p-6 pt-0;
+  }
+  
+  .badge {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+  
+  .badge-primary {
+    @apply bg-gradient-to-r from-primary-100 to-primary-200 text-primary-800 border border-primary-300/50;
+  }
+  
+  .badge-secondary {
+    @apply bg-gradient-to-r from-neutral-100 to-neutral-200 text-neutral-800 border border-neutral-300/50;
+  }
+  
+  .badge-accent {
+    @apply bg-gradient-to-r from-accent-100 to-accent-200 text-accent-800 border border-accent-300/50;
+  }
+  
+  .badge-outline {
+    @apply border-2 border-neutral-300 bg-white/80 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-400;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .gradient-text {
+    @apply bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent;
+  }
+  
+  .glass {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20;
+  }
+  
+  .glass-card {
+    @apply bg-white/90 backdrop-blur-md border border-white/30 shadow-xl;
+  }
+  
+  .gradient-bg-primary {
+    @apply bg-gradient-to-br from-primary-50 via-primary-100 to-primary-200;
+  }
+  
+  .gradient-bg-neutral {
+    @apply bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-200;
+  }
+  
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .shadow-soft {
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-medium {
+    box-shadow: 0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-neutral-100;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-neutral-300 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-neutral-400;
+}
+
+/* Custom animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+/* Loading animations */
+.loading-dots {
+  @apply inline-flex space-x-1;
+}
+
+.loading-dots > div {
+  @apply w-2 h-2 bg-current rounded-full animate-pulse;
+  animation-delay: 0.2s;
+}
+
+.loading-dots > div:nth-child(2) {
+  animation-delay: 0.4s;
+}
+
+.loading-dots > div:nth-child(3) {
+  animation-delay: 0.6s;
+}
+
+/* Focus styles */
+.focus-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+}
+
+/* Transitions */
+.transition-smooth {
+  @apply transition-all duration-300 ease-in-out;
+}
+
+.transition-fast {
+  @apply transition-all duration-150 ease-in-out;
+}
+
+/* Shadows */
+.shadow-elevation-1 {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.shadow-elevation-2 {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.shadow-elevation-3 {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+} 

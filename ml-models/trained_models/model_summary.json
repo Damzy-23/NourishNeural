@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-10-02T10:03:43.119108",
+  "models": {
+    "expiry_predictor": {
+      "type": "Rule-based with UK guidelines",
+      "status": "Ready",
+      "features": "Category, storage type, quality factors",
+      "accuracy": "N/A (rule-based)"
+    },
+    "waste_predictor": {
+      "type": "Random Forest (if sklearn available) or Rule-based",
+      "status": "Trained",
+      "features": "User history, food characteristics, environmental factors",
+      "accuracy": "Test accuracy logged during training"
+    },
+    "food_classifier": {
+      "type": "Keyword-based classification",
+      "status": "Ready",
+      "features": "Food name keywords",
+      "accuracy": "N/A (rule-based)"
+    }
+  },
+  "data_used": "Synthetic training data generated",
+  "next_steps": [
+    "Collect real user data for better training",
+    "Implement computer vision for food recognition",
+    "Integrate with PantryPal backend",
+    "Deploy models for real-time predictions"
+  ]
+}

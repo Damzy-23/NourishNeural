@@ -1,0 +1,619 @@
+{
+  "stores": [
+    {
+      "id": "tesco-001",
+      "name": "Tesco Extra Bristol East",
+      "chain": "Tesco",
+      "brand": "Tesco Extra",
+      "address": {
+        "street": "East Street",
+        "city": "Bristol",
+        "postcode": "BS5 0SP",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4545,
+        "longitude": -2.5879
+      },
+      "contact": {
+        "phone": "0345 677 9900",
+        "website": "https://www.tesco.com"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "Clubcard",
+        "petrolStation": true,
+        "pharmacy": true,
+        "cafe": true
+      },
+      "hours": {
+        "monday": "06:00-23:00",
+        "tuesday": "06:00-23:00",
+        "wednesday": "06:00-23:00",
+        "thursday": "06:00-23:00",
+        "friday": "06:00-23:00",
+        "saturday": "06:00-23:00",
+        "sunday": "10:00-16:00"
+      },
+      "features": ["Large store", "Car parking", "Disabled access", "ATM", "Customer toilets"]
+    },
+    {
+      "id": "sainsburys-001",
+      "name": "Sainsbury's Bristol Cabot Circus",
+      "chain": "Sainsbury's",
+      "brand": "Sainsbury's",
+      "address": {
+        "street": "Cabot Circus",
+        "city": "Bristol",
+        "postcode": "BS1 3BX",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4565,
+        "longitude": -2.5889
+      },
+      "contact": {
+        "phone": "0345 611 6111",
+        "website": "https://www.sainsburys.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "Nectar",
+        "petrolStation": false,
+        "pharmacy": true,
+        "cafe": true
+      },
+      "hours": {
+        "monday": "07:00-22:00",
+        "tuesday": "07:00-22:00",
+        "wednesday": "07:00-22:00",
+        "thursday": "07:00-22:00",
+        "friday": "07:00-22:00",
+        "saturday": "07:00-22:00",
+        "sunday": "11:00-17:00"
+      },
+      "features": ["City centre location", "Public transport access", "Disabled access", "ATM"]
+    },
+    {
+      "id": "asda-001",
+      "name": "ASDA Bristol Patchway",
+      "chain": "ASDA",
+      "brand": "ASDA Superstore",
+      "address": {
+        "street": "Patchway Retail Park",
+        "city": "Bristol",
+        "postcode": "BS34 5TL",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.5265,
+        "longitude": -2.5899
+      },
+      "contact": {
+        "phone": "0345 140 2020",
+        "website": "https://www.asda.com"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "ASDA Rewards",
+        "petrolStation": true,
+        "pharmacy": true,
+        "cafe": true
+      },
+      "hours": {
+        "monday": "06:00-23:00",
+        "tuesday": "06:00-23:00",
+        "wednesday": "06:00-23:00",
+        "thursday": "06:00-23:00",
+        "friday": "06:00-23:00",
+        "saturday": "06:00-23:00",
+        "sunday": "10:00-16:00"
+      },
+      "features": ["Large store", "Car parking", "Disabled access", "ATM", "George clothing"]
+    },
+    {
+      "id": "morrisons-001",
+      "name": "Morrisons Bristol Bedminster",
+      "chain": "Morrisons",
+      "brand": "Morrisons",
+      "address": {
+        "street": "East Street",
+        "city": "Bristol",
+        "postcode": "BS3 4JX",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4405,
+        "longitude": -2.5989
+      },
+      "contact": {
+        "phone": "0345 611 6111",
+        "website": "https://www.morrisons.com"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "Morrisons More",
+        "petrolStation": true,
+        "pharmacy": true,
+        "cafe": true
+      },
+      "hours": {
+        "monday": "06:00-22:00",
+        "tuesday": "06:00-22:00",
+        "wednesday": "06:00-22:00",
+        "thursday": "06:00-22:00",
+        "friday": "06:00-22:00",
+        "saturday": "06:00-22:00",
+        "sunday": "10:00-16:00"
+      },
+      "features": ["Market Street", "Car parking", "Disabled access", "ATM", "Fresh bakery"]
+    },
+    {
+      "id": "waitrose-001",
+      "name": "Waitrose & Partners Bristol",
+      "chain": "Waitrose",
+      "brand": "Waitrose & Partners",
+      "address": {
+        "street": "Queen's Road",
+        "city": "Bristol",
+        "postcode": "BS8 1QS",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4565,
+        "longitude": -2.6089
+      },
+      "contact": {
+        "phone": "0345 609 0203",
+        "website": "https://www.waitrose.com"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "myWaitrose",
+        "petrolStation": false,
+        "pharmacy": true,
+        "cafe": true
+      },
+      "hours": {
+        "monday": "07:00-22:00",
+        "tuesday": "07:00-22:00",
+        "wednesday": "07:00-22:00",
+        "thursday": "07:00-22:00",
+        "friday": "07:00-22:00",
+        "saturday": "07:00-22:00",
+        "sunday": "11:00-17:00"
+      },
+      "features": ["Premium products", "Wine cellar", "Disabled access", "ATM", "Customer service desk"]
+    },
+    {
+      "id": "aldi-001",
+      "name": "ALDI Bristol Eastville",
+      "chain": "ALDI",
+      "brand": "ALDI",
+      "address": {
+        "street": "Eastgate Shopping Centre",
+        "city": "Bristol",
+        "postcode": "BS5 6XX",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4645,
+        "longitude": -2.5789
+      },
+      "contact": {
+        "phone": "0800 042 0800",
+        "website": "https://www.aldi.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "ALDI app",
+        "petrolStation": false,
+        "pharmacy": false,
+        "cafe": false
+      },
+      "hours": {
+        "monday": "08:00-22:00",
+        "tuesday": "08:00-22:00",
+        "wednesday": "08:00-22:00",
+        "thursday": "08:00-22:00",
+        "friday": "08:00-22:00",
+        "saturday": "08:00-22:00",
+        "sunday": "10:00-16:00"
+      },
+      "features": ["Budget prices", "Weekly specials", "Disabled access", "Self-service tills"]
+    },
+    {
+      "id": "lidl-001",
+      "name": "Lidl Bristol Bedminster",
+      "chain": "Lidl",
+      "brand": "Lidl",
+      "address": {
+        "street": "North Street",
+        "city": "Bristol",
+        "postcode": "BS3 1JQ",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4405,
+        "longitude": -2.6089
+      },
+      "contact": {
+        "phone": "0370 444 1234",
+        "website": "https://www.lidl.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "Lidl Plus",
+        "petrolStation": false,
+        "pharmacy": false,
+        "cafe": false
+      },
+      "hours": {
+        "monday": "08:00-22:00",
+        "tuesday": "08:00-22:00",
+        "wednesday": "08:00-22:00",
+        "thursday": "08:00-22:00",
+        "friday": "08:00-22:00",
+        "saturday": "08:00-22:00",
+        "sunday": "10:00-16:00"
+      },
+      "features": ["Budget prices", "Weekly specials", "Disabled access", "Self-service tills"]
+    },
+    {
+      "id": "coop-001",
+      "name": "Co-op Bristol Clifton",
+      "chain": "Co-op",
+      "brand": "Co-op Food",
+      "address": {
+        "street": "Clifton Down Shopping Centre",
+        "city": "Bristol",
+        "postcode": "BS8 3NF",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4645,
+        "longitude": -2.6189
+      },
+      "contact": {
+        "phone": "0345 266 8900",
+        "website": "https://www.coop.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "Co-op Membership",
+        "petrolStation": false,
+        "pharmacy": true,
+        "cafe": false
+      },
+      "hours": {
+        "monday": "07:00-22:00",
+        "tuesday": "07:00-22:00",
+        "wednesday": "07:00-22:00",
+        "thursday": "07:00-22:00",
+        "friday": "07:00-22:00",
+        "saturday": "07:00-22:00",
+        "sunday": "08:00-20:00"
+      },
+      "features": ["Local community", "Fairtrade products", "Disabled access", "ATM", "Post Office services"]
+    },
+    {
+      "id": "coop-002",
+      "name": "Co-op Bristol Bedminster",
+      "chain": "Co-op",
+      "brand": "Co-op Food",
+      "address": {
+        "street": "East Street",
+        "city": "Bristol",
+        "postcode": "BS3 4JX",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4405,
+        "longitude": -2.5989
+      },
+      "contact": {
+        "phone": "0345 266 8900",
+        "website": "https://www.coop.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "Co-op Membership",
+        "petrolStation": false,
+        "pharmacy": true,
+        "cafe": false
+      },
+      "hours": {
+        "monday": "07:00-22:00",
+        "tuesday": "07:00-22:00",
+        "wednesday": "07:00-22:00",
+        "thursday": "07:00-22:00",
+        "friday": "07:00-22:00",
+        "saturday": "07:00-22:00",
+        "sunday": "08:00-20:00"
+      },
+      "features": ["Local community", "Fairtrade products", "Disabled access", "ATM"]
+    },
+    {
+      "id": "iceland-001",
+      "name": "Iceland Bristol City Centre",
+      "chain": "Iceland",
+      "brand": "Iceland",
+      "address": {
+        "street": "Union Street",
+        "city": "Bristol",
+        "postcode": "BS1 2DX",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4565,
+        "longitude": -2.5889
+      },
+      "contact": {
+        "phone": "0344 847 6756",
+        "website": "https://www.iceland.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "Bonus Card",
+        "petrolStation": false,
+        "pharmacy": false,
+        "cafe": false
+      },
+      "hours": {
+        "monday": "08:00-20:00",
+        "tuesday": "08:00-20:00",
+        "wednesday": "08:00-20:00",
+        "thursday": "08:00-20:00",
+        "friday": "08:00-20:00",
+        "saturday": "08:00-20:00",
+        "sunday": "10:00-16:00"
+      },
+      "features": ["Frozen foods specialist", "Budget prices", "Disabled access", "Self-service tills"]
+    },
+    {
+      "id": "marks-spencer-001",
+      "name": "M&S Foodhall Bristol Cabot Circus",
+      "chain": "Marks & Spencer",
+      "brand": "M&S Foodhall",
+      "address": {
+        "street": "Cabot Circus",
+        "city": "Bristol",
+        "postcode": "BS1 3BX",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4565,
+        "longitude": -2.5889
+      },
+      "contact": {
+        "phone": "0345 302 1234",
+        "website": "https://www.marksandspencer.com"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "Sparks",
+        "petrolStation": false,
+        "pharmacy": false,
+        "cafe": true
+      },
+      "hours": {
+        "monday": "08:00-21:00",
+        "tuesday": "08:00-21:00",
+        "wednesday": "08:00-21:00",
+        "thursday": "08:00-21:00",
+        "friday": "08:00-21:00",
+        "saturday": "08:00-21:00",
+        "sunday": "10:00-17:00"
+      },
+      "features": ["Premium quality", "Fresh prepared foods", "Disabled access", "ATM", "Customer toilets"]
+    },
+    {
+      "id": "booths-001",
+      "name": "Booths Bristol",
+      "chain": "Booths",
+      "brand": "Booths",
+      "address": {
+        "street": "Queen's Road",
+        "city": "Bristol",
+        "postcode": "BS8 1QS",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4565,
+        "longitude": -2.6089
+      },
+      "contact": {
+        "phone": "01772 251701",
+        "website": "https://www.booths.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": true,
+        "clickAndCollect": true,
+        "loyaltyProgram": "Booths Card",
+        "petrolStation": false,
+        "pharmacy": false,
+        "cafe": true
+      },
+      "hours": {
+        "monday": "08:00-20:00",
+        "tuesday": "08:00-20:00",
+        "wednesday": "08:00-20:00",
+        "thursday": "08:00-20:00",
+        "friday": "08:00-20:00",
+        "saturday": "08:00-20:00",
+        "sunday": "10:00-16:00"
+      },
+      "features": ["Premium quality", "Local produce", "Disabled access", "ATM", "Customer service desk"]
+    },
+    {
+      "id": "costcutter-001",
+      "name": "Costcutter Bristol Eastville",
+      "chain": "Costcutter",
+      "brand": "Costcutter",
+      "address": {
+        "street": "Eastgate Shopping Centre",
+        "city": "Bristol",
+        "postcode": "BS5 6XX",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4645,
+        "longitude": -2.5789
+      },
+      "contact": {
+        "phone": "0800 121 8420",
+        "website": "https://www.costcutter.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": false,
+        "clickAndCollect": false,
+        "loyaltyProgram": "Costcutter Card",
+        "petrolStation": false,
+        "pharmacy": false,
+        "cafe": false
+      },
+      "hours": {
+        "monday": "07:00-22:00",
+        "tuesday": "07:00-22:00",
+        "wednesday": "07:00-22:00",
+        "thursday": "07:00-22:00",
+        "friday": "07:00-22:00",
+        "saturday": "07:00-22:00",
+        "sunday": "08:00-20:00"
+      },
+      "features": ["Convenience store", "Local community", "Disabled access", "ATM", "Newspapers"]
+    },
+    {
+      "id": "spar-001",
+      "name": "SPAR Bristol City Centre",
+      "chain": "SPAR",
+      "brand": "SPAR",
+      "address": {
+        "street": "Broadmead",
+        "city": "Bristol",
+        "postcode": "BS1 3HA",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4565,
+        "longitude": -2.5889
+      },
+      "contact": {
+        "phone": "0800 121 8420",
+        "website": "https://www.spar.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": false,
+        "clickAndCollect": false,
+        "loyaltyProgram": "SPAR Card",
+        "petrolStation": true,
+        "pharmacy": false,
+        "cafe": true
+      },
+      "hours": {
+        "monday": "06:00-22:00",
+        "tuesday": "06:00-22:00",
+        "wednesday": "06:00-22:00",
+        "thursday": "06:00-22:00",
+        "friday": "06:00-22:00",
+        "saturday": "06:00-22:00",
+        "sunday": "08:00-20:00"
+      },
+      "features": ["Convenience store", "Petrol station", "Disabled access", "ATM", "Hot food counter"]
+    },
+    {
+      "id": "nisa-001",
+      "name": "Nisa Local Bristol",
+      "chain": "Nisa",
+      "brand": "Nisa Local",
+      "address": {
+        "street": "Fishponds Road",
+        "city": "Bristol",
+        "postcode": "BS16 3PA",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4845,
+        "longitude": -2.5189
+      },
+      "contact": {
+        "phone": "01724 282200",
+        "website": "https://www.nisaretail.com"
+      },
+      "services": {
+        "deliveryAvailable": false,
+        "clickAndCollect": false,
+        "loyaltyProgram": "Nisa Card",
+        "petrolStation": false,
+        "pharmacy": false,
+        "cafe": false
+      },
+      "hours": {
+        "monday": "07:00-22:00",
+        "tuesday": "07:00-22:00",
+        "wednesday": "07:00-22:00",
+        "thursday": "07:00-22:00",
+        "friday": "07:00-22:00",
+        "saturday": "07:00-22:00",
+        "sunday": "08:00-20:00"
+      },
+      "features": ["Independent retailer", "Local community", "Disabled access", "ATM", "Post Office services"]
+    },
+    {
+      "id": "budgens-001",
+      "name": "Budgens Bristol",
+      "chain": "Budgens",
+      "brand": "Budgens",
+      "address": {
+        "street": "Stokes Croft",
+        "city": "Bristol",
+        "postcode": "BS1 3QY",
+        "country": "UK"
+      },
+      "coordinates": {
+        "latitude": 51.4565,
+        "longitude": -2.5889
+      },
+      "contact": {
+        "phone": "0800 121 8420",
+        "website": "https://www.budgens.co.uk"
+      },
+      "services": {
+        "deliveryAvailable": false,
+        "clickAndCollect": false,
+        "loyaltyProgram": "Budgens Card",
+        "petrolStation": false,
+        "pharmacy": false,
+        "cafe": false
+      },
+      "hours": {
+        "monday": "07:00-22:00",
+        "tuesday": "07:00-22:00",
+        "wednesday": "07:00-22:00",
+        "thursday": "07:00-22:00",
+        "friday": "07:00-22:00",
+        "saturday": "07:00-22:00",
+        "sunday": "08:00-20:00"
+      },
+      "features": ["Independent retailer", "Local produce", "Disabled access", "ATM", "Fresh bakery"]
+    }
+  ],
+  "metadata": {
+    "totalStores": 16,
+    "lastUpdated": "2024-01-15T00:00:00Z",
+    "dataSource": "Geolocet UK Grocery Store Locations",
+    "coverage": "Bristol area sample stores",
+    "chains": ["Tesco", "Sainsbury's", "ASDA", "Morrisons", "Waitrose", "ALDI", "Lidl", "Co-op", "Iceland", "Marks & Spencer", "Booths", "Costcutter", "SPAR", "Nisa", "Budgens"]
+  }
+}

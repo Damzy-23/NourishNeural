@@ -1,0 +1,31 @@
+{
+  "pipeline_status": "completed",
+  "start_time": "2025-10-02 12:13:48.798274",
+  "steps_completed": [
+    "data_collection",
+    "ai_chat_training",
+    "simple_model_training"
+  ],
+  "performance_results": {
+    "ai_chat": {
+      "status": "completed",
+      "satisfaction_score": 85.0,
+      "training_examples": 1000
+    },
+    "expiry_predictor": {
+      "status": "completed",
+      "mae": 4.074074074074074,
+      "target_mae": 2.0,
+      "achieved_target": false
+    },
+    "waste_predictor": {
+      "status": "completed",
+      "accuracy": 1.0,
+      "target_accuracy": 85.0,
+      "achieved_target": true
+    }
+  },
+  "end_time": "2025-10-02 12:14:29.367391",
+  "duration_seconds": 40.569117,
+  "success_rate": 1.0
+}

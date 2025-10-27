@@ -1,0 +1,14 @@
+id,name,chain,address,latitude,longitude,phone,services
+tesco-001,Tesco Extra Bristol East,Tesco,"East Street, Bristol, BS5 0SP",51.4545,-2.5879,0345 677 9900,"['delivery', 'click_and_collect', 'pharmacy', 'cafe']"
+tesco-002,Tesco Metro Bristol City Centre,Tesco,"Union Street, Bristol, BS1 2DX",51.4565,-2.5889,0345 677 9900,['click_and_collect']
+sainsburys-001,Sainsbury's Bristol Cabot Circus,Sainsbury's,"Cabot Circus, Bristol, BS1 3BX",51.4565,-2.5889,0345 611 6111,"['delivery', 'click_and_collect', 'pharmacy', 'cafe']"
+asda-001,ASDA Bristol Patchway,ASDA,"Patchway Retail Park, Bristol, BS34 5TL",51.5265,-2.5899,0345 140 2020,"['delivery', 'click_and_collect', 'pharmacy', 'cafe', 'petrol']"
+coop-001,Co-op Bristol Clifton,Co-op,"Clifton Down Shopping Centre, Bristol, BS8 3NF",51.4645,-2.6189,0345 266 8900,"['delivery', 'click_and_collect', 'pharmacy']"
+coop-002,Co-op Bristol Bedminster,Co-op,"East Street, Bristol, BS3 4JX",51.4405,-2.5989,0345 266 8900,"['delivery', 'click_and_collect', 'pharmacy']"
+iceland-001,Iceland Bristol City Centre,Iceland,"Union Street, Bristol, BS1 2DX",51.4565,-2.5889,0344 847 6756,"['delivery', 'click_and_collect']"
+marks-spencer-001,M&S Foodhall Bristol Cabot Circus,Marks & Spencer,"Cabot Circus, Bristol, BS1 3BX",51.4565,-2.5889,0345 302 1234,"['delivery', 'click_and_collect', 'cafe']"
+booths-001,Booths Bristol,Booths,"Queen's Road, Bristol, BS8 1QS",51.4565,-2.6089,01772 251701,"['delivery', 'click_and_collect', 'cafe']"
+spar-001,SPAR Bristol City Centre,SPAR,"Broadmead, Bristol, BS1 3HA",51.4565,-2.5889,0800 121 8420,"['petrol', 'cafe']"
+costcutter-001,Costcutter Bristol Eastville,Costcutter,"Eastgate Shopping Centre, Bristol, BS5 6XX",51.4645,-2.5789,0800 121 8420,[]
+nisa-001,Nisa Local Bristol,Nisa,"Fishponds Road, Bristol, BS16 3PA",51.4845,-2.5189,01724 282200,[]
+budgens-001,Budgens Bristol,Budgens,"Stokes Croft, Bristol, BS1 3QY",51.4565,-2.5889,0800 121 8420,[]

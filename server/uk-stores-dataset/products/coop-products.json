@@ -1,0 +1,27 @@
+{
+  "store": "Co-op",
+  "products": [
+    {
+      "id": "coop-milk-001",
+      "name": "Co-op Whole Milk 4 Pints",
+      "brand": "Co-op",
+      "category": "dairy-eggs",
+      "price": 1.15,
+      "availability": "In Stock"
+    },
+    {
+      "id": "coop-fairtrade-001",
+      "name": "Co-op Fairtrade Bananas",
+      "brand": "Co-op",
+      "category": "fresh-produce",
+      "price": 0.85,
+      "availability": "In Stock"
+    }
+  ],
+  "metadata": {
+    "totalProducts": 2,
+    "store": "Co-op",
+    "lastUpdated": "2025-10-17T16:52:25.619577",
+    "dataSource": "Co-op API"
+  }
+}

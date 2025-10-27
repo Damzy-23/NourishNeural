@@ -1,0 +1,11 @@
+category,fridge_days,freezer_days,room_temp_days
+Dairy,9,298,3
+Meat,4,57,3
+Fish,8,101,2
+Vegetables,9,277,2
+Fruits,11,342,5
+Bakery,7,288,6
+Pantry,10,334,6
+Frozen,5,295,2
+Beverages,12,294,1
+Snacks,6,91,3

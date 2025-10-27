@@ -1,0 +1,27 @@
+{
+  "store": "Iceland",
+  "products": [
+    {
+      "id": "iceland-frozen-001",
+      "name": "Iceland Frozen Mixed Vegetables 1kg",
+      "brand": "Iceland",
+      "category": "frozen",
+      "price": 1.0,
+      "availability": "In Stock"
+    },
+    {
+      "id": "iceland-frozen-002",
+      "name": "Iceland Frozen Fish Fingers 20 Pack",
+      "brand": "Iceland",
+      "category": "frozen",
+      "price": 2.5,
+      "availability": "In Stock"
+    }
+  ],
+  "metadata": {
+    "totalProducts": 2,
+    "store": "Iceland",
+    "lastUpdated": "2025-10-17T16:52:25.621573",
+    "dataSource": "Iceland API"
+  }
+}

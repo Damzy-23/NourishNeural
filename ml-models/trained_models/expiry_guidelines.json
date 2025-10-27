@@ -1,0 +1,52 @@
+{
+  "Dairy": {
+    "fridge": 7,
+    "freezer": 90,
+    "pantry": 2
+  },
+  "Meat": {
+    "fridge": 3,
+    "freezer": 270,
+    "pantry": 0
+  },
+  "Fish": {
+    "fridge": 2,
+    "freezer": 180,
+    "pantry": 0
+  },
+  "Vegetables": {
+    "fridge": 7,
+    "freezer": 365,
+    "pantry": 3
+  },
+  "Fruits": {
+    "fridge": 5,
+    "freezer": 365,
+    "pantry": 7
+  },
+  "Bakery": {
+    "fridge": 5,
+    "freezer": 90,
+    "pantry": 3
+  },
+  "Pantry": {
+    "fridge": 365,
+    "freezer": 365,
+    "pantry": 365
+  },
+  "Frozen": {
+    "fridge": 1,
+    "freezer": 365,
+    "pantry": 0
+  },
+  "Beverages": {
+    "fridge": 30,
+    "freezer": 365,
+    "pantry": 365
+  },
+  "Snacks": {
+    "fridge": 90,
+    "freezer": 365,
+    "pantry": 90
+  }
+}

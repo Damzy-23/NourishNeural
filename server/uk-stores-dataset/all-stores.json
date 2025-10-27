@@ -1,0 +1,193 @@
+{
+  "stores": [
+    {
+      "id": "tesco-001",
+      "name": "Tesco Extra Bristol East",
+      "chain": "Tesco",
+      "address": "East Street, Bristol, BS5 0SP",
+      "latitude": 51.4545,
+      "longitude": -2.5879,
+      "phone": "0345 677 9900",
+      "services": [
+        "delivery",
+        "click_and_collect",
+        "pharmacy",
+        "cafe"
+      ]
+    },
+    {
+      "id": "tesco-002",
+      "name": "Tesco Metro Bristol City Centre",
+      "chain": "Tesco",
+      "address": "Union Street, Bristol, BS1 2DX",
+      "latitude": 51.4565,
+      "longitude": -2.5889,
+      "phone": "0345 677 9900",
+      "services": [
+        "click_and_collect"
+      ]
+    },
+    {
+      "id": "sainsburys-001",
+      "name": "Sainsbury's Bristol Cabot Circus",
+      "chain": "Sainsbury's",
+      "address": "Cabot Circus, Bristol, BS1 3BX",
+      "latitude": 51.4565,
+      "longitude": -2.5889,
+      "phone": "0345 611 6111",
+      "services": [
+        "delivery",
+        "click_and_collect",
+        "pharmacy",
+        "cafe"
+      ]
+    },
+    {
+      "id": "asda-001",
+      "name": "ASDA Bristol Patchway",
+      "chain": "ASDA",
+      "address": "Patchway Retail Park, Bristol, BS34 5TL",
+      "latitude": 51.5265,
+      "longitude": -2.5899,
+      "phone": "0345 140 2020",
+      "services": [
+        "delivery",
+        "click_and_collect",
+        "pharmacy",
+        "cafe",
+        "petrol"
+      ]
+    },
+    {
+      "id": "coop-001",
+      "name": "Co-op Bristol Clifton",
+      "chain": "Co-op",
+      "address": "Clifton Down Shopping Centre, Bristol, BS8 3NF",
+      "latitude": 51.4645,
+      "longitude": -2.6189,
+      "phone": "0345 266 8900",
+      "services": [
+        "delivery",
+        "click_and_collect",
+        "pharmacy"
+      ]
+    },
+    {
+      "id": "coop-002",
+      "name": "Co-op Bristol Bedminster",
+      "chain": "Co-op",
+      "address": "East Street, Bristol, BS3 4JX",
+      "latitude": 51.4405,
+      "longitude": -2.5989,
+      "phone": "0345 266 8900",
+      "services": [
+        "delivery",
+        "click_and_collect",
+        "pharmacy"
+      ]
+    },
+    {
+      "id": "iceland-001",
+      "name": "Iceland Bristol City Centre",
+      "chain": "Iceland",
+      "address": "Union Street, Bristol, BS1 2DX",
+      "latitude": 51.4565,
+      "longitude": -2.5889,
+      "phone": "0344 847 6756",
+      "services": [
+        "delivery",
+        "click_and_collect"
+      ]
+    },
+    {
+      "id": "marks-spencer-001",
+      "name": "M&S Foodhall Bristol Cabot Circus",
+      "chain": "Marks & Spencer",
+      "address": "Cabot Circus, Bristol, BS1 3BX",
+      "latitude": 51.4565,
+      "longitude": -2.5889,
+      "phone": "0345 302 1234",
+      "services": [
+        "delivery",
+        "click_and_collect",
+        "cafe"
+      ]
+    },
+    {
+      "id": "booths-001",
+      "name": "Booths Bristol",
+      "chain": "Booths",
+      "address": "Queen's Road, Bristol, BS8 1QS",
+      "latitude": 51.4565,
+      "longitude": -2.6089,
+      "phone": "01772 251701",
+      "services": [
+        "delivery",
+        "click_and_collect",
+        "cafe"
+      ]
+    },
+    {
+      "id": "spar-001",
+      "name": "SPAR Bristol City Centre",
+      "chain": "SPAR",
+      "address": "Broadmead, Bristol, BS1 3HA",
+      "latitude": 51.4565,
+      "longitude": -2.5889,
+      "phone": "0800 121 8420",
+      "services": [
+        "petrol",
+        "cafe"
+      ]
+    },
+    {
+      "id": "costcutter-001",
+      "name": "Costcutter Bristol Eastville",
+      "chain": "Costcutter",
+      "address": "Eastgate Shopping Centre, Bristol, BS5 6XX",
+      "latitude": 51.4645,
+      "longitude": -2.5789,
+      "phone": "0800 121 8420",
+      "services": []
+    },
+    {
+      "id": "nisa-001",
+      "name": "Nisa Local Bristol",
+      "chain": "Nisa",
+      "address": "Fishponds Road, Bristol, BS16 3PA",
+      "latitude": 51.4845,
+      "longitude": -2.5189,
+      "phone": "01724 282200",
+      "services": []
+    },
+    {
+      "id": "budgens-001",
+      "name": "Budgens Bristol",
+      "chain": "Budgens",
+      "address": "Stokes Croft, Bristol, BS1 3QY",
+      "latitude": 51.4565,
+      "longitude": -2.5889,
+      "phone": "0800 121 8420",
+      "services": []
+    }
+  ],
+  "metadata": {
+    "totalStores": 13,
+    "lastUpdated": "2025-10-17T16:52:19.858749",
+    "dataSource": "UK Supermarket APIs",
+    "coverage": "Bristol area sample",
+    "chains": [
+      "Costcutter",
+      "Sainsbury's",
+      "Iceland",
+      "Booths",
+      "Tesco",
+      "Nisa",
+      "Marks & Spencer",
+      "SPAR",
+      "Budgens",
+      "ASDA",
+      "Co-op"
+    ]
+  }
+}

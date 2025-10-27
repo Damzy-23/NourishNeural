@@ -1,0 +1,14 @@
+{
+  "total_products": 162,
+  "total_expiry_samples": 162,
+  "total_consumption_samples": 162,
+  "supermarkets": {
+    "tesco": 54,
+    "sainsburys": 54,
+    "asda": 54
+  },
+  "categories": {
+    "bakery": 90,
+    "frozen": 72
+  }
+}

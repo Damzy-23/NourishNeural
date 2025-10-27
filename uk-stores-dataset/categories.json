@@ -1,0 +1,230 @@
+{
+  "categories": [
+    {
+      "id": "fresh-produce",
+      "name": "Fresh Produce",
+      "subcategories": [
+        {
+          "id": "vegetables",
+          "name": "Vegetables"
+        },
+        {
+          "id": "fruits",
+          "name": "Fruits"
+        },
+        {
+          "id": "herbs-spices",
+          "name": "Herbs & Spices"
+        }
+      ]
+    },
+    {
+      "id": "dairy-eggs",
+      "name": "Dairy & Eggs",
+      "subcategories": [
+        {
+          "id": "milk",
+          "name": "Milk"
+        },
+        {
+          "id": "cheese",
+          "name": "Cheese"
+        },
+        {
+          "id": "yogurt",
+          "name": "Yogurt"
+        },
+        {
+          "id": "butter-margarine",
+          "name": "Butter & Margarine"
+        },
+        {
+          "id": "eggs",
+          "name": "Eggs"
+        }
+      ]
+    },
+    {
+      "id": "meat-seafood",
+      "name": "Meat & Seafood",
+      "subcategories": [
+        {
+          "id": "beef",
+          "name": "Beef"
+        },
+        {
+          "id": "pork",
+          "name": "Pork"
+        },
+        {
+          "id": "chicken",
+          "name": "Chicken"
+        },
+        {
+          "id": "lamb",
+          "name": "Lamb"
+        },
+        {
+          "id": "fish",
+          "name": "Fish"
+        },
+        {
+          "id": "seafood",
+          "name": "Seafood"
+        }
+      ]
+    },
+    {
+      "id": "bakery",
+      "name": "Bakery",
+      "subcategories": [
+        {
+          "id": "bread",
+          "name": "Bread"
+        },
+        {
+          "id": "pastries",
+          "name": "Pastries"
+        },
+        {
+          "id": "cakes",
+          "name": "Cakes"
+        },
+        {
+          "id": "biscuits",
+          "name": "Biscuits"
+        }
+      ]
+    },
+    {
+      "id": "frozen",
+      "name": "Frozen Foods",
+      "subcategories": [
+        {
+          "id": "frozen-vegetables",
+          "name": "Frozen Vegetables"
+        },
+        {
+          "id": "frozen-meals",
+          "name": "Frozen Meals"
+        },
+        {
+          "id": "ice-cream",
+          "name": "Ice Cream"
+        },
+        {
+          "id": "frozen-desserts",
+          "name": "Frozen Desserts"
+        }
+      ]
+    },
+    {
+      "id": "pantry",
+      "name": "Pantry",
+      "subcategories": [
+        {
+          "id": "pasta-rice",
+          "name": "Pasta & Rice"
+        },
+        {
+          "id": "canned-goods",
+          "name": "Canned Goods"
+        },
+        {
+          "id": "cereals",
+          "name": "Cereals"
+        },
+        {
+          "id": "cooking-ingredients",
+          "name": "Cooking Ingredients"
+        }
+      ]
+    },
+    {
+      "id": "beverages",
+      "name": "Beverages",
+      "subcategories": [
+        {
+          "id": "soft-drinks",
+          "name": "Soft Drinks"
+        },
+        {
+          "id": "juices",
+          "name": "Juices"
+        },
+        {
+          "id": "water",
+          "name": "Water"
+        },
+        {
+          "id": "alcohol",
+          "name": "Alcohol"
+        }
+      ]
+    },
+    {
+      "id": "snacks",
+      "name": "Snacks",
+      "subcategories": [
+        {
+          "id": "crisps",
+          "name": "Crisps"
+        },
+        {
+          "id": "nuts",
+          "name": "Nuts"
+        },
+        {
+          "id": "chocolate",
+          "name": "Chocolate"
+        },
+        {
+          "id": "sweets",
+          "name": "Sweets"
+        }
+      ]
+    },
+    {
+      "id": "household",
+      "name": "Household",
+      "subcategories": [
+        {
+          "id": "cleaning",
+          "name": "Cleaning"
+        },
+        {
+          "id": "toiletries",
+          "name": "Toiletries"
+        },
+        {
+          "id": "kitchen-essentials",
+          "name": "Kitchen Essentials"
+        }
+      ]
+    },
+    {
+      "id": "health-beauty",
+      "name": "Health & Beauty",
+      "subcategories": [
+        {
+          "id": "vitamins",
+          "name": "Vitamins"
+        },
+        {
+          "id": "skincare",
+          "name": "Skincare"
+        },
+        {
+          "id": "oral-care",
+          "name": "Oral Care"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "totalCategories": 10,
+    "totalSubcategories": 40,
+    "lastUpdated": "2024-01-15T00:00:00Z",
+    "standard": "UK Grocery Standard Categories"
+  }
+}

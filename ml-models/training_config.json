@@ -1,0 +1,148 @@
+{
+  "data_collection": {
+    "enabled": true,
+    "num_products_per_supermarket": 1000,
+    "num_expiry_samples": 1000,
+    "num_consumption_samples": 2000,
+    "supermarkets": ["tesco", "sainsburys", "asda", "morrisons", "aldi", "lidl"],
+    "categories": [
+      "fruit_vegetables",
+      "dairy",
+      "meat_poultry", 
+      "fish_seafood",
+      "bakery",
+      "pantry",
+      "frozen",
+      "beverages"
+    ]
+  },
+  "food_classifier": {
+    "enabled": true,
+    "target_accuracy": 95.0,
+    "architecture": "efficientnet_b4",
+    "batch_size": 32,
+    "epochs": 100,
+    "learning_rate": 1e-4,
+    "weight_decay": 1e-4,
+    "use_augmentation": true,
+    "label_smoothing": 0.1,
+    "early_stopping_patience": 10,
+    "num_classes": 200,
+    "pretrained": true,
+    "multi_task_learning": true,
+    "storage_prediction": true,
+    "supermarket_prediction": true,
+    "quality_prediction": true
+  },
+  "expiry_predictor": {
+    "enabled": true,
+    "target_mae": 2.0,
+    "architecture": "transformer_lstm_hybrid",
+    "batch_size": 64,
+    "epochs": 50,
+    "learning_rate": 1e-3,
+    "weight_decay": 1e-4,
+    "hidden_dim": 256,
+    "num_heads": 8,
+    "num_layers": 4,
+    "dropout": 0.1,
+    "features": [
+      "food_item_id",
+      "category_id", 
+      "storage_type_id",
+      "storage_temp",
+      "humidity",
+      "days_since_purchase",
+      "season_encoded",
+      "brand_id"
+    ]
+  },
+  "waste_predictor": {
+    "enabled": true,
+    "target_accuracy": 85.0,
+    "architecture": "xgboost_ensemble",
+    "n_estimators": 1000,
+    "max_depth": 8,
+    "learning_rate": 0.1,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "random_state": 42,
+    "features": [
+      "household_size",
+      "cooking_frequency",
+      "dietary_preferences",
+      "budget_consciousness",
+      "storage_facilities",
+      "season",
+      "special_occasions",
+      "grocery_frequency",
+      "bulk_buying",
+      "meal_planning",
+      "leftovers_usage"
+    ]
+  },
+  "ai_chat": {
+    "enabled": true,
+    "target_satisfaction": 80.0,
+    "num_training_examples": 1000,
+    "use_fine_tuning": true,
+    "base_model": "gpt-3.5-turbo",
+    "system_prompt": "You are PantryPal, a specialized UK food assistant with expertise in UK supermarkets, British food culture, and practical cooking advice.",
+    "categories": [
+      "recipe_suggestion",
+      "nutrition_info", 
+      "shopping_advice",
+      "storage_advice",
+      "seasonal_advice",
+      "supermarket_comparison",
+      "quick_meals",
+      "budget_tips"
+    ],
+    "uk_specifics": {
+      "supermarkets": ["tesco", "sainsburys", "asda", "morrisons", "aldi", "lidl"],
+      "currency": "GBP",
+      "measurements": "metric",
+      "date_format": "DD/MM/YYYY",
+      "loyalty_schemes": ["Clubcard", "Nectar", "Asda Rewards", "Morrisons More", "Lidl Plus"]
+    }
+  },
+  "training_settings": {
+    "device": "auto",
+    "num_workers": 4,
+    "pin_memory": true,
+    "mixed_precision": true,
+    "gradient_accumulation": 1,
+    "max_grad_norm": 1.0,
+    "warmup_epochs": 5,
+    "save_checkpoints": true,
+    "checkpoint_frequency": 10,
+    "resume_from_checkpoint": false
+  },
+  "evaluation": {
+    "cross_validation": true,
+    "test_size": 0.2,
+    "validation_size": 0.2,
+    "stratified_split": true,
+    "random_state": 42,
+    "metrics": [
+      "accuracy",
+      "precision",
+      "recall", 
+      "f1_score",
+      "confusion_matrix",
+      "classification_report"
+    ]
+  },
+  "deployment": {
+    "model_format": "pytorch",
+    "optimize_for_inference": true,
+    "quantization": false,
+    "model_compression": true,
+    "api_endpoints": [
+      "/predict/food",
+      "/predict/expiry", 
+      "/predict/waste",
+      "/classify-food"
+    ]
+  }
+}

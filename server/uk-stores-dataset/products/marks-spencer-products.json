@@ -1,0 +1,27 @@
+{
+  "store": "Marks & Spencer",
+  "products": [
+    {
+      "id": "ms-milk-001",
+      "name": "M&S Organic Whole Milk 4 Pints",
+      "brand": "M&S",
+      "category": "dairy-eggs",
+      "price": 1.85,
+      "availability": "In Stock"
+    },
+    {
+      "id": "ms-prepared-001",
+      "name": "M&S Chicken & Bacon Caesar Salad",
+      "brand": "M&S",
+      "category": "fresh-produce",
+      "price": 4.5,
+      "availability": "In Stock"
+    }
+  ],
+  "metadata": {
+    "totalProducts": 2,
+    "store": "Marks & Spencer",
+    "lastUpdated": "2025-10-17T16:52:25.622570",
+    "dataSource": "M&S API"
+  }
+}

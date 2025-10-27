@@ -1,0 +1,76 @@
+{
+  "Dairy": [
+    "milk",
+    "cheese",
+    "yogurt",
+    "butter",
+    "cream",
+    "dairy"
+  ],
+  "Meat": [
+    "chicken",
+    "beef",
+    "pork",
+    "lamb",
+    "turkey",
+    "meat"
+  ],
+  "Fish": [
+    "salmon",
+    "cod",
+    "tuna",
+    "fish",
+    "seafood",
+    "prawns"
+  ],
+  "Vegetables": [
+    "tomato",
+    "carrot",
+    "onion",
+    "pepper",
+    "vegetable",
+    "lettuce"
+  ],
+  "Fruits": [
+    "apple",
+    "banana",
+    "orange",
+    "grape",
+    "fruit",
+    "berry"
+  ],
+  "Bakery": [
+    "bread",
+    "cake",
+    "pastry",
+    "biscuit",
+    "croissant"
+  ],
+  "Pantry": [
+    "rice",
+    "pasta",
+    "cereal",
+    "bean",
+    "lentil",
+    "grain"
+  ],
+  "Frozen": [
+    "ice cream",
+    "frozen",
+    "frozen vegetables"
+  ],
+  "Beverages": [
+    "tea",
+    "coffee",
+    "juice",
+    "water",
+    "drink"
+  ],
+  "Snacks": [
+    "crisps",
+    "nuts",
+    "chocolate",
+    "snack",
+    "cracker"
+  ]
+}

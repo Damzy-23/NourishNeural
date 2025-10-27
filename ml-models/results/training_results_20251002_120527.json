@@ -1,0 +1,25 @@
+{
+  "pipeline_status": "partial",
+  "success_rate": 0.4,
+  "duration_seconds": 664.626455,
+  "individual_results": {
+    "ai_chat": {
+      "training_examples": 68,
+      "satisfaction_score": 75.0,
+      "target_satisfaction": 80.0,
+      "achieved_target": "False"
+    }
+  },
+  "performance_summary": {
+    "targets_achieved": 0,
+    "total_targets": 4,
+    "detailed_results": {
+      "ai_chat": {
+        "achieved": "False",
+        "target": 80.0,
+        "actual": 0,
+        "metric": "satisfaction"
+      }
+    }
+  }
+}

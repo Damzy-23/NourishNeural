@@ -1,0 +1,27 @@
+{
+  "store": "Tesco",
+  "products": [
+    {
+      "id": "tesco-milk-001",
+      "name": "Tesco Whole Milk 4 Pints",
+      "brand": "Tesco",
+      "category": "dairy-eggs",
+      "price": 1.25,
+      "availability": "In Stock"
+    },
+    {
+      "id": "tesco-bread-001",
+      "name": "Tesco White Sliced Bread 800g",
+      "brand": "Tesco",
+      "category": "bakery",
+      "price": 0.85,
+      "availability": "In Stock"
+    }
+  ],
+  "metadata": {
+    "totalProducts": 2,
+    "store": "Tesco",
+    "lastUpdated": "2025-10-17T16:52:25.616301",
+    "dataSource": "Tesco API"
+  }
+}
