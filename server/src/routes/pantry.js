@@ -1,342 +1,495 @@
 const express = require('express');
-const { authenticateJWT } = require('../config/passport');
-const { db } = require('../config/database');
+const { authenticateJWT } = require('../middleware/supabaseAuth');
+const { supabase } = require('../config/supabase');
 
 const router = express.Router();
 
-// Get all pantry items for the authenticated user
+/**
+ * GET /api/pantry
+ * Get all pantry items for the authenticated user
+ * Query params: category, expiringSoon, lowStock
+ */
 router.get('/', authenticateJWT, async (req, res) => {
   try {
     const { category, expiringSoon, lowStock } = req.query;
-    
-    let query = db('pantry_items').where({ user_id: req.user.id });
-    
+    const userId = req.user.id;
+
+    // Start building the query
+    let query = supabase
+      .from('pantry_items')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_archived', false)
+      .order('expiry_date', { ascending: true });
+
     // Filter by category
-    if (category) {
-      query = query.where({ category });
+    if (category && category !== 'all') {
+      query = query.eq('category', category);
     }
-    
+
     // Filter by expiring soon (within 7 days)
     if (expiringSoon === 'true') {
       const sevenDaysFromNow = new Date();
       sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
-      
-      query = query.where('expiry_date', '<=', sevenDaysFromNow)
-        .where('expiry_date', '>=', new Date());
+
+      query = query
+        .lte('expiry_date', sevenDaysFromNow.toISOString().split('T')[0])
+        .gte('expiry_date', new Date().toISOString().split('T')[0]);
     }
-    
+
     // Filter by low stock (quantity <= 1)
     if (lowStock === 'true') {
-      query = query.where('quantity', '<=', 1);
+      query = query.lte('quantity', 1);
     }
-    
-    const items = await query.orderBy('expiry_date', 'asc');
-    
-    res.json({ items });
+
+    const { data: items, error } = await query;
+
+    if (error) {
+      console.error('Error fetching pantry items:', error);
+      return res.status(500).json({
+        error: 'Failed to fetch pantry items',
+        details: error.message
+      });
+    }
+
+    res.json({ items: items || [] });
   } catch (error) {
     console.error('Error fetching pantry items:', error);
-    res.status(500).json({ error: 'Failed to fetch pantry items' });
+    res.status(500).json({
+      error: 'Failed to fetch pantry items',
+      details: error.message
+    });
   }
 });
 
-// Get a specific pantry item
+/**
+ * GET /api/pantry/stats
+ * Get pantry statistics for the authenticated user
+ */
+router.get('/stats', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get all pantry items for calculations
+    const { data: items, error } = await supabase
+      .from('pantry_items')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('is_archived', false);
+
+    if (error) {
+      throw error;
+    }
+
+    // Calculate statistics
+    const now = new Date();
+    const threeDaysFromNow = new Date();
+    threeDaysFromNow.setDate(now.getDate() + 3);
+
+    const stats = {
+      totalItems: items.length,
+      totalValue: items.reduce((sum, item) => sum + (parseFloat(item.estimated_price) || 0), 0),
+      categoryBreakdown: {},
+      expiringSoon: items.filter(item => {
+        if (!item.expiry_date) return false;
+        const expiryDate = new Date(item.expiry_date);
+        return expiryDate >= now && expiryDate <= threeDaysFromNow;
+      }).length,
+      expired: items.filter(item => {
+        if (!item.expiry_date) return false;
+        return new Date(item.expiry_date) < now;
+      }).length,
+      lowStock: items.filter(item => parseFloat(item.quantity) <= 1).length,
+      averageItemValue: items.length > 0
+        ? items.reduce((sum, item) => sum + (parseFloat(item.estimated_price) || 0), 0) / items.length
+        : 0
+    };
+
+    // Calculate category breakdown
+    items.forEach(item => {
+      stats.categoryBreakdown[item.category] = (stats.categoryBreakdown[item.category] || 0) + 1;
+    });
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching pantry stats:', error);
+    res.status(500).json({
+      error: 'Failed to fetch pantry statistics',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/pantry/categories
+ * Get all unique categories used by the user
+ */
+router.get('/categories', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const { data: items, error } = await supabase
+      .from('pantry_items')
+      .select('category')
+      .eq('user_id', userId)
+      .eq('is_archived', false);
+
+    if (error) {
+      throw error;
+    }
+
+    // Get unique categories
+    const categories = [...new Set(items.map(item => item.category))].sort();
+
+    res.json({ categories });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({
+      error: 'Failed to fetch categories',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/pantry/:id
+ * Get a specific pantry item
+ */
 router.get('/:id', authenticateJWT, async (req, res) => {
   try {
-    const item = await db('pantry_items')
-      .where({ id: req.params.id, user_id: req.user.id })
-      .first();
-    
-    if (!item) {
-      return res.status(404).json({ error: 'Pantry item not found' });
+    const userId = req.user.id;
+    const itemId = req.params.id;
+
+    const { data: item, error } = await supabase
+      .from('pantry_items')
+      .select('*')
+      .eq('id', itemId)
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Pantry item not found' });
+      }
+      throw error;
     }
-    
+
     res.json({ item });
   } catch (error) {
     console.error('Error fetching pantry item:', error);
-    res.status(500).json({ error: 'Failed to fetch pantry item' });
+    res.status(500).json({
+      error: 'Failed to fetch pantry item',
+      details: error.message
+    });
   }
 });
 
-// Add a new pantry item
+/**
+ * POST /api/pantry
+ * Add a new pantry item
+ */
 router.post('/', authenticateJWT, async (req, res) => {
   try {
-    const { name, quantity, unit, category, expiryDate, estimatedPrice, barcode, notes } = req.body;
-    
+    const userId = req.user.id;
+    const {
+      name,
+      quantity,
+      unit,
+      category,
+      expiryDate,
+      purchaseDate,
+      estimatedPrice,
+      actualPrice,
+      barcode,
+      storeName,
+      brand,
+      notes,
+      imageUrl
+    } = req.body;
+
+    // Validate required fields
     if (!name || !quantity || !unit) {
-      return res.status(400).json({ error: 'Name, quantity, and unit are required' });
+      return res.status(400).json({
+        error: 'Name, quantity, and unit are required'
+      });
     }
-    
+
     // Check if item already exists (by name and barcode)
     let existingItem = null;
     if (barcode) {
-      existingItem = await db('pantry_items')
-        .where({ user_id: req.user.id, barcode })
-        .first();
+      const { data } = await supabase
+        .from('pantry_items')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('barcode', barcode)
+        .eq('is_archived', false)
+        .single();
+      existingItem = data;
     } else {
-      existingItem = await db('pantry_items')
-        .where({ user_id: req.user.id, name })
-        .first();
+      const { data } = await supabase
+        .from('pantry_items')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('name', name)
+        .eq('is_archived', false)
+        .single();
+      existingItem = data;
     }
-    
+
     if (existingItem) {
       // Update quantity of existing item
-      const [updatedItem] = await db('pantry_items')
-        .where({ id: existingItem.id })
+      const newQuantity = parseFloat(existingItem.quantity) + parseFloat(quantity);
+
+      const { data: updatedItem, error } = await supabase
+        .from('pantry_items')
         .update({
-          quantity: existingItem.quantity + quantity,
-          updated_at: new Date()
+          quantity: newQuantity,
+          updated_at: new Date().toISOString()
         })
-        .returning('*');
-      
+        .eq('id', existingItem.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
       return res.json({
         item: updatedItem,
         message: 'Item quantity updated successfully'
       });
     }
-    
+
     // Create new item
-    const [item] = await db('pantry_items').insert({
-      user_id: req.user.id,
-      name,
-      quantity,
-      unit,
-      category: category || 'General',
-      expiry_date: expiryDate,
-      purchase_date: new Date(),
-      estimated_price: estimatedPrice,
-      barcode,
-      notes,
-      created_at: new Date(),
-      updated_at: new Date()
-    }).returning('*');
-    
+    const { data: item, error } = await supabase
+      .from('pantry_items')
+      .insert({
+        user_id: userId,
+        name,
+        quantity: parseFloat(quantity),
+        unit,
+        category: category || 'General',
+        expiry_date: expiryDate || null,
+        purchase_date: purchaseDate || new Date().toISOString().split('T')[0],
+        estimated_price: estimatedPrice ? parseFloat(estimatedPrice) : null,
+        actual_price: actualPrice ? parseFloat(actualPrice) : null,
+        barcode: barcode || null,
+        store_name: storeName || null,
+        brand: brand || null,
+        notes: notes || null,
+        image_url: imageUrl || null
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error adding pantry item:', error);
+      throw error;
+    }
+
     res.status(201).json({
       item,
       message: 'Pantry item added successfully'
     });
   } catch (error) {
     console.error('Error adding pantry item:', error);
-    res.status(500).json({ error: 'Failed to add pantry item' });
+    res.status(500).json({
+      error: 'Failed to add pantry item',
+      details: error.message
+    });
   }
 });
 
-// Update a pantry item
+/**
+ * PUT /api/pantry/:id
+ * Update a pantry item
+ */
 router.put('/:id', authenticateJWT, async (req, res) => {
   try {
-    const { name, quantity, unit, category, expiryDate, estimatedPrice, barcode, notes } = req.body;
-    
+    const userId = req.user.id;
+    const itemId = req.params.id;
+    const updateData = req.body;
+
     // Check if item exists and belongs to user
-    const existingItem = await db('pantry_items')
-      .where({ id: req.params.id, user_id: req.user.id })
-      .first();
-    
-    if (!existingItem) {
-      return res.status(404).json({ error: 'Pantry item not found' });
+    const { data: existingItem, error: fetchError } = await supabase
+      .from('pantry_items')
+      .select('*')
+      .eq('id', itemId)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Pantry item not found' });
+      }
+      throw fetchError;
     }
-    
+
+    // Prepare update object (only include provided fields)
+    const updates = {
+      updated_at: new Date().toISOString()
+    };
+
+    if (updateData.name !== undefined) updates.name = updateData.name;
+    if (updateData.quantity !== undefined) updates.quantity = parseFloat(updateData.quantity);
+    if (updateData.unit !== undefined) updates.unit = updateData.unit;
+    if (updateData.category !== undefined) updates.category = updateData.category;
+    if (updateData.expiryDate !== undefined) updates.expiry_date = updateData.expiryDate;
+    if (updateData.purchaseDate !== undefined) updates.purchase_date = updateData.purchaseDate;
+    if (updateData.estimatedPrice !== undefined) updates.estimated_price = parseFloat(updateData.estimatedPrice);
+    if (updateData.actualPrice !== undefined) updates.actual_price = parseFloat(updateData.actualPrice);
+    if (updateData.barcode !== undefined) updates.barcode = updateData.barcode;
+    if (updateData.storeName !== undefined) updates.store_name = updateData.storeName;
+    if (updateData.brand !== undefined) updates.brand = updateData.brand;
+    if (updateData.notes !== undefined) updates.notes = updateData.notes;
+    if (updateData.imageUrl !== undefined) updates.image_url = updateData.imageUrl;
+
     // Update the item
-    const [updatedItem] = await db('pantry_items')
-      .where({ id: req.params.id })
-      .update({
-        name: name || existingItem.name,
-        quantity: quantity !== undefined ? quantity : existingItem.quantity,
-        unit: unit || existingItem.unit,
-        category: category || existingItem.category,
-        expiry_date: expiryDate !== undefined ? expiryDate : existingItem.expiry_date,
-        estimated_price: estimatedPrice !== undefined ? estimatedPrice : existingItem.estimated_price,
-        barcode: barcode !== undefined ? barcode : existingItem.barcode,
-        notes: notes !== undefined ? notes : existingItem.notes,
-        updated_at: new Date()
-      })
-      .returning('*');
-    
+    const { data: updatedItem, error: updateError } = await supabase
+      .from('pantry_items')
+      .update(updates)
+      .eq('id', itemId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
     res.json({
       item: updatedItem,
       message: 'Pantry item updated successfully'
     });
   } catch (error) {
     console.error('Error updating pantry item:', error);
-    res.status(500).json({ error: 'Failed to update pantry item' });
+    res.status(500).json({
+      error: 'Failed to update pantry item',
+      details: error.message
+    });
   }
 });
 
-// Delete a pantry item
+/**
+ * DELETE /api/pantry/:id
+ * Delete (archive) a pantry item
+ */
 router.delete('/:id', authenticateJWT, async (req, res) => {
   try {
+    const userId = req.user.id;
+    const itemId = req.params.id;
+    const hardDelete = req.query.hard === 'true';
+
     // Check if item exists and belongs to user
-    const existingItem = await db('pantry_items')
-      .where({ id: req.params.id, user_id: req.user.id })
-      .first();
-    
-    if (!existingItem) {
-      return res.status(404).json({ error: 'Pantry item not found' });
+    const { data: existingItem, error: fetchError } = await supabase
+      .from('pantry_items')
+      .select('*')
+      .eq('id', itemId)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Pantry item not found' });
+      }
+      throw fetchError;
     }
-    
-    // Delete the item
-    await db('pantry_items').where({ id: req.params.id }).del();
-    
-    res.json({ message: 'Pantry item deleted successfully' });
+
+    if (hardDelete) {
+      // Permanently delete the item
+      const { error: deleteError } = await supabase
+        .from('pantry_items')
+        .delete()
+        .eq('id', itemId);
+
+      if (deleteError) throw deleteError;
+
+      res.json({ message: 'Pantry item deleted permanently' });
+    } else {
+      // Soft delete (archive) the item
+      const { error: updateError } = await supabase
+        .from('pantry_items')
+        .update({ is_archived: true })
+        .eq('id', itemId);
+
+      if (updateError) throw updateError;
+
+      res.json({ message: 'Pantry item archived successfully' });
+    }
   } catch (error) {
     console.error('Error deleting pantry item:', error);
-    res.status(500).json({ error: 'Failed to delete pantry item' });
-  }
-});
-
-// Update pantry item quantity
-router.patch('/:id/quantity', authenticateJWT, async (req, res) => {
-  try {
-    const { quantity, operation } = req.body; // operation: 'add', 'subtract', 'set'
-    
-    if (quantity === undefined || !operation) {
-      return res.status(400).json({ error: 'Quantity and operation are required' });
-    }
-    
-    // Check if item exists and belongs to user
-    const existingItem = await db('pantry_items')
-      .where({ id: req.params.id, user_id: req.user.id })
-      .first();
-    
-    if (!existingItem) {
-      return res.status(404).json({ error: 'Pantry item not found' });
-    }
-    
-    let newQuantity;
-    switch (operation) {
-      case 'add':
-        newQuantity = existingItem.quantity + quantity;
-        break;
-      case 'subtract':
-        newQuantity = Math.max(0, existingItem.quantity - quantity);
-        break;
-      case 'set':
-        newQuantity = quantity;
-        break;
-      default:
-        return res.status(400).json({ error: 'Invalid operation. Use "add", "subtract", or "set"' });
-    }
-    
-    // Update the quantity
-    const [updatedItem] = await db('pantry_items')
-      .where({ id: req.params.id })
-      .update({
-        quantity: newQuantity,
-        updated_at: new Date()
-      })
-      .returning('*');
-    
-    res.json({
-      item: updatedItem,
-      message: 'Quantity updated successfully'
+    res.status(500).json({
+      error: 'Failed to delete pantry item',
+      details: error.message
     });
-  } catch (error) {
-    console.error('Error updating pantry item quantity:', error);
-    res.status(500).json({ error: 'Failed to update quantity' });
   }
 });
 
-// Get pantry statistics
-router.get('/stats', authenticateJWT, async (req, res) => {
+/**
+ * POST /api/pantry/:id/consume
+ * Consume (reduce quantity) of a pantry item
+ */
+router.post('/:id/consume', authenticateJWT, async (req, res) => {
   try {
-    const items = await db('pantry_items').where({ user_id: req.user.id });
-    
-    // Calculate statistics
-    const totalItems = items.length;
-    const totalValue = items.reduce((sum, item) => sum + (item.estimated_price || 0), 0);
-    
-    // Group by category
-    const categoryBreakdown = items.reduce((acc, item) => {
-      const category = item.category || 'Uncategorized';
-      if (!acc[category]) {
-        acc[category] = { count: 0, value: 0 };
+    const userId = req.user.id;
+    const itemId = req.params.id;
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Valid amount is required' });
+    }
+
+    // Get the item
+    const { data: item, error: fetchError } = await supabase
+      .from('pantry_items')
+      .select('*')
+      .eq('id', itemId)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Pantry item not found' });
       }
-      acc[category].count++;
-      acc[category].value += item.estimated_price || 0;
-      return acc;
-    }, {});
-    
-    // Expiry analysis
-    const now = new Date();
-    const expiringSoon = items.filter(item => {
-      if (!item.expiry_date) return false;
-      const expiryDate = new Date(item.expiry_date);
-      const daysUntilExpiry = (expiryDate - now) / (1000 * 60 * 60 * 24);
-      return daysUntilExpiry <= 7 && daysUntilExpiry > 0;
-    });
-    
-    const expired = items.filter(item => {
-      if (!item.expiry_date) return false;
-      return new Date(item.expiry_date) < now;
-    });
-    
-    // Low stock items
-    const lowStock = items.filter(item => item.quantity <= 1);
-    
-    res.json({
-      stats: {
-        totalItems,
-        totalValue: Math.round(totalValue * 100) / 100,
-        categoryBreakdown,
-        expiringSoon: expiringSoon.length,
-        expired: expired.length,
-        lowStock: lowStock.length,
-        averageItemValue: totalItems > 0 ? Math.round((totalValue / totalItems) * 100) / 100 : 0
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching pantry statistics:', error);
-    res.status(500).json({ error: 'Failed to fetch pantry statistics' });
-  }
-});
-
-// Get pantry categories
-router.get('/categories', authenticateJWT, async (req, res) => {
-  try {
-    const categories = await db('pantry_items')
-      .where({ user_id: req.user.id })
-      .select('category')
-      .distinct()
-      .orderBy('category');
-    
-    res.json({
-      categories: categories.map(c => c.category || 'Uncategorized')
-    });
-  } catch (error) {
-    console.error('Error fetching pantry categories:', error);
-    res.status(500).json({ error: 'Failed to fetch pantry categories' });
-  }
-});
-
-// Search pantry items
-router.get('/search', authenticateJWT, async (req, res) => {
-  try {
-    const { q, category, limit = 20 } = req.query;
-    
-    if (!q) {
-      return res.status(400).json({ error: 'Search query is required' });
+      throw fetchError;
     }
-    
-    let query = db('pantry_items')
-      .where({ user_id: req.user.id })
-      .where(function() {
-        this.where('name', 'ilike', `%${q}%`)
-          .orWhere('notes', 'ilike', `%${q}%`)
-          .orWhere('barcode', 'ilike', `%${q}%`);
+
+    const newQuantity = parseFloat(item.quantity) - parseFloat(amount);
+
+    if (newQuantity <= 0) {
+      // Archive item if quantity reaches 0
+      const { error: updateError } = await supabase
+        .from('pantry_items')
+        .update({
+          quantity: 0,
+          is_archived: true
+        })
+        .eq('id', itemId);
+
+      if (updateError) throw updateError;
+
+      res.json({
+        message: 'Item consumed and archived',
+        quantity: 0
       });
-    
-    // Filter by category if specified
-    if (category) {
-      query = query.where({ category });
+    } else {
+      // Update quantity
+      const { data: updatedItem, error: updateError } = await supabase
+        .from('pantry_items')
+        .update({ quantity: newQuantity })
+        .eq('id', itemId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      res.json({
+        item: updatedItem,
+        message: 'Item quantity updated'
+      });
     }
-    
-    // Limit results
-    query = query.limit(parseInt(limit));
-    
-    const items = await query.orderBy('name');
-    res.json({ items });
   } catch (error) {
-    console.error('Error searching pantry items:', error);
-    res.status(500).json({ error: 'Failed to search pantry items' });
+    console.error('Error consuming pantry item:', error);
+    res.status(500).json({
+      error: 'Failed to consume pantry item',
+      details: error.message
+    });
   }
 });
 
-module.exports = router; 
+module.exports = router;

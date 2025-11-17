@@ -1,7 +1,9 @@
 const express = require('express');
-const { authenticateJWT, optionalAuth } = require('../config/passport');
-const { aiRateLimit } = require('../middleware/rateLimiter');
+const { authenticateJWT, optionalAuth } = require('../middleware/supabaseAuth');
 const OpenAI = require('openai');
+
+// TODO: Re-enable rate limiting when ready
+const aiRateLimit = (req, res, next) => next(); // Temporarily bypass rate limiting
 
 const router = express.Router();
 

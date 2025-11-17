@@ -8,16 +8,19 @@ require('dotenv').config();
 // Import mock database
 const mockDB = require('./mockDatabase');
 
-const { connectDB } = require('./config/database');
-const { setupGraphQL } = require('./config/graphql');
-const { setupPassport } = require('./config/passport');
-const { setupSession } = require('./config/session');
-const { setupRateLimiting } = require('./middleware/rateLimiter');
+// Database and GraphQL setup (disabled for now - using Supabase)
+// const { connectDB } = require('./config/database');
+// const { setupGraphQL } = require('./config/graphql');
+// const { setupPassport } = require('./config/passport');
+// const { setupSession } = require('./config/session');
+// const { setupRateLimiting } = require('./middleware/rateLimiter');
 
 // Import routes
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/users');
-const groceryRoutes = require('./routes/groceries');
+const supabaseAuthRoutes = require('./routes/supabase-auth');
+// Old routes disabled - they use Passport which is not configured
+// const authRoutes = require('./routes/auth');
+// const userRoutes = require('./routes/users');
+// const groceryRoutes = require('./routes/groceries');
 const storeRoutes = require('./routes/stores');
 const aiRoutes = require('./routes/ai');
 const pantryRoutes = require('./routes/pantry');
@@ -164,8 +167,8 @@ app.post('/api/ai/chat', (req, res) => {
   });
 });
 
-// API routes - temporarily disable auth routes that need sessions
-// app.use('/api/auth', authRoutes);
+// API routes - Use Supabase auth routes
+app.use('/api/auth', supabaseAuthRoutes);
 // app.use('/api/users', userRoutes);
 
 // Mock endpoints must be defined before route handlers to take precedence
@@ -213,7 +216,7 @@ app.get('/api/users/profile', (req, res) => {
   }
 });
 
-app.put('/api/users/profile', (req, res) => {
+app.put('/api/users/profile', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -225,7 +228,7 @@ app.put('/api/users/profile', (req, res) => {
 
     const token = authHeader.substring(7);
     const session = mockDB.getSession(token);
-    
+
     if (!session) {
       return res.status(401).json({
         error: 'Invalid token',
@@ -241,8 +244,8 @@ app.put('/api/users/profile', (req, res) => {
       });
     }
 
-    // Update user data
-    const updatedUser = mockDB.updateUser(user.email, {
+    // Update user data (now async - password will be hashed if provided)
+    const updatedUser = await mockDB.updateUser(user.email, {
       firstName: req.body.firstName || user.firstName,
       lastName: req.body.lastName || user.lastName,
       age: req.body.age || user.age,
@@ -323,8 +326,8 @@ app.put('/api/users/preferences', (req, res) => {
   });
 });
 
-// Authentication endpoints
-app.post('/api/auth/register', (req, res) => {
+// Authentication endpoints (DISABLED - Using Supabase routes instead)
+/* app.post('/api/auth/register', async (req, res) => {
   try {
     const { firstName, lastName, email, password, age } = req.body;
 
@@ -344,9 +347,9 @@ app.post('/api/auth/register', (req, res) => {
       });
     }
 
-    // Create new user
-    const newUser = mockDB.createUser({ firstName, lastName, email, password, age });
-    
+    // Create new user (now async - password will be hashed)
+    const newUser = await mockDB.createUser({ firstName, lastName, email, password, age });
+
     // Create session
     const token = mockDB.generateToken();
     mockDB.createSession(newUser.id, token);
@@ -369,7 +372,7 @@ app.post('/api/auth/register', (req, res) => {
   }
 });
 
-app.post('/api/auth/login', (req, res) => {
+app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -380,15 +383,15 @@ app.post('/api/auth/login', (req, res) => {
       });
     }
 
-    // Authenticate user
-    const user = mockDB.authenticateUser(email, password);
-    
+    // Authenticate user (now async - password will be compared with bcrypt)
+    const user = await mockDB.authenticateUser(email, password);
+
     // Create session
     const token = mockDB.generateToken();
     mockDB.createSession(user.id, token);
 
-    // Update last login
-    mockDB.updateUser(email, { lastLoginAt: new Date().toISOString() });
+    // Update last login (now async due to potential password hashing)
+    await mockDB.updateUser(email, { lastLoginAt: new Date().toISOString() });
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
@@ -468,7 +471,7 @@ app.post('/api/auth/logout', (req, res) => {
       details: error.message
     });
   }
-});
+}); */
 
 // Mock user stats endpoint
 app.get('/api/users/stats', (req, res) => {
@@ -533,14 +536,14 @@ app.delete('/api/groceries/:id', (req, res) => {
   });
 });
 
-app.use('/api/groceries', groceryRoutes);
+// app.use('/api/groceries', groceryRoutes); // Disabled - uses Passport
 app.use('/api/stores', storeRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/pantry', pantryRoutes);
 app.use('/api/ml', mlRoutes);
 
-// GraphQL setup
-setupGraphQL(app);
+// GraphQL setup (disabled - using Supabase)
+// setupGraphQL(app);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -583,10 +586,11 @@ async function startServer() {
     
     // Start server
     app.listen(PORT, () => {
-      console.log(`🚀 PantryPal server running on port ${PORT}`);
+      console.log(`🚀 Nourish Neural server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-      console.log(`📊 GraphQL: http://localhost:${PORT}/graphql`);
+      console.log(`🔑 Using Supabase Auth: ${process.env.SUPABASE_URL ? '✅' : '❌'}`);
+      console.log(`🎯 CORS enabled for: ${process.env.CORS_ORIGIN}`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

@@ -1,22 +1,28 @@
 // Mock database for user management
 // In a real app, this would be replaced with a proper database like MongoDB, PostgreSQL, etc.
 
+const bcrypt = require('bcryptjs');
+
 class MockDatabase {
   constructor() {
     this.users = new Map();
     this.sessions = new Map();
-    this.initializeDefaultUsers();
+    this.initialized = false;
+    this.initPromise = this.initializeDefaultUsers();
   }
 
   // Initialize with some default users for testing
-  initializeDefaultUsers() {
-    // Add a default test user
+  async initializeDefaultUsers() {
+    if (this.initialized) return;
+
+    // Add a default test user with hashed password
+    const hashedPassword = await bcrypt.hash('password123', 10);
     this.users.set('john.doe@example.com', {
       id: 'user-1',
       firstName: 'John',
       lastName: 'Doe',
       email: 'john.doe@example.com',
-      password: 'password123', // In real app, this would be hashed
+      password: hashedPassword, // Now properly hashed
       avatar: 'https://ui-avatars.com/api/?name=John+Doe&background=random',
       isVerified: true,
       role: 'user',
@@ -24,16 +30,29 @@ class MockDatabase {
       updatedAt: '2024-01-01T00:00:00Z',
       lastLoginAt: new Date().toISOString()
     });
+
+    this.initialized = true;
+  }
+
+  // Ensure initialization is complete before using
+  async ensureInitialized() {
+    if (!this.initialized) {
+      await this.initPromise;
+    }
   }
 
   // User management methods
-  createUser(userData) {
+  async createUser(userData) {
+    await this.ensureInitialized();
     const { email, password, firstName, lastName, age } = userData;
-    
+
     // Check if user already exists
     if (this.users.has(email)) {
       throw new Error('User with this email already exists');
     }
+
+    // Hash the password before storing
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const userId = `user-${Date.now()}`;
     const newUser = {
@@ -42,7 +61,7 @@ class MockDatabase {
       lastName,
       email,
       age: age || null,
-      password, // In real app, hash this password
+      password: hashedPassword, // Now properly hashed with bcrypt
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}+${encodeURIComponent(lastName)}&background=random`,
       isVerified: true,
       role: 'user',
@@ -68,10 +87,16 @@ class MockDatabase {
     return null;
   }
 
-  updateUser(email, updateData) {
+  async updateUser(email, updateData) {
+    await this.ensureInitialized();
     const user = this.users.get(email);
     if (!user) {
       throw new Error('User not found');
+    }
+
+    // If password is being updated, hash it
+    if (updateData.password) {
+      updateData.password = await bcrypt.hash(updateData.password, 10);
     }
 
     const updatedUser = {
@@ -114,14 +139,16 @@ class MockDatabase {
   }
 
   // Authentication methods
-  authenticateUser(email, password) {
+  async authenticateUser(email, password) {
+    await this.ensureInitialized();
     const user = this.users.get(email);
     if (!user) {
       throw new Error('Invalid email or password');
     }
 
-    // In real app, compare hashed passwords
-    if (user.password !== password) {
+    // Compare hashed passwords using bcrypt
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       throw new Error('Invalid email or password');
     }
 
