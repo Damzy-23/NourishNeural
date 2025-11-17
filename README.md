@@ -75,8 +75,9 @@ NourishNeural/
 - **Frontend**: React 18, TypeScript, TailwindCSS, React Query, Framer Motion
 - **Backend**: Node.js, Express, PostgreSQL (Supabase-compatible)
 - **ML Layer**: EfficientNet (classification), LSTM (expiry), ensemble forecasting (waste)
-- **Auth**: Google OAuth 2.0 + secure session tokens
+- **Auth**: Supabase Auth (Google OAuth 2.0 + email/password)
 - **Tooling**: Vite, ESLint, React Helmet Async, Lucide icons
+- **Branding**: Custom SVG logo and favicon with blue/white gradient design
 
 ## 📱 Experience Highlights
 
@@ -95,10 +96,17 @@ NourishNeural/
 
 ## 🎯 Roadmap
 
-- **Phase 1**: Core auth, pantry intelligence, AI chat, store dataset integration.
-- **Phase 2**: Barcode scanning, loyalty sync, advanced waste forecasting.
-- **Phase 3**: Hyper-personalised nutrition engine, meal kits, sustainability scoring.
-- **Phase 4**: AR inventory capture, smart appliance integrations, local market expansion.
+- **Phase 1**: ✅ Core auth (Supabase), pantry intelligence, Nurexa AI chat, store dataset integration, branding updates
+- **Phase 2**: Barcode scanning, loyalty sync, advanced waste forecasting
+- **Phase 3**: Hyper-personalised nutrition engine, meal kits, sustainability scoring
+- **Phase 4**: AR inventory capture, smart appliance integrations, local market expansion
+
+## 🎨 Recent Updates
+
+- **Branding**: Rebranded AI assistant to "Nurexa AI" with updated messaging across the platform
+- **Logo**: New custom SVG logo and favicon featuring blue/white gradient neural network design
+- **Email Templates**: Enhanced Supabase email confirmation templates with inline logo
+- **UI/UX**: Updated navigation and landing page with new logo integration
 
 ## 🤝 Contributing
 

@@ -151,9 +151,11 @@ export default function LandingPage() {
           <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex h-16 items-center justify-between">
               <Link to="/" className="flex items-center space-x-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500 text-white shadow-lg shadow-primary-500/30">
-                  <BrainCircuit className="h-5 w-5" />
-                </span>
+                <img
+                  src="/favicon.svg"
+                  alt="Nourish Neural logo"
+                  className="h-10 w-10 rounded-2xl shadow-lg shadow-primary-500/30"
+                />
                 <span className="text-xl font-bold tracking-tight">Nourish Neural</span>
               </Link>
               <div className="hidden md:flex items-center space-x-3">

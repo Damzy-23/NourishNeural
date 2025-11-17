@@ -10,7 +10,6 @@ import {
   Menu,
   X,
   Package,
-  BrainCircuit
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { cn } from '../utils/cn'
@@ -52,9 +51,11 @@ export default function Layout() {
             {/* Logo */}
             <div className="flex h-16 items-center justify-between px-6">
               <Link to="/app/dashboard" className="flex items-center space-x-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500 flex items-center justify-center shadow-lg">
-                  <BrainCircuit className="h-6 w-6 text-white" />
-                </div>
+                <img
+                  src="/favicon.svg"
+                  alt="Nourish Neural logo"
+                  className="h-10 w-10 rounded-xl shadow-lg shadow-primary-500/30"
+                />
                 <span className="text-xl font-bold gradient-text">Nourish Neural</span>
               </Link>
               <button
@@ -134,7 +135,11 @@ export default function Layout() {
           {/* Logo */}
           <div className="flex h-16 items-center px-6">
             <Link to="/app/dashboard" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500" />
+              <img
+                src="/favicon.svg"
+                alt="Nourish Neural logo"
+                className="h-8 w-8 rounded-lg shadow-lg shadow-primary-500/30"
+              />
               <span className="text-xl font-bold text-neutral-900">Nourish Neural</span>
             </Link>
           </div>
