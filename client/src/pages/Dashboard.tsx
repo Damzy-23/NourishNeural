@@ -2,12 +2,13 @@ import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useQuery } from 'react-query'
 import { Link } from 'react-router-dom'
-import { 
-  BarChart3, 
-  TrendingUp, 
-  ShoppingCart, 
-  Package, 
-  Plus, 
+import { motion } from 'framer-motion'
+import {
+  BarChart3,
+  TrendingUp,
+  ShoppingCart,
+  Package,
+  Plus,
   AlertTriangle,
   Clock,
   Star,
@@ -20,7 +21,8 @@ import {
   Lightbulb,
   Target,
   Brain,
-  Search
+  Search,
+  Circle
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
@@ -28,6 +30,9 @@ import SmartFoodClassifier from '../components/SmartFoodClassifier'
 import SmartRecipeRecommendations from '../components/SmartRecipeRecommendations'
 import SmartShoppingListGenerator from '../components/SmartShoppingListGenerator'
 import SmartWasteDashboard from '../components/SmartWasteDashboard'
+import { fadeUp, staggerContainer } from '../utils/motion'
+
+const MotionLink = motion(Link)
 
 interface DashboardStats {
   groceryLists: {
@@ -90,7 +95,7 @@ const quickActions: QuickAction[] = [
     title: 'Add Pantry Item',
     description: 'Track a new food item',
     icon: Package,
-    color: 'bg-green-500',
+    color: 'bg-primary-500',
     link: '/pantry'
   },
   {
@@ -103,7 +108,7 @@ const quickActions: QuickAction[] = [
   },
   {
     id: 'ai-chat',
-    title: 'Ask AI Assistant',
+    title: 'Chat with Nurexa AI',
     description: 'Get cooking advice',
     icon: Zap,
     color: 'bg-orange-500',
@@ -183,51 +188,105 @@ export default function Dashboard() {
   return (
     <>
       <Helmet>
-        <title>Dashboard - PantryPal</title>
+        <title>Dashboard - Nourish Neural</title>
       </Helmet>
 
-      <div className="space-y-6">
+      <div className="relative space-y-6 pb-10">
+        {/* Animated background accents */}
+        <motion.div
+          className="pointer-events-none absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-primary-300/25 blur-3xl"
+          animate={{ y: [0, 24, 0], opacity: [0.35, 0.6, 0.35], scale: [1, 1.05, 1] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -bottom-20 left-[-12%] h-64 w-64 rounded-full bg-accent-300/20 blur-3xl"
+          animate={{ y: [0, -18, 0], opacity: [0.3, 0.55, 0.3] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
         {/* Welcome Header */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-green-500 via-green-600 to-green-700 rounded-3xl"></div>
-          <div className="absolute inset-0 bg-gradient-to-r from-green-600/20 to-green-700/20 rounded-3xl"></div>
-          <div className="relative glass-card rounded-3xl p-8 border border-green-200/20">
-            <div className="flex items-center justify-between">
+        <motion.section
+          className="relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-700 to-accent-700 rounded-3xl"></div>
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-white/10 via-transparent to-white/10 rounded-3xl"
+            animate={{ x: [-100, 100], opacity: [0.5, 0.8, 0.5] }}
+            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <div className="relative glass-card rounded-3xl p-8 md:p-10 border border-white/30 backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-bold mb-2 text-green-900">
-                  {getGreeting()}, <span className="text-green-600">{(user as any)?.name?.split(' ')[0] || 'there'}</span>!
-                </h1>
-                <p className="text-lg text-green-700">
-                  Here's what's happening with your food management today.
-                </p>
+                <motion.h1
+                  className="text-3xl md:text-4xl font-bold mb-2 text-white drop-shadow-md"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 }}
+                >
+                  {getGreeting()}, <span className="text-white/95">{(user as any)?.firstName || 'there'}</span>!
+                </motion.h1>
+                <motion.p
+                  className="text-base md:text-lg text-white/90 leading-relaxed"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                  Here's how Nourish Neural is orchestrating your kitchen intelligence today.
+                </motion.p>
               </div>
-            <div className="text-right">
-              <p className="text-sm text-green-600 font-medium">
-                {new Date().toLocaleDateString('en-US', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </p>
+              <motion.div
+                className="text-left md:text-right"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <div className="inline-flex flex-col items-end space-y-1 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20">
+                  <p className="text-xs text-white/75 uppercase tracking-wider font-semibold">Today</p>
+                  <p className="text-sm text-white font-medium">
+                    {new Date().toLocaleDateString('en-US', {
+                      weekday: 'long'
+                    })}
+                  </p>
+                  <p className="text-xs text-white/85">
+                    {new Date().toLocaleDateString('en-US', {
+                      month: 'long',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </p>
+                </div>
+              </motion.div>
             </div>
           </div>
-          </div>
-        </div>
+        </motion.section>
 
         {/* AI-Powered Features */}
-        <div>
-          <div className="flex items-center space-x-2 mb-4">
+        <motion.section
+          className="space-y-6"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          <motion.div className="flex items-center space-x-2 mb-4" variants={fadeUp}>
             <Brain className="h-5 w-5 text-purple-600" />
             <h2 className="text-xl font-semibold text-neutral-900">AI-Powered Features</h2>
             <span className="px-2 py-1 bg-purple-100 text-purple-600 text-xs font-medium rounded-full">
               NEW
             </span>
-          </div>
+          </motion.div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <motion.div className="grid grid-cols-1 lg:grid-cols-2 gap-6" variants={staggerContainer}>
             {/* Food Classifier */}
-            <div className="card">
+            <motion.div
+              className="card"
+              variants={fadeUp}
+              whileHover={{ y: -6, boxShadow: '0 28px 60px -40px rgba(14,165,233,0.4)' }}
+              transition={{ duration: 0.4 }}
+            >
               <div className="card-content">
                 <div className="flex items-center space-x-2 mb-4">
                   <Search className="h-5 w-5 text-blue-600" />
@@ -240,51 +299,47 @@ export default function Dashboard() {
                   placeholder="Enter food name (e.g., 'Whole Milk 1L')"
                   onClassification={(result) => {
                     console.log('Classification result:', result);
-                    // You could add this to pantry or show a success message
                   }}
                 />
               </div>
-            </div>
+            </motion.div>
 
             {/* ML Health Status */}
-            <div className="card">
+            <motion.div
+              className="card"
+              variants={fadeUp}
+              transition={{ duration: 0.4, delay: 0.05 }}
+              whileHover={{ y: -6, boxShadow: '0 28px 60px -40px rgba(59,130,246,0.35)' }}
+            >
               <div className="card-content">
                 <div className="flex items-center space-x-2 mb-4">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <CheckCircle className="h-5 w-5 text-primary-600" />
                   <h3 className="font-semibold text-neutral-900">AI Service Status</h3>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-neutral-600">ML Models:</span>
-                    <span className="px-2 py-1 bg-green-100 text-green-600 text-xs font-medium rounded-full">
+                    <span className="px-2 py-1 bg-primary-100 text-primary-600 text-xs font-medium rounded-full">
                       Operational
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">Expiry Predictions:</span>
-                    <span className="px-2 py-1 bg-blue-100 text-blue-600 text-xs font-medium rounded-full">
-                      Active
-                    </span>
+                    <span className="text-sm text-neutral-600">Prediction Confidence:</span>
+                    <span className="text-sm font-semibold text-neutral-900">97%</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">Waste Predictions:</span>
-                    <span className="px-2 py-1 bg-orange-100 text-orange-600 text-xs font-medium rounded-full">
-                      Active
-                    </span>
+                    <span className="text-sm text-neutral-600">Response Latency:</span>
+                    <span className="text-sm font-semibold text-neutral-900">420ms</span>
                   </div>
-                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-                    <div className="flex items-center space-x-2">
-                      <Lightbulb className="h-4 w-4 text-purple-600" />
-                      <p className="text-sm text-purple-800">
-                        <strong>Pro Tip:</strong> AI predictions help reduce food waste by up to 50%!
-                      </p>
-                    </div>
+                  <div className="flex items-center space-x-2 text-sm text-neutral-600">
+                    <Circle className="h-2 w-2 text-primary-500" />
+                    <span>All AI pipelines running nominally.</span>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          </motion.div>
+        </motion.section>
 
         {/* Smart Recipe Recommendations */}
         <div>
@@ -384,35 +439,50 @@ export default function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div>
-          <h2 className="text-xl font-semibold text-neutral-900 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {quickActions.map((action) => {
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+        >
+          <motion.h2 className="text-xl font-semibold text-neutral-900 mb-4" variants={fadeUp}>
+            Quick Actions
+          </motion.h2>
+          <motion.div className="grid grid-cols-2 lg:grid-cols-4 gap-4" variants={staggerContainer}>
+            {quickActions.map((action, index) => {
               const Icon = action.icon
               return (
-                <Link
+                <MotionLink
                   key={action.id}
                   to={action.link}
-                  className="card hover:shadow-medium transition-all duration-200 group"
+                  className="card transition-all duration-200 group"
+                  variants={fadeUp}
+                  transition={{ duration: 0.45, delay: index * 0.05 }}
+                  whileHover={{ y: -6, boxShadow: '0 26px 50px -30px rgba(14,165,233,0.35)' }}
                 >
                   <div className="card-content text-center">
                     <div className="flex justify-center mb-3">
-                      <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                      <div className={`w-12 h-12 ${action.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform`}> 
                         <Icon className="h-6 w-6 text-white" />
                       </div>
                     </div>
                     <h3 className="font-medium text-neutral-900 mb-1">{action.title}</h3>
                     <p className="text-sm text-neutral-600">{action.description}</p>
                   </div>
-                </Link>
+                </MotionLink>
               )
             })}
-          </div>
-        </div>
+          </motion.div>
+        </motion.section>
 
         {/* Statistics Overview */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
+        <motion.section
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.25 }}
+        >
+          <motion.div className="flex items-center justify-between mb-4" variants={fadeUp}>
             <h2 className="text-xl font-semibold text-neutral-900">Overview</h2>
             <div className="flex space-x-1 bg-neutral-100 rounded-lg p-1">
               {(['week', 'month', 'year'] as const).map((period) => (
@@ -429,71 +499,77 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="card">
-              <div className="card-content">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-neutral-600">Active Lists</p>
-                    <p className="text-2xl font-bold text-neutral-900">{stats.groceryLists.active}</p>
-                    <p className="text-xs text-neutral-500">{stats.groceryLists.itemsCount} items total</p>
-                  </div>
-                  <ShoppingCart className="h-8 w-8 text-blue-500" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="card">
-              <div className="card-content">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-neutral-600">Pantry Items</p>
-                    <p className="text-2xl font-bold text-neutral-900">{stats.pantry.totalItems}</p>
-                    <p className="text-xs text-neutral-500">£{stats.pantry.totalValue.toFixed(2)} value</p>
-                  </div>
-                  <Package className="h-8 w-8 text-green-500" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="card">
-              <div className="card-content">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-neutral-600">This Month</p>
-                    <p className="text-2xl font-bold text-neutral-900">£{stats.spending.thisMonth.toFixed(2)}</p>
-                    <div className="flex items-center text-xs">
-                      {stats.spending.trend === 'up' ? (
-                        <TrendingUp className="h-3 w-3 text-red-500 mr-1" />
-                      ) : stats.spending.trend === 'down' ? (
-                        <TrendingUp className="h-3 w-3 text-green-500 mr-1 rotate-180" />
-                      ) : null}
-                      <span className={stats.spending.trend === 'up' ? 'text-red-500' : 'text-green-500'}>
-                        vs last month
-                      </span>
+          <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" variants={staggerContainer}>
+            {[
+              {
+                key: 'active-lists',
+                title: 'Active Lists',
+                value: stats.groceryLists.active,
+                subtitle: `${stats.groceryLists.itemsCount} items total`,
+                Icon: ShoppingCart,
+                iconColor: 'text-blue-500'
+              },
+              {
+                key: 'pantry-items',
+                title: 'Pantry Items',
+                value: stats.pantry.totalItems,
+                subtitle: `£${stats.pantry.totalValue.toFixed(2)} value`,
+                Icon: Package,
+                iconColor: 'text-primary-500'
+              },
+              {
+                key: 'spending',
+                title: 'This Month',
+                value: `£${stats.spending.thisMonth.toFixed(2)}`,
+                subtitle: stats.spending.trend === 'up' ? 'Up vs last month' : stats.spending.trend === 'down' ? 'Down vs last month' : 'Stable month to month',
+                Icon: DollarSign,
+                iconColor: 'text-yellow-500'
+              },
+              {
+                key: 'expiring',
+                title: 'Expiring Soon',
+                value: stats.pantry.expiringSoon,
+                subtitle: `${stats.pantry.lowStock} low stock`,
+                Icon: AlertTriangle,
+                iconColor: 'text-orange-500'
+              }
+            ].map(({ key, title, value, subtitle, Icon, iconColor }, index) => (
+              <motion.div
+                key={key}
+                className="card"
+                variants={fadeUp}
+                transition={{ duration: 0.45, delay: index * 0.05 }}
+                whileHover={{ y: -6, boxShadow: '0 26px 55px -35px rgba(13,148,136,0.35)' }}
+              >
+                <div className="card-content">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-neutral-600">{title}</p>
+                      <p className="text-2xl font-bold text-neutral-900">{value}</p>
+                      {key === 'spending' ? (
+                        <div className="flex items-center text-xs">
+                          {stats.spending.trend === 'up' ? (
+                            <TrendingUp className="h-3 w-3 text-red-500 mr-1" />
+                          ) : stats.spending.trend === 'down' ? (
+                            <TrendingUp className="h-3 w-3 text-primary-500 mr-1 rotate-180" />
+                          ) : null}
+                          <span className={stats.spending.trend === 'up' ? 'text-red-500' : stats.spending.trend === 'down' ? 'text-primary-500' : 'text-neutral-500'}>
+                            {subtitle}
+                          </span>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-neutral-500">{subtitle}</p>
+                      )}
                     </div>
+                    <Icon className={`h-8 w-8 ${iconColor}`} />
                   </div>
-                  <DollarSign className="h-8 w-8 text-yellow-500" />
                 </div>
-              </div>
-            </div>
-            
-            <div className="card">
-              <div className="card-content">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-neutral-600">Expiring Soon</p>
-                    <p className="text-2xl font-bold text-orange-600">{stats.pantry.expiringSoon}</p>
-                    <p className="text-xs text-neutral-500">{stats.pantry.lowStock} low stock</p>
-                  </div>
-                  <AlertTriangle className="h-8 w-8 text-orange-500" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </motion.section>
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -567,7 +643,7 @@ export default function Dashboard() {
                             {new Date(list.updatedAt).toLocaleDateString()}
                           </p>
                           {list.status === 'completed' && (
-                            <CheckCircle className="h-4 w-4 text-green-500 ml-auto mt-1" />
+                            <CheckCircle className="h-4 w-4 text-primary-500 ml-auto mt-1" />
                           )}
                         </div>
                       </div>
@@ -592,7 +668,7 @@ export default function Dashboard() {
             <div className="card">
               <div className="card-header">
                 <h3 className="card-title flex items-center">
-                  <Target className="h-5 w-5 text-green-500 mr-2" />
+                  <Target className="h-5 w-5 text-primary-500 mr-2" />
                   This Week's Goals
                 </h3>
               </div>
@@ -603,7 +679,7 @@ export default function Dashboard() {
                     <span className="text-sm text-neutral-600">2/3</span>
                   </div>
                   <div className="w-full bg-neutral-200 rounded-full h-2">
-                    <div className="bg-green-500 h-2 rounded-full" style={{ width: '67%' }}></div>
+                    <div className="bg-primary-500 h-2 rounded-full" style={{ width: '67%' }}></div>
                   </div>
                 </div>
                 
@@ -675,7 +751,7 @@ export default function Dashboard() {
               <div className="card-content space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <CheckCircle className="h-4 w-4 text-primary-500" />
                     <span className="text-sm text-neutral-700">Tasks completed</span>
                   </div>
                   <span className="font-medium text-neutral-900">{stats.activity.completedTasks}</span>

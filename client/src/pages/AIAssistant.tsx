@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useMutation } from 'react-query'
+import { motion } from 'framer-motion'
 import { 
   Bot, 
   Send, 
@@ -15,7 +16,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { apiService } from '../services/api'
-import { useAuth } from '../hooks/useAuth'
+import { fadeUp, staggerContainer } from '../utils/motion'
 
 interface Message {
   id: string
@@ -71,11 +72,10 @@ const AI_FEATURES: AIFeature[] = [
 ]
 
 export default function AIAssistant() {
-  const { user } = useAuth()
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hello! I'm your PantryPal AI assistant. I can help you with recipes, nutrition advice, food substitutions, and smart shopping tips. What would you like to know?",
+      content: "Hello! I'm your Nurexa AI assistant. I can help you with recipes, nutrition analysis, food substitutions, and smart shopping tips. What would you like to know?",
       sender: 'ai',
       timestamp: new Date(),
       type: 'text'
@@ -90,7 +90,7 @@ export default function AIAssistant() {
     ({ message, endpoint }: { message: string; endpoint?: string }) =>
       apiService.post(endpoint || '/api/ai/chat', { message }),
     {
-      onSuccess: (response: any, variables) => {
+      onSuccess: (response: any) => {
         const aiMessage: Message = {
           id: Date.now().toString(),
           content: response.response || response.message,
@@ -101,7 +101,7 @@ export default function AIAssistant() {
         }
         setMessages(prev => [...prev, aiMessage])
       },
-      onError: (error: any) => {
+      onError: () => {
         const errorMessage: Message = {
           id: Date.now().toString(),
           content: "I'm sorry, I'm having trouble responding right now. Please try again later.",
@@ -160,7 +160,7 @@ export default function AIAssistant() {
     setMessages([
       {
         id: '1',
-        content: "Hello! I'm your PantryPal AI assistant. I can help you with recipes, nutrition advice, food substitutions, and smart shopping tips. What would you like to know?",
+        content: "Hello! I'm your Nurexa AI assistant. I can help you with recipes, nutrition analysis, food substitutions, and smart shopping tips. What would you like to know?",
         sender: 'ai',
         timestamp: new Date(),
         type: 'text'
@@ -244,42 +244,96 @@ export default function AIAssistant() {
   return (
     <>
       <Helmet>
-        <title>AI Assistant - PantryPal</title>
+        <title>Nurexa AI - Nourish Neural</title>
       </Helmet>
 
-      <div className="h-[calc(100vh-8rem)] flex flex-col space-y-6">
+      <div className="relative h-[calc(100vh-8rem)] flex flex-col space-y-6">
+        <motion.div
+          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-r from-primary-100/50 via-white to-accent-100/50 blur-3xl"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -bottom-24 right-[-10%] h-72 w-72 rounded-full bg-primary-200/35 blur-3xl"
+          animate={{ y: [0, -18, 0], opacity: [0.35, 0.6, 0.35] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-neutral-900 flex items-center">
-              <Sparkles className="h-8 w-8 text-primary-500 mr-3" />
-              AI Assistant
-            </h1>
-            <p className="mt-2 text-neutral-600">
-              Get personalized cooking advice and smart food recommendations
-            </p>
+        <motion.div
+          className="relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
+          <div className="relative glass-card rounded-3xl p-8 md:p-10 border border-neutral-200/60 backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <motion.div
+                  className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg shadow-primary-500/30"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2, type: 'spring' }}
+                >
+                  <Sparkles className="h-7 w-7 text-white" />
+                </motion.div>
+                <div>
+                  <motion.h1
+                    className="text-3xl md:text-4xl font-bold gradient-text"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                  >
+                    Nurexa AI
+                  </motion.h1>
+                  <motion.p
+                    className="mt-1 text-neutral-600 text-sm md:text-base"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                  >
+                    Chat with an AI trained on recipes, nutrition, and culinary intelligence
+                  </motion.p>
+                </div>
+              </div>
+              <motion.button
+                onClick={clearChat}
+                className="btn btn-outline shadow-md hover:shadow-lg"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Clear Chat
+              </motion.button>
+            </div>
           </div>
-          <button
-            onClick={clearChat}
-            className="btn btn-outline"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Clear Chat
-          </button>
-        </div>
+        </motion.div>
 
         {/* AI Features Quick Access */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
           {AI_FEATURES.map((feature) => {
             const Icon = feature.icon
             return (
-              <button
+              <motion.button
                 key={feature.id}
                 onClick={() => handleFeatureClick(feature)}
                 disabled={chatMutation.isLoading}
                 className={`card hover:shadow-medium transition-all duration-200 ${
                   selectedFeature === feature.id ? 'ring-2 ring-primary-500' : ''
                 }`}
+                variants={fadeUp}
+                whileHover={{ y: -6, boxShadow: '0 28px 55px -35px rgba(12,74,110,0.35)' }}
+                whileTap={{ scale: 0.98 }}
               >
                 <div className="card-content text-center">
                   <div className="flex justify-center mb-3">
@@ -290,13 +344,19 @@ export default function AIAssistant() {
                   <h3 className="font-medium text-neutral-900 mb-1">{feature.name}</h3>
                   <p className="text-xs text-neutral-600">{feature.description}</p>
                 </div>
-              </button>
+              </motion.button>
             )
           })}
-        </div>
+        </motion.div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-neutral-200">
+        <motion.div
+          className="flex-1 flex flex-col bg-white rounded-lg shadow-sm border border-neutral-200"
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ duration: 0.5 }}
+        >
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.map(renderMessage)}
@@ -335,46 +395,56 @@ export default function AIAssistant() {
                   disabled={chatMutation.isLoading}
                 />
               </div>
-              <button
+              <motion.button
                 onClick={() => handleSendMessage()}
                 disabled={!inputMessage.trim() || chatMutation.isLoading}
                 className="btn btn-primary px-6"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
               >
                 {chatMutation.isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Send className="h-4 w-4" />
                 )}
-              </button>
+              </motion.button>
             </div>
             
             {/* Quick suggestions */}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <motion.div className="mt-3 flex flex-wrap gap-2" variants={fadeUp}>
               {[
                 "What's a healthy breakfast recipe?",
                 "How can I meal prep for the week?",
                 "What's in season right now?",
                 "Help me use up my leftovers"
               ].map((suggestion, index) => (
-                <button
+                <motion.button
                   key={index}
                   onClick={() => handleSendMessage(suggestion)}
                   disabled={chatMutation.isLoading}
                   className="btn btn-ghost btn-sm text-xs"
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   {suggestion}
-                </button>
+                </motion.button>
               ))}
-            </div>
+            </motion.div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Info Banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <motion.div
+          className="bg-blue-50 border border-blue-200 rounded-lg p-4"
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ duration: 0.45 }}
+        >
           <div className="flex items-start space-x-3">
             <MessageSquare className="h-5 w-5 text-blue-600 mt-0.5" />
             <div className="flex-1">
-              <h3 className="text-sm font-medium text-blue-900">AI Assistant Tips</h3>
+              <h3 className="text-sm font-medium text-blue-900">Nurexa AI Tips</h3>
               <p className="text-sm text-blue-700 mt-1">
                 For the best experience, be specific about your dietary preferences, allergies, 
                 and what ingredients you have available. I can provide personalized suggestions 
@@ -382,7 +452,7 @@ export default function AIAssistant() {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </>
   )

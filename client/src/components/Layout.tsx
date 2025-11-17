@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
-import { 
-  ShoppingCart, 
-  Home, 
-  Store, 
-  Bot, 
-  User, 
-  LogOut, 
-  Menu, 
+import {
+  ShoppingCart,
+  Home,
+  Store,
+  Bot,
+  User,
+  LogOut,
+  Menu,
   X,
   Package,
-  ChefHat
+  BrainCircuit
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { cn } from '../utils/cn'
@@ -20,7 +20,7 @@ const navigation = [
   { name: 'Grocery Lists', href: '/app/grocery-lists', icon: ShoppingCart },
   { name: 'Pantry', href: '/app/pantry', icon: Package },
   { name: 'Stores', href: '/app/stores', icon: Store },
-  { name: 'AI Assistant', href: '/app/ai-assistant', icon: Bot },
+  { name: 'Nurexa AI', href: '/app/ai-assistant', icon: Bot },
   { name: 'Profile', href: '/app/profile', icon: User },
 ]
 
@@ -52,10 +52,10 @@ export default function Layout() {
             {/* Logo */}
             <div className="flex h-16 items-center justify-between px-6">
               <Link to="/app/dashboard" className="flex items-center space-x-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg">
-                  <ChefHat className="h-6 w-6 text-white" />
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500 flex items-center justify-center shadow-lg">
+                  <BrainCircuit className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xl font-bold gradient-text">PantryPal</span>
+                <span className="text-xl font-bold gradient-text">Nourish Neural</span>
               </Link>
               <button
                 onClick={() => setSidebarOpen(false)}
@@ -134,8 +134,8 @@ export default function Layout() {
           {/* Logo */}
           <div className="flex h-16 items-center px-6">
             <Link to="/app/dashboard" className="flex items-center space-x-2">
-              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500" />
-              <span className="text-xl font-bold text-neutral-900">PantryPal</span>
+              <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500" />
+              <span className="text-xl font-bold text-neutral-900">Nourish Neural</span>
             </Link>
           </div>
 
