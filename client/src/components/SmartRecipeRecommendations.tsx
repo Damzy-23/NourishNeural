@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { ChefHat, Clock, Users, Star, TrendingUp, Heart } from 'lucide-react';
-import { mlService, type FoodItem } from '../services/mlService';
+import { useState, useEffect } from 'react';
+import { ChefHat, Clock, Users, Star, TrendingUp } from 'lucide-react';
 
 interface Recipe {
   id: string;

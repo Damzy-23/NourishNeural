@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, ChefHat, Shield, Eye, Database, Lock, Users, Globe, Mail } from 'lucide-react'
+import { ArrowLeft, BrainCircuit, Shield, Eye, Database, Lock, Users, Globe, Mail } from 'lucide-react'
 
 export default function PrivacyPolicy() {
   const lastUpdated = "January 1, 2025"
@@ -8,8 +8,8 @@ export default function PrivacyPolicy() {
   return (
     <>
       <Helmet>
-        <title>Privacy Policy - PantryPal</title>
-        <meta name="description" content="Privacy Policy for PantryPal - How we protect and use your data" />
+        <title>Privacy Policy - Nourish Neural</title>
+        <meta name="description" content="Privacy Policy for Nourish Neural - How we protect and use your data" />
       </Helmet>
 
       <div className="min-h-screen bg-neutral-50">
@@ -20,9 +20,9 @@ export default function PrivacyPolicy() {
               <div className="flex items-center space-x-3">
                 <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
                   <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-                    <ChefHat className="h-5 w-5 text-white" />
+                    <BrainCircuit className="h-5 w-5 text-white" />
                   </div>
-                  <span className="text-xl font-bold text-neutral-900">PantryPal</span>
+                  <span className="text-xl font-bold text-neutral-900">Nourish Neural</span>
                 </Link>
               </div>
               <Link
@@ -40,17 +40,17 @@ export default function PrivacyPolicy() {
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
             {/* Page Header */}
-            <div className="bg-gradient-to-r from-green-600 to-green-700 px-8 py-12 text-white">
+            <div className="bg-gradient-to-r from-primary-600 via-primary-500 to-accent-600 px-8 py-12 text-white">
               <div className="flex items-center space-x-4 mb-4">
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                   <Shield className="h-7 w-7" />
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold">Privacy Policy</h1>
-                  <p className="text-green-100 mt-1">Last updated: {lastUpdated}</p>
+                  <p className="text-primary-100 mt-1">Last updated: {lastUpdated}</p>
                 </div>
               </div>
-              <p className="text-green-100 text-lg max-w-2xl">
+              <p className="text-primary-100 text-lg max-w-2xl">
                 Your privacy is important to us. This policy explains how we collect, use, and protect your information.
               </p>
             </div>
@@ -62,14 +62,14 @@ export default function PrivacyPolicy() {
                 {/* Introduction */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Shield className="h-6 w-6 text-green-600 mr-3" />
+                    <Shield className="h-6 w-6 text-primary-600 mr-3" />
                     1. Introduction
                   </h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      PantryPal ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy 
+                      Nourish Neural ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy 
                       explains how we collect, use, disclose, and safeguard your information when you use our AI-powered 
-                      food management platform.
+                      culinary intelligence platform.
                     </p>
                     <p>
                       We comply with applicable data protection laws, including the General Data Protection Regulation (GDPR) 
@@ -81,7 +81,7 @@ export default function PrivacyPolicy() {
                 {/* Information We Collect */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Database className="h-6 w-6 text-green-600 mr-3" />
+                    <Database className="h-6 w-6 text-primary-600 mr-3" />
                     2. Information We Collect
                   </h2>
                   
@@ -118,7 +118,7 @@ export default function PrivacyPolicy() {
                 {/* How We Use Information */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Eye className="h-6 w-6 text-green-600 mr-3" />
+                    <Eye className="h-6 w-6 text-primary-600 mr-3" />
                     3. How We Use Your Information
                   </h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
@@ -166,7 +166,7 @@ export default function PrivacyPolicy() {
                 {/* Data Security */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Lock className="h-6 w-6 text-green-600 mr-3" />
+                    <Lock className="h-6 w-6 text-primary-600 mr-3" />
                     6. Data Security
                   </h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
@@ -206,7 +206,7 @@ export default function PrivacyPolicy() {
                 {/* Your Rights */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Users className="h-6 w-6 text-green-600 mr-3" />
+                    <Users className="h-6 w-6 text-primary-600 mr-3" />
                     8. Your Privacy Rights
                   </h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
@@ -230,7 +230,7 @@ export default function PrivacyPolicy() {
                 {/* International Transfers */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Globe className="h-6 w-6 text-green-600 mr-3" />
+                    <Globe className="h-6 w-6 text-primary-600 mr-3" />
                     9. International Data Transfers
                   </h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
@@ -270,7 +270,7 @@ export default function PrivacyPolicy() {
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6">11. Children's Privacy</h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      PantryPal is not intended for children under 13 years of age. We do not knowingly collect 
+                      Nourish Neural is not intended for children under 13 years of age. We do not knowingly collect 
                       personal information from children under 13. If we become aware that we have collected 
                       personal information from a child under 13, we will take steps to delete such information.
                     </p>
@@ -314,7 +314,7 @@ export default function PrivacyPolicy() {
                 {/* Contact Information */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Mail className="h-6 w-6 text-green-600 mr-3" />
+                    <Mail className="h-6 w-6 text-primary-600 mr-3" />
                     14. Contact Us
                   </h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
@@ -324,7 +324,7 @@ export default function PrivacyPolicy() {
                     <div className="bg-green-50 rounded-lg p-6">
                       <p><strong>Data Protection Officer:</strong> privacy@pantrypal.com</p>
                       <p><strong>General Inquiries:</strong> support@pantrypal.com</p>
-                      <p><strong>Address:</strong> PantryPal Privacy Team, 123 Innovation Street, Tech City, TC 12345</p>
+                      <p><strong>Address:</strong> Nourish Neural Privacy Team, 123 Innovation Street, Tech City, TC 12345</p>
                       <p><strong>Phone:</strong> +1 (555) 123-PALM</p>
                     </div>
                     <p>
@@ -341,7 +341,7 @@ export default function PrivacyPolicy() {
             <div className="bg-neutral-50 px-8 py-6 border-t border-neutral-200">
               <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                 <p className="text-neutral-600 text-sm">
-                  © 2025 PantryPal. All rights reserved.
+                  © 2025 Nourish Neural. All rights reserved.
                 </p>
                 <div className="flex space-x-6">
                   <Link to="/terms" className="text-sm text-primary-600 hover:text-primary-700 transition-colors">

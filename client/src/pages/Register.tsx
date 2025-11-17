@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
-import { Eye, EyeOff, Mail, Lock, User, ChefHat, AlertCircle, CheckCircle } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, BrainCircuit, AlertCircle, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { fadeUp, scaleIn, staggerContainer } from '../utils/motion'
+import { supabase } from '../lib/supabase'
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -81,7 +84,7 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
@@ -90,43 +93,95 @@ export default function Register() {
     setErrors({})
 
     try {
-      // Call the actual registration API
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          age: Number(formData.age),
-          password: formData.password
-        })
+      // Use Supabase directly for registration
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            age: parseInt(formData.age)
+          }
+        }
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        if (response.status === 409) {
+      if (authError) {
+        console.error('Supabase registration error:', authError)
+        if (authError.message.includes('already registered')) {
           setErrors({ email: 'An account with this email already exists' })
+          toast.error('Email already registered')
           return
         }
-        throw new Error(data.error || 'Registration failed')
+        throw new Error(authError.message || 'Registration failed')
+      }
+
+      if (!authData.user) {
+        throw new Error('Registration failed - no user returned')
+      }
+
+      // If no session, email confirmation is required
+      if (!authData.session) {
+        toast.success('Registration successful! Please check your email to confirm your account.')
+        setIsLoading(false)
+        navigate('/login')
+        return
+      }
+
+      // Create user profile
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .insert({
+          id: authData.user.id,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          age: parseInt(formData.age)
+        })
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError)
+        // Don't fail registration if profile creation fails
+      }
+
+      // Create default preferences
+      const { error: prefsError } = await supabase
+        .from('user_preferences')
+        .insert({
+          user_id: authData.user.id
+        })
+
+      if (prefsError) {
+        console.error('Preferences creation error:', prefsError)
+        // Don't fail registration
+      }
+
+      // Construct user object
+      const user = {
+        id: authData.user.id,
+        email: authData.user.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        age: parseInt(formData.age),
+        avatarUrl: null,
+        isVerified: authData.user.email_confirmed_at != null,
+        role: authData.user.role || 'authenticated',
+        createdAt: authData.user.created_at,
+        updatedAt: new Date().toISOString()
       }
 
       // Store token and user data
-      localStorage.setItem('pantrypal_token', data.token)
-      localStorage.setItem('pantrypal_user', JSON.stringify(data.user))
-      
+      localStorage.setItem('pantrypal_token', authData.session.access_token)
+      localStorage.setItem('pantrypal_user', JSON.stringify(user))
+
       // Login the user
-      login(data.token)
-      
-      toast.success('Welcome to PantryPal! Your account has been created successfully.')
+      login(authData.session.access_token)
+
+      toast.success('Welcome to Nourish Neural! Your account has been created successfully.')
       navigate('/app/dashboard', { replace: true })
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Registration error:', error)
       toast.error('Registration failed. Please try again.')
-      setErrors({ general: 'Registration failed. Please check your information and try again.' })
+      setErrors({ general: error.message || 'Registration failed. Please check your information and try again.' })
     } finally {
       setIsLoading(false)
     }
@@ -157,45 +212,140 @@ export default function Register() {
   }
 
   const passwordStrength = getPasswordStrength(formData.password)
-
+  const onboardingHighlights = [
+    'AI-personalised grocery forecasting and pantry orchestration',
+    'Live UK supermarket pricing with intelligent substitutions',
+    'Sustainability nudges tailored to your household cadence'
+  ]
+ 
   return (
     <>
       <Helmet>
-        <title>Create Account - PantryPal</title>
-        <meta name="description" content="Sign up for PantryPal and start managing your food smarter" />
+        <title>Create Account - Nourish Neural</title>
+        <meta name="description" content="Sign up for Nourish Neural and start managing your food smarter" />
       </Helmet>
 
       <div className="min-h-screen gradient-bg-primary flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5"></div>
-        <div className="max-w-md w-full space-y-8 relative">
-          {/* Header */}
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-3 mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg animate-float">
-                <ChefHat className="h-8 w-8 text-white" />
-              </div>
-              <span className="text-4xl font-bold gradient-text">PantryPal</span>
-            </div>
-            <h2 className="text-4xl font-bold text-neutral-900 mb-3">
-              Create your account
-            </h2>
-            <p className="text-neutral-600 text-lg">
-              Join thousands of users saving money and reducing food waste
-            </p>
-          </div>
+        <motion.div
+          className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-accent-300/25 blur-3xl"
+          animate={{ y: [0, -30, 0], opacity: [0.6, 0.9, 0.6] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute -bottom-48 right-[-12%] h-96 w-96 rounded-full bg-primary-300/25 blur-3xl"
+          animate={{ y: [0, 28, 0], opacity: [0.5, 0.85, 0.5], scale: [1, 1.06, 1] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="relative max-w-5xl w-full grid gap-10 lg:grid-cols-[1.1fr_0.9fr]"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div
+            className="hidden lg:flex flex-col justify-between rounded-[32px] border border-white/50 bg-white/80 backdrop-blur-xl shadow-2xl shadow-primary-500/20 p-10 space-y-8"
+            variants={scaleIn}
+            transition={{ duration: 0.7 }}
+          >
+            <motion.div
+              className="inline-flex items-center space-x-3 rounded-full border border-primary-200/70 bg-white/85 px-4 py-2 text-sm font-semibold text-primary-700 shadow-soft"
+              variants={fadeUp}
+            >
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20">
+                <BrainCircuit className="h-4 w-4" />
+              </span>
+              <span>Activate neural nourishment for your household</span>
+            </motion.div>
 
-          {/* Form */}
-          <div className="glass-card rounded-3xl shadow-2xl p-10 border border-white/30">
+            <motion.div className="space-y-4" variants={fadeUp} transition={{ duration: 0.65 }}>
+              <h2 className="text-4xl font-bold text-neutral-900 leading-tight">
+                Create your <span className="gradient-text">Nourish Neural</span> identity.
+              </h2>
+              <p className="text-neutral-600 text-lg leading-relaxed">
+                Unlock predictive grocery planning, AI-crafted pantry insights, and zero-waste coaching—all tuned to
+                your lifestyle.
+              </p>
+            </motion.div>
+
+            <motion.ul className="space-y-4" variants={fadeUp} transition={{ duration: 0.65, delay: 0.05 }}>
+              {onboardingHighlights.map((highlight, index) => (
+                <motion.li
+                  key={highlight}
+                  className="flex items-start space-x-3 rounded-2xl border border-primary-100/60 bg-white/75 px-5 py-4 shadow-soft"
+                  variants={fadeUp}
+                  transition={{ duration: 0.5, delay: index * 0.06 }}
+                >
+                  <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary-500/15 text-primary-600">
+                    <CheckCircle className="h-4 w-4" />
+                  </span>
+                  <span className="text-neutral-700 text-sm leading-relaxed">{highlight}</span>
+                </motion.li>
+              ))}
+            </motion.ul>
+
+            <motion.div className="grid grid-cols-2 gap-4 pt-4" variants={fadeUp} transition={{ duration: 0.6, delay: 0.08 }}>
+              {[
+                { label: 'Households onboarded', value: '18k+' },
+                { label: 'Avg. waste reduction', value: '52%' },
+                { label: 'Pantry freshness score', value: '92/100' },
+                { label: 'Weekly savings', value: '£42' },
+              ].map((stat) => (
+                <motion.div
+                  key={stat.label}
+                  className="rounded-2xl border border-primary-100/70 bg-white/80 px-5 py-4 text-left shadow-soft"
+                  whileHover={{ y: -4, scale: 1.03 }}
+                >
+                  <p className="text-xs uppercase tracking-[0.18em] text-primary-500">{stat.label}</p>
+                  <p className="text-2xl font-semibold text-neutral-900 mt-1">{stat.value}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            className="max-w-md w-full mx-auto lg:mx-0 space-y-8 rounded-[28px] border border-white/40 bg-white/85 backdrop-blur-xl shadow-xl shadow-primary-500/10 p-10"
+            variants={scaleIn}
+            transition={{ duration: 0.7, delay: 0.12 }}
+          >
+            <motion.div className="text-center space-y-3" variants={staggerContainer}>
+              <motion.div
+                className="inline-flex items-center justify-center space-x-3"
+                variants={fadeUp}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <BrainCircuit className="h-8 w-8 text-white" />
+                </div>
+                <span className="text-4xl font-bold gradient-text">Nourish Neural</span>
+              </motion.div>
+              <motion.h2 className="text-3xl font-bold text-neutral-900" variants={fadeUp} transition={{ duration: 0.55 }}>
+                Create your account
+              </motion.h2>
+              <motion.p className="text-neutral-600 text-base" variants={fadeUp}>
+                Calibrate your culinary copilot in under two minutes.
+              </motion.p>
+            </motion.div>
+
             {errors.general && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
+              <motion.div
+                className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3"
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
                 <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
                 <p className="text-red-700 text-sm">{errors.general}</p>
-              </div>
+              </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <motion.form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
               {/* Name Fields */}
-              <div className="grid grid-cols-2 gap-4">
+              <motion.div className="grid grid-cols-1 gap-4 md:grid-cols-2" variants={fadeUp}>
                 <div>
                   <label htmlFor="firstName" className="block text-sm font-medium text-neutral-700 mb-2">
                     First name
@@ -247,10 +397,10 @@ export default function Register() {
                     <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
                   )}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Email Field */}
-              <div>
+              <motion.div variants={fadeUp}>
                 <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
                   Email address
                 </label>
@@ -274,10 +424,10 @@ export default function Register() {
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                 )}
-              </div>
+              </motion.div>
 
               {/* Age Field */}
-              <div>
+              <motion.div variants={fadeUp}>
                 <label htmlFor="age" className="block text-sm font-medium text-neutral-700 mb-2">
                   Age
                 </label>
@@ -303,10 +453,10 @@ export default function Register() {
                 {errors.age && (
                   <p className="mt-1 text-sm text-red-600">{errors.age}</p>
                 )}
-              </div>
+              </motion.div>
 
               {/* Password Field */}
-              <div>
+              <motion.div variants={fadeUp}>
                 <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-2">
                   Password
                 </label>
@@ -357,10 +507,10 @@ export default function Register() {
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">{errors.password}</p>
                 )}
-              </div>
+              </motion.div>
 
               {/* Confirm Password Field */}
-              <div>
+              <motion.div variants={fadeUp}>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-700 mb-2">
                   Confirm password
                 </label>
@@ -395,10 +545,10 @@ export default function Register() {
                 {errors.confirmPassword && (
                   <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
                 )}
-              </div>
+              </motion.div>
 
               {/* Terms Agreement */}
-              <div>
+              <motion.div variants={fadeUp}>
                 <div className="flex items-start space-x-3">
                   <input
                     id="agreeToTerms"
@@ -424,13 +574,15 @@ export default function Register() {
                 {errors.agreeToTerms && (
                   <p className="mt-1 text-sm text-red-600">{errors.agreeToTerms}</p>
                 )}
-              </div>
+              </motion.div>
 
               {/* Submit Button */}
-              <button
+              <motion.button
                 type="submit"
                 disabled={isLoading}
                 className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
               >
                 {isLoading ? (
                   <>
@@ -443,11 +595,11 @@ export default function Register() {
                     Create account
                   </>
                 )}
-              </button>
-            </form>
+              </motion.button>
+            </motion.form>
 
             {/* Divider */}
-            <div className="mt-6">
+            <motion.div className="mt-6" variants={fadeUp} transition={{ duration: 0.5, delay: 0.08 }}>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-neutral-300" />
@@ -456,10 +608,14 @@ export default function Register() {
                   <span className="px-2 bg-white text-neutral-500">Or continue with</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
             {/* Social Registration */}
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <motion.div
+              className="mt-6 grid grid-cols-2 gap-3"
+              variants={fadeUp}
+              transition={{ duration: 0.5, delay: 0.12 }}
+            >
               <button
                 type="button"
                 className="w-full inline-flex justify-center py-2 px-4 border border-neutral-300 rounded-lg shadow-sm bg-white text-sm font-medium text-neutral-500 hover:bg-neutral-50 transition-colors"
@@ -481,11 +637,11 @@ export default function Register() {
                 </svg>
                 <span className="ml-2">Facebook</span>
               </button>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* Sign In Link */}
-          <div className="text-center">
+          <motion.div className="text-center" variants={fadeUp} transition={{ duration: 0.5, delay: 0.18 }}>
             <p className="text-neutral-600">
               Already have an account?{' '}
               <Link
@@ -495,8 +651,8 @@ export default function Register() {
                 Sign in here
               </Link>
             </p>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       </div>
     </>
   )

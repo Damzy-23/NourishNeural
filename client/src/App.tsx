@@ -5,6 +5,8 @@ import Layout from './components/Layout'
 import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import TermsOfService from './pages/TermsOfService'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import Dashboard from './pages/Dashboard'
@@ -28,7 +30,7 @@ function App() {
             <div></div>
             <div></div>
           </div>
-          <p className="mt-4 text-neutral-600">Loading PantryPal...</p>
+          <p className="mt-4 text-neutral-600">Loading Nourish Neural...</p>
         </div>
       </div>
     )
@@ -37,7 +39,7 @@ function App() {
   return (
     <>
       <Helmet>
-        <title>PantryPal - AI Grocery Assistant</title>
+        <title>Nourish Neural - AI Culinary Intelligence</title>
         <meta name="description" content="Your smart grocery companion – find, plan, and shop smarter." />
       </Helmet>
       
@@ -46,6 +48,8 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/auth/callback" element={<AuthCallback />} />

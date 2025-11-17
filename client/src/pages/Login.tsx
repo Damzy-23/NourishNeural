@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
-import { Eye, EyeOff, Mail, Lock, ChefHat, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, BrainCircuit, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { fadeUp, scaleIn, staggerContainer } from '../utils/motion'
+import { supabase } from '../lib/supabase'
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -42,7 +45,7 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
@@ -51,36 +54,59 @@ export default function Login() {
     setErrors({})
 
     try {
-      // Call the actual login API
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
+      // Use Supabase directly for login
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
       })
 
-      const data = await response.json()
+      if (authError) {
+        console.error('Supabase login error:', authError)
+        throw new Error(authError.message || 'Login failed')
+      }
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Login failed')
+      if (!authData.session || !authData.user) {
+        throw new Error('No session returned')
+      }
+
+      // Get user profile from database
+      const { data: profile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single()
+
+      if (profileError) {
+        console.warn('Could not fetch profile:', profileError)
+      }
+
+      // Construct user object
+      const user = {
+        id: authData.user.id,
+        email: authData.user.email,
+        firstName: profile?.first_name || authData.user.user_metadata?.first_name || '',
+        lastName: profile?.last_name || authData.user.user_metadata?.last_name || '',
+        age: profile?.age || authData.user.user_metadata?.age,
+        avatarUrl: profile?.avatar_url || null,
+        isVerified: authData.user.email_confirmed_at != null,
+        role: authData.user.role || 'authenticated',
+        createdAt: authData.user.created_at,
+        updatedAt: profile?.updated_at || authData.user.updated_at
       }
 
       // Store token and user data
-      localStorage.setItem('pantrypal_token', data.token)
-      localStorage.setItem('pantrypal_user', JSON.stringify(data.user))
-      
+      localStorage.setItem('pantrypal_token', authData.session.access_token)
+      localStorage.setItem('pantrypal_user', JSON.stringify(user))
+
       // Login the user
-      login(data.token)
-      
-      toast.success('Welcome back to PantryPal!')
+      login(authData.session.access_token)
+
+      toast.success('Welcome back to Nourish Neural!')
       navigate(from, { replace: true })
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Login error:', error)
       toast.error('Login failed. Please check your credentials.')
-      setErrors({ general: 'Invalid email or password' })
+      setErrors({ general: error.message || 'Invalid email or password' })
     } finally {
       setIsLoading(false)
     }
@@ -99,39 +125,117 @@ export default function Login() {
   return (
     <>
       <Helmet>
-        <title>Login - PantryPal</title>
-        <meta name="description" content="Sign in to your PantryPal account" />
+        <title>Login - Nourish Neural</title>
+        <meta name="description" content="Sign in to your Nourish Neural account" />
       </Helmet>
 
-      <div className="min-h-screen gradient-bg-primary flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5"></div>
-        <div className="max-w-md w-full space-y-8 relative">
-          {/* Header */}
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-3 mb-8">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center shadow-lg animate-float">
-                <ChefHat className="h-8 w-8 text-white" />
-              </div>
-              <span className="text-4xl font-bold gradient-text">PantryPal</span>
-            </div>
-            <h2 className="text-4xl font-bold text-neutral-900 mb-3">
-              Welcome back
-            </h2>
-            <p className="text-neutral-600 text-lg">
-              Sign in to your account to continue
-            </p>
-          </div>
+      <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-primary-50 via-white to-accent-50">
+        <motion.div
+          className="absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-accent-300/25 blur-3xl"
+          animate={{ y: [0, -30, 0], opacity: [0.6, 0.9, 0.6] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="absolute -bottom-40 right-[-10%] h-96 w-96 rounded-full bg-primary-300/25 blur-3xl"
+          animate={{ y: [0, 24, 0], opacity: [0.5, 0.85, 0.5], scale: [1, 1.05, 1] }}
+          transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="relative max-w-5xl w-full grid gap-8 lg:grid-cols-[1fr_1fr] items-center"
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div
+            className="hidden lg:block rounded-[32px] border border-white/40 bg-white/70 backdrop-blur-xl shadow-2xl shadow-primary-500/20 p-10 space-y-6"
+            variants={scaleIn}
+            transition={{ duration: 0.65 }}
+          >
+            <motion.div
+              className="inline-flex items-center space-x-3 rounded-full border border-primary-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-primary-700 shadow-soft"
+              variants={fadeUp}
+            >
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20">
+                <BrainCircuit className="h-4 w-4" />
+              </span>
+              <span>Neural pantry intelligence, always learning</span>
+            </motion.div>
+            <motion.h2
+              className="text-4xl font-bold text-neutral-900 leading-tight"
+              variants={fadeUp}
+              transition={{ duration: 0.6 }}
+            >
+              Welcome back to <span className="gradient-text">Nourish Neural</span>.
+            </motion.h2>
+            <motion.p className="text-neutral-600 text-lg leading-relaxed" variants={fadeUp}>
+              Sign in to orchestrate grocery planning, predictive pantry insights, and sustainable meal rituals—all
+              within a single neural dashboard.
+            </motion.p>
+            <motion.div
+              className="grid grid-cols-2 gap-4 pt-4"
+              variants={fadeUp}
+              transition={{ duration: 0.6, delay: 0.05 }}
+            >
+              {[
+                { label: 'Active automations', value: '24' },
+                { label: 'Weekly savings', value: '£34.50' },
+                { label: 'Waste avoided', value: '2.8kg' },
+                { label: 'Nutrition insights', value: '7' },
+              ].map((metric) => (
+                <motion.div
+                  key={metric.label}
+                  className="rounded-2xl border border-primary-100/60 bg-white/80 px-5 py-4 text-left shadow-soft"
+                  whileHover={{ y: -4, scale: 1.02 }}
+                >
+                  <p className="text-xs uppercase tracking-[0.18em] text-primary-500">{metric.label}</p>
+                  <p className="text-2xl font-semibold text-neutral-900 mt-1">{metric.value}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
 
-          {/* Form */}
-          <div className="glass-card rounded-3xl shadow-2xl p-10 border border-white/30">
+          <motion.div
+            className="max-w-md w-full mx-auto lg:mx-0 space-y-8 rounded-[28px] border border-white/40 bg-white/80 backdrop-blur-xl shadow-xl shadow-primary-500/10 p-10"
+            variants={scaleIn}
+            transition={{ duration: 0.65, delay: 0.1 }}
+          >
+            <motion.div className="text-center space-y-3" variants={staggerContainer}>
+              <motion.div
+                className="inline-flex items-center justify-center space-x-3"
+                variants={fadeUp}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-lg">
+                  <BrainCircuit className="h-8 w-8 text-white" />
+                </div>
+                <span className="text-4xl font-bold gradient-text">Nourish Neural</span>
+              </motion.div>
+              <motion.h2 className="text-3xl font-bold text-neutral-900" variants={fadeUp} transition={{ duration: 0.55 }}>
+                Welcome back
+              </motion.h2>
+              <motion.p className="text-neutral-600 text-base" variants={fadeUp}>
+                Sign in to resume your culinary intelligence journey.
+              </motion.p>
+            </motion.div>
+
             {errors.general && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3">
+              <motion.div
+                className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3"
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
                 <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
                 <p className="text-red-700 text-sm">{errors.general}</p>
-              </div>
+              </motion.div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <motion.form
+              onSubmit={handleSubmit}
+              className="space-y-6"
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+            >
               {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
@@ -233,7 +337,7 @@ export default function Login() {
                   'Sign in'
                 )}
               </button>
-            </form>
+            </motion.form>
 
             {/* Divider */}
             <div className="mt-6">
@@ -248,7 +352,11 @@ export default function Login() {
             </div>
 
             {/* Social Login */}
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <motion.div
+              className="mt-6 grid grid-cols-2 gap-3"
+              variants={fadeUp}
+              transition={{ duration: 0.5, delay: 0.08 }}
+            >
               <button
                 type="button"
                 className="w-full inline-flex justify-center py-2 px-4 border border-neutral-300 rounded-lg shadow-sm bg-white text-sm font-medium text-neutral-500 hover:bg-neutral-50 transition-colors"
@@ -270,22 +378,22 @@ export default function Login() {
                 </svg>
                 <span className="ml-2">Facebook</span>
               </button>
-            </div>
-          </div>
+            </motion.div>
 
-          {/* Sign Up Link */}
-          <div className="text-center">
-            <p className="text-neutral-600">
-              Don't have an account?{' '}
-              <Link
-                to="/register"
-                className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
-              >
-                Sign up for free
-              </Link>
-            </p>
-          </div>
-        </div>
+            {/* Sign Up Link */}
+            <motion.div className="text-center" variants={fadeUp} transition={{ duration: 0.5, delay: 0.12 }}>
+              <p className="text-neutral-600">
+                Don't have an account?{' '}
+                <Link
+                  to="/register"
+                  className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
+                >
+                  Sign up for free
+                </Link>
+              </p>
+            </motion.div>
+          </motion.div>
+        </motion.div>
       </div>
     </>
   )

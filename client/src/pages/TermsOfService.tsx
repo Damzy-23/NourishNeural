@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, ChefHat, FileText, Shield, Users, Clock } from 'lucide-react'
+import { ArrowLeft, BrainCircuit, ChefHat, FileText, Shield, Users, Clock } from 'lucide-react'
 
 export default function TermsOfService() {
   const lastUpdated = "January 1, 2025"
@@ -8,8 +8,8 @@ export default function TermsOfService() {
   return (
     <>
       <Helmet>
-        <title>Terms of Service - PantryPal</title>
-        <meta name="description" content="Terms of Service for PantryPal - Your AI-powered grocery assistant" />
+        <title>Terms of Service - Nourish Neural</title>
+        <meta name="description" content="Terms of Service for Nourish Neural - Your AI-powered culinary intelligence platform" />
       </Helmet>
 
       <div className="min-h-screen bg-neutral-50">
@@ -20,9 +20,9 @@ export default function TermsOfService() {
               <div className="flex items-center space-x-3">
                 <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
                   <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-                    <ChefHat className="h-5 w-5 text-white" />
+                    <BrainCircuit className="h-5 w-5 text-white" />
                   </div>
-                  <span className="text-xl font-bold text-neutral-900">PantryPal</span>
+                  <span className="text-xl font-bold text-neutral-900">Nourish Neural</span>
                 </Link>
               </div>
               <Link
@@ -51,7 +51,7 @@ export default function TermsOfService() {
                 </div>
               </div>
               <p className="text-primary-100 text-lg max-w-2xl">
-                Please read these terms carefully before using PantryPal. By using our service, you agree to be bound by these terms.
+                Please read these terms carefully before using Nourish Neural. By using our service, you agree to be bound by these terms.
               </p>
             </div>
 
@@ -67,12 +67,12 @@ export default function TermsOfService() {
                   </h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      Welcome to PantryPal ("we," "our," or "us"). These Terms of Service ("Terms") govern your use of our 
-                      AI-powered food management platform, including our website, mobile applications, and related services 
+                      Welcome to Nourish Neural ("we," "our," or "us"). These Terms of Service ("Terms") govern your use of our 
+                      AI-powered culinary intelligence platform, including our website, mobile applications, and related services 
                       (collectively, the "Service").
                     </p>
                     <p>
-                      By accessing or using PantryPal, you agree to be bound by these Terms. If you disagree with any part 
+                      By accessing or using Nourish Neural, you agree to be bound by these Terms. If you disagree with any part 
                       of these terms, then you may not access the Service.
                     </p>
                   </div>
@@ -86,7 +86,7 @@ export default function TermsOfService() {
                   </h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      By creating an account, accessing, or using PantryPal, you confirm that:
+                      By creating an account, accessing, or using Nourish Neural, you confirm that:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>You are at least 18 years old or have parental consent</li>
@@ -106,7 +106,7 @@ export default function TermsOfService() {
                   </h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      PantryPal provides AI-powered tools to help you manage your food inventory, reduce waste, 
+                      Nourish Neural provides AI-powered tools to help you manage your food inventory, reduce waste, 
                       and make smarter grocery decisions. Our services include:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
@@ -125,7 +125,7 @@ export default function TermsOfService() {
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6">4. User Accounts</h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      To access certain features of PantryPal, you must create an account. You are responsible for:
+                      To access certain features of Nourish Neural, you must create an account. You are responsible for:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Maintaining the confidentiality of your account credentials</li>
@@ -149,7 +149,7 @@ export default function TermsOfService() {
                       our Privacy Policy, which is incorporated into these Terms by reference.
                     </p>
                     <p>
-                      By using PantryPal, you consent to:
+                      By using Nourish Neural, you consent to:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Collection of your food preferences and shopping habits</li>
@@ -164,7 +164,7 @@ export default function TermsOfService() {
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6">6. Acceptable Use Policy</h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
-                    <p>You agree not to use PantryPal to:</p>
+                    <p>You agree not to use Nourish Neural to:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Violate any laws or regulations</li>
                       <li>Infringe on intellectual property rights</li>
@@ -182,7 +182,7 @@ export default function TermsOfService() {
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6">7. AI and Machine Learning</h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      PantryPal uses artificial intelligence and machine learning to provide personalized recommendations. 
+                      Nourish Neural uses artificial intelligence and machine learning to provide personalized recommendations. 
                       Please note:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
@@ -200,7 +200,7 @@ export default function TermsOfService() {
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6">8. Intellectual Property</h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      PantryPal and its original content, features, and functionality are owned by us and are protected 
+                      Nourish Neural and its original content, features, and functionality are owned by us and are protected 
                       by international copyright, trademark, patent, trade secret, and other intellectual property laws.
                     </p>
                     <p>
@@ -220,7 +220,7 @@ export default function TermsOfService() {
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6">9. Disclaimers</h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      PantryPal is provided "as is" without warranties of any kind. We disclaim all warranties, 
+                      Nourish Neural is provided "as is" without warranties of any kind. We disclaim all warranties, 
                       express or implied, including but not limited to:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
@@ -237,7 +237,7 @@ export default function TermsOfService() {
                   <h2 className="text-2xl font-bold text-neutral-900 mb-6">10. Limitation of Liability</h2>
                   <div className="space-y-4 text-neutral-700 leading-relaxed">
                     <p>
-                      To the maximum extent permitted by law, PantryPal shall not be liable for any indirect, incidental, 
+                      To the maximum extent permitted by law, Nourish Neural shall not be liable for any indirect, incidental, 
                       special, consequential, or punitive damages, including but not limited to:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
@@ -291,7 +291,7 @@ export default function TermsOfService() {
                     </p>
                     <div className="bg-neutral-50 rounded-lg p-6">
                       <p><strong>Email:</strong> legal@pantrypal.com</p>
-                      <p><strong>Address:</strong> PantryPal Legal Team, 123 Innovation Street, Tech City, TC 12345</p>
+                      <p><strong>Address:</strong> Nourish Neural Legal Team, 123 Innovation Street, Tech City, TC 12345</p>
                       <p><strong>Phone:</strong> +1 (555) 123-PALM</p>
                     </div>
                   </div>
@@ -316,7 +316,7 @@ export default function TermsOfService() {
             <div className="bg-neutral-50 px-8 py-6 border-t border-neutral-200">
               <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                 <p className="text-neutral-600 text-sm">
-                  © 2025 PantryPal. All rights reserved.
+                  © 2025 Nourish Neural. All rights reserved.
                 </p>
                 <div className="flex space-x-6">
                   <Link to="/privacy" className="text-sm text-primary-600 hover:text-primary-700 transition-colors">

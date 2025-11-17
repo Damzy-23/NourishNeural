@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
+import { motion } from 'framer-motion'
 import { useQuery } from 'react-query'
 import { 
   MapPin, 
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import { fadeUp, staggerContainer } from '../utils/motion'
 
 interface Store {
   id: string
@@ -281,10 +283,15 @@ export default function Stores() {
   }
 
   const renderStoreCard = (store: Store) => {
-    const openStatus = getOpenStatus(store)
-    
-    return (
-      <div key={store.id} className="card hover:shadow-medium transition-shadow">
+     const openStatus = getOpenStatus(store)
+     
+     return (
+      <motion.div
+        key={store.id}
+        className="card"
+        variants={fadeUp}
+        whileHover={{ y: -6, boxShadow: '0 32px 55px -35px rgba(37,99,235,0.35)' }}
+      >
         {store.imageUrl && (
           <div className="h-48 bg-cover bg-center rounded-t-lg" 
                style={{ backgroundImage: `url(${store.imageUrl})` }} />
@@ -304,7 +311,7 @@ export default function Stores() {
                 </div>
               )}
               <span className={`badge ${
-                openStatus.isOpen === true ? 'bg-green-100 text-green-800' :
+                openStatus.isOpen === true ? 'bg-primary-100 text-primary-800' :
                 openStatus.isOpen === false ? 'bg-red-100 text-red-800' :
                 'bg-neutral-100 text-neutral-800'
               }`}>
@@ -414,7 +421,7 @@ export default function Stores() {
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
@@ -422,7 +429,12 @@ export default function Stores() {
     const openStatus = getOpenStatus(store)
     
     return (
-      <div key={store.id} className="card">
+      <motion.div
+        key={store.id}
+        className="card"
+        variants={fadeUp}
+        whileHover={{ y: -4, boxShadow: '0 26px 50px -30px rgba(37,99,235,0.28)' }}
+      >
         <div className="card-content">
           <div className="flex items-start space-x-4">
             {store.imageUrl && (
@@ -444,7 +456,7 @@ export default function Stores() {
                     </div>
                   )}
                   <span className={`badge ${
-                    openStatus.isOpen === true ? 'bg-green-100 text-green-800' :
+                    openStatus.isOpen === true ? 'bg-primary-100 text-primary-800' :
                     openStatus.isOpen === false ? 'bg-red-100 text-red-800' :
                     'bg-neutral-100 text-neutral-800'
                   }`}>
@@ -529,7 +541,7 @@ export default function Stores() {
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     )
   }
 
@@ -548,58 +560,112 @@ export default function Stores() {
   return (
     <>
       <Helmet>
-        <title>Stores - PantryPal</title>
+        <title>Stores - Nourish Neural</title>
       </Helmet>
 
-      <div className="space-y-6">
+      <div className="relative space-y-8 pb-12">
+        <motion.div
+          className="pointer-events-none absolute -top-28 left-[-12%] h-72 w-72 rounded-full bg-primary-200/35 blur-3xl"
+          animate={{ y: [0, 20, 0], opacity: [0.35, 0.6, 0.35] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -bottom-32 right-[-15%] h-80 w-80 rounded-full bg-accent-200/30 blur-3xl"
+          animate={{ y: [0, -18, 0], opacity: [0.3, 0.55, 0.3] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+ 
         {/* Header */}
-        <div className="relative">
+        <motion.div
+          className="relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
           <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
-          <div className="relative glass-card rounded-3xl p-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-4xl font-bold gradient-text mb-2">Stores</h1>
-                <p className="text-lg text-neutral-600">
-                  Find grocery stores near you and compare prices
-                </p>
+          <div className="relative glass-card rounded-3xl p-8 md:p-10 border border-neutral-200/60 backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <motion.div
+                  className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg shadow-primary-500/30"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2, type: 'spring' }}
+                >
+                  <MapPin className="h-7 w-7 text-white" />
+                </motion.div>
+                <div>
+                  <motion.h1
+                    className="text-3xl md:text-4xl font-bold gradient-text"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                  >
+                    Store Atlas
+                  </motion.h1>
+                  <motion.p
+                    className="mt-1 text-neutral-600 text-sm md:text-base"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                  >
+                    Compare store assortments, hours, and pricing across your area
+                  </motion.p>
+                </div>
               </div>
-              <div className="flex space-x-2">
-                <button
+              <div className="flex flex-wrap items-center gap-2">
+                <motion.button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="btn btn-outline"
+                  className="btn btn-outline shadow-md hover:shadow-lg"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   <Filter className="h-4 w-4 mr-2" />
                   Filters
-                </button>
-                <div className="flex border border-neutral-300 rounded-lg">
+                </motion.button>
+                <motion.div
+                  className="flex border-2 border-neutral-300 rounded-xl overflow-hidden shadow-sm"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.6 }}
+                >
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`px-3 py-2 ${
-                      viewMode === 'grid' 
-                        ? 'bg-primary-100 text-primary-700' 
-                        : 'text-neutral-600 hover:bg-neutral-50'
+                    className={`px-3 py-2 transition-all duration-200 ${
+                      viewMode === 'grid'
+                        ? 'bg-primary-500 text-white shadow-inner'
+                        : 'text-neutral-600 hover:bg-neutral-100'
                     }`}
                   >
                     <Grid className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`px-3 py-2 ${
-                      viewMode === 'list' 
-                        ? 'bg-primary-100 text-primary-700' 
-                        : 'text-neutral-600 hover:bg-neutral-50'
+                    className={`px-3 py-2 transition-all duration-200 ${
+                      viewMode === 'list'
+                        ? 'bg-primary-500 text-white shadow-inner'
+                        : 'text-neutral-600 hover:bg-neutral-100'
                     }`}
                   >
                     <List className="h-4 w-4" />
                   </button>
-                </div>
+                </motion.div>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Location Search */}
-        <div className="card">
+        <motion.div
+          className="card"
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ duration: 0.45 }}
+        >
           <div className="card-content">
             <div className="flex space-x-3">
               <div className="flex-1">
@@ -614,46 +680,63 @@ export default function Stores() {
                   />
                 </div>
               </div>
-              <button
+              <motion.button
                 onClick={handleLocationSearch}
                 className="btn btn-primary"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
               >
                 Search
-              </button>
+              </motion.button>
               {userLocation && (
-                <button
+                <motion.button
                   onClick={handleUseMyLocation}
                   className="btn btn-outline"
                   title="Find stores near your current location"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   <Navigation className="h-4 w-4 mr-2" />
                   Use My Location
-                </button>
+                </motion.button>
               )}
             </div>
             {/* Location Status */}
             {locationError && (
-              <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <motion.div
+                className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
                 <p className="text-sm text-yellow-800">
                   <Navigation className="h-4 w-4 inline mr-1" />
                   {locationError}
                 </p>
-              </div>
+              </motion.div>
             )}
             {userLocation && (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-800">
+              <motion.div
+                className="mt-3 p-3 bg-primary-50 border border-primary-200 rounded-lg"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <p className="text-sm text-primary-800">
                   <Navigation className="h-4 w-4 inline mr-1" />
                   Location found! Showing stores within {filters.radius}km of your location.
                 </p>
-              </div>
+              </motion.div>
             )}
           </div>
-        </div>
+        </motion.div>
 
         {/* Filters */}
-        {showFilters && (
-          <div className="card">
+         {showFilters && (
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
             <div className="card-header">
               <h2 className="card-title">Filters</h2>
             </div>
@@ -740,12 +823,17 @@ export default function Stores() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Results */}
         {stores.length === 0 ? (
-          <div className="card">
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+          >
             <div className="card-content">
               <div className="text-center py-12">
                 <MapPin className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
@@ -757,25 +845,33 @@ export default function Stores() {
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <motion.div
+            className="space-y-4"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div className="flex items-center justify-between" variants={fadeUp}>
               <p className="text-sm text-neutral-600">
                 Found {stores.length} store{stores.length !== 1 ? 's' : ''}
               </p>
-            </div>
+            </motion.div>
             
             {viewMode === 'grid' ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <motion.div
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                variants={staggerContainer}
+              >
                 {stores.map(renderStoreCard)}
-              </div>
+              </motion.div>
             ) : (
-              <div className="space-y-4">
+              <motion.div className="space-y-4" variants={staggerContainer}>
                 {stores.map(renderStoreList)}
-              </div>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
         )}
       </div>
     </>

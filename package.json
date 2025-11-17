@@ -1,7 +1,7 @@
 {
-  "name": "pantrypal",
+  "name": "nourish-neural",
   "version": "1.0.0",
-  "description": "AI-powered grocery assistant app - find, plan, and shop smarter",
+  "description": "AI-powered culinary intelligence platform for predictive pantry and grocery orchestration",
   "main": "server/index.js",
   "scripts": {
     "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
@@ -24,7 +24,7 @@
     "meal-planning",
     "pantry-tracking"
   ],
-  "author": "PantryPal Team",
+  "author": "Nourish Neural Team",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"

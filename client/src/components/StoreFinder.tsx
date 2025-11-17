@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { MapPin, Phone, Clock, Truck, ShoppingCart, Star, Search, Filter } from 'lucide-react'
+import { MapPin, Phone, Clock, Truck, ShoppingCart, Star, Search } from 'lucide-react'
 import { storeService, Store, Product } from '../services/storeService'
 import toast from 'react-hot-toast'
 
@@ -100,19 +100,6 @@ export default function StoreFinder({ onStoreSelect, showProducts = false }: Sto
   const getUniqueChains = () => {
     const chains = [...new Set(stores.map(store => store.chain))]
     return chains.sort()
-  }
-
-  const getServiceIcon = (service: string) => {
-    switch (service) {
-      case 'deliveryAvailable':
-        return <Truck className="h-4 w-4 text-green-600" />
-      case 'clickAndCollect':
-        return <ShoppingCart className="h-4 w-4 text-blue-600" />
-      case 'loyaltyProgram':
-        return <Star className="h-4 w-4 text-yellow-600" />
-      default:
-        return null
-    }
   }
 
   return (

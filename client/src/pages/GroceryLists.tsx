@@ -1,20 +1,21 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
-import { 
-  ShoppingCart, 
-  Plus, 
-  Edit, 
-  Trash2, 
-  Check, 
+import { motion } from 'framer-motion'
+import {
+  ShoppingCart,
+  Plus,
+  Edit,
+  Trash2,
+  Check,
   X,
   Calendar,
   DollarSign,
-  Package,
-  MapPin
+  Package
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import { fadeUp } from '../utils/motion'
 
 interface GroceryItem {
   id: string
@@ -169,30 +170,96 @@ export default function GroceryLists() {
   return (
     <>
       <Helmet>
-        <title>Grocery Lists - PantryPal</title>
+        <title>Grocery Lists - Nourish Neural</title>
       </Helmet>
 
-      <div className="space-y-6">
+      <div className="relative space-y-8 pb-12">
+        <motion.div
+          className="pointer-events-none absolute -top-16 left-[-10%] h-64 w-64 rounded-full bg-primary-200/30 blur-3xl"
+          animate={{ y: [0, 18, 0], opacity: [0.4, 0.65, 0.4] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -bottom-10 right-[-12%] h-56 w-56 rounded-full bg-accent-200/30 blur-3xl"
+          animate={{ y: [0, -16, 0], opacity: [0.35, 0.6, 0.35] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-neutral-900">Grocery Lists</h1>
-            <p className="mt-2 text-neutral-600">
-              Create and manage your shopping lists
-            </p>
+        <motion.div
+          className="relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
+          <div className="relative glass-card rounded-3xl p-8 md:p-10 border border-neutral-200/60 backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <motion.div
+                  className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg shadow-primary-500/30"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2, type: 'spring' }}
+                >
+                  <ShoppingCart className="h-7 w-7 text-white" />
+                </motion.div>
+                <div>
+                  <motion.h1
+                    className="text-3xl md:text-4xl font-bold gradient-text"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                  >
+                    Intelligent Lists
+                  </motion.h1>
+                  <motion.p
+                    className="mt-1 text-neutral-600 text-sm md:text-base"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                  >
+                    Create and orchestrate neural shopping workflows with AI-ranked routes
+                  </motion.p>
+                </div>
+              </div>
+              <motion.button
+                onClick={() => setShowCreateForm(true)}
+                className="btn btn-primary shadow-lg hover:shadow-xl"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                whileHover={{ y: -2, boxShadow: '0 24px 45px -20px rgba(14,165,233,0.6)' }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                New List
+              </motion.button>
+            </div>
           </div>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="btn btn-primary"
+        </motion.div>
+
+        {!!error && (
+          <motion.div
+            className="card border border-red-200/60 bg-red-50/60"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
           >
-            <Plus className="h-4 w-4 mr-2" />
-            New List
-          </button>
-        </div>
+            <div className="card-content text-sm text-red-700">
+              Unable to load grocery lists right now. {(error as Error)?.message ?? ''}
+            </div>
+          </motion.div>
+        )}
 
         {/* Create List Form */}
         {showCreateForm && (
-          <div className="card">
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
             <div className="card-header">
               <div className="flex items-center justify-between">
                 <h2 className="card-title">Create New Grocery List</h2>
@@ -315,12 +382,17 @@ export default function GroceryLists() {
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Grocery Lists Grid */}
         {groceryLists.length === 0 ? (
-          <div className="card">
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
             <div className="card-content">
               <div className="text-center py-12">
                 <ShoppingCart className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
@@ -339,21 +411,30 @@ export default function GroceryLists() {
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {groceryLists.map((list) => {
               const progress = calculateProgress(list)
               const totalCost = list.items.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0)
+              const isEditing = editingList === list.id
               
               return (
-                <div key={list.id} className="card hover:shadow-medium transition-shadow">
+                <motion.div
+                  key={list.id}
+                  className={`card ${isEditing ? 'ring-2 ring-primary-400/60' : ''}`}
+                  variants={fadeUp}
+                  initial="hidden"
+                  animate="visible"
+                  transition={{ duration: 0.45 }}
+                  whileHover={{ y: -6, boxShadow: '0 28px 55px -35px rgba(14,165,233,0.3)' }}
+                >
                   <div className="card-header">
                     <div className="flex items-center justify-between">
                       <h3 className="card-title text-lg">{list.name}</h3>
                       <div className="flex space-x-1">
                         <button
-                          onClick={() => setEditingList(list.id)}
+                          onClick={() => setEditingList(isEditing ? null : list.id)}
                           className="btn btn-ghost btn-sm"
                         >
                           <Edit className="h-4 w-4" />
@@ -433,7 +514,7 @@ export default function GroceryLists() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
           </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { motion } from 'framer-motion'
 import { 
   User, 
   Settings, 
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import { fadeUp, staggerContainer } from '../utils/motion'
 
 interface UserProfile {
   id: string
@@ -273,12 +275,28 @@ export default function Profile() {
   return (
     <>
       <Helmet>
-        <title>Profile - PantryPal</title>
+        <title>Profile - Nourish Neural</title>
       </Helmet>
 
-      <div className="space-y-6">
+      <div className="relative space-y-8 pb-12">
+        <motion.div
+          className="pointer-events-none absolute -top-24 right-[-12%] h-72 w-72 rounded-full bg-primary-200/35 blur-3xl"
+          animate={{ y: [0, 18, 0], opacity: [0.35, 0.6, 0.35] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -bottom-36 left-[-14%] h-80 w-80 rounded-full bg-accent-200/30 blur-3xl"
+          animate={{ y: [0, -16, 0], opacity: [0.3, 0.55, 0.3] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+ 
         {/* Header */}
-        <div className="relative">
+        <motion.div
+          className="relative"
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
           <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
           <div className="relative glass-card rounded-3xl p-8">
             <div className="flex items-center justify-between">
@@ -290,72 +308,59 @@ export default function Profile() {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* User Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="card">
-            <div className="card-content">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-600">Grocery Lists</p>
-                  <p className="text-2xl font-bold text-neutral-900">{stats.totalLists || 0}</p>
+        <motion.section
+          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          {[
+            { key: 'lists', label: 'Grocery Lists', value: stats.totalLists || 0, Icon: Settings, color: 'text-blue-500' },
+            { key: 'pantry', label: 'Pantry Items', value: stats.totalPantryItems || 0, Icon: User, color: 'text-green-500' },
+            { key: 'saved', label: 'Money Saved', value: `£${stats.moneySaved || 0}`, Icon: DollarSign, color: 'text-yellow-500' },
+            { key: 'member', label: 'Member Since', value: profile.createdAt ? new Date(profile.createdAt).getFullYear() : 'New', Icon: Heart, color: 'text-red-500' }
+          ].map(({ key, label, value, Icon, color }, index) => (
+            <motion.div
+              key={key}
+              className="card"
+              variants={fadeUp}
+              transition={{ duration: 0.45, delay: index * 0.05 }}
+              whileHover={{ y: -6, boxShadow: '0 28px 55px -35px rgba(14,165,233,0.3)' }}
+            >
+              <div className="card-content">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-600">{label}</p>
+                    <p className="text-2xl font-bold text-neutral-900">{value}</p>
+                  </div>
+                  <Icon className={`h-8 w-8 ${color}`} />
                 </div>
-                <Settings className="h-8 w-8 text-blue-500" />
               </div>
-            </div>
-          </div>
-          
-          <div className="card">
-            <div className="card-content">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-600">Pantry Items</p>
-                  <p className="text-2xl font-bold text-neutral-900">{stats.totalPantryItems || 0}</p>
-                </div>
-                <User className="h-8 w-8 text-green-500" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="card">
-            <div className="card-content">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-600">Money Saved</p>
-                  <p className="text-2xl font-bold text-neutral-900">£{stats.moneySaved || 0}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-yellow-500" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="card">
-            <div className="card-content">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-600">Member Since</p>
-                  <p className="text-lg font-bold text-neutral-900">
-                    {profile.createdAt ? new Date(profile.createdAt).getFullYear() : 'New'}
-                  </p>
-                </div>
-                <Heart className="h-8 w-8 text-red-500" />
-              </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          ))}
+        </motion.section>
 
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
-            <div className="card">
+            <motion.div
+              className="card"
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              transition={{ duration: 0.45 }}
+            >
               <div className="card-content">
                 <nav className="space-y-1">
                   {tabs.map((tab) => {
                     const Icon = tab.icon
                     return (
-                      <button
+                      <motion.button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -363,31 +368,41 @@ export default function Profile() {
                             ? 'bg-primary-100 text-primary-700'
                             : 'text-neutral-600 hover:bg-neutral-50'
                         }`}
+                        whileHover={{ x: 4 }}
                       >
                         <Icon className="h-4 w-4" />
                         <span>{tab.label}</span>
-                      </button>
+                      </motion.button>
                     )
                   })}
                 </nav>
               </div>
-            </div>
+            </motion.div>
           </div>
 
           {/* Content Area */}
           <div className="lg:col-span-3">
             {activeTab === 'profile' && (
-              <div className="card">
+              <motion.div
+                className="card"
+                key="profile-tab"
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.45 }}
+              >
                 <div className="card-header">
                   <div className="flex items-center justify-between">
                     <h2 className="card-title">Personal Information</h2>
-                    <button
+                    <motion.button
                       onClick={() => setIsEditing(!isEditing)}
                       className="btn btn-outline btn-sm"
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.97 }}
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       {isEditing ? 'Cancel' : 'Edit'}
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
                 <div className="card-content space-y-6">
@@ -527,136 +542,155 @@ export default function Profile() {
                   </div>
 
                   {isEditing && (
-                    <div className="flex space-x-2">
-                      <button
+                    <div className="flex space-x-3">
+                      <motion.button
                         onClick={handleProfileSave}
                         disabled={updateProfileMutation.isLoading}
                         className="btn btn-primary"
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.97 }}
                       >
                         <Save className="h-4 w-4 mr-2" />
                         {updateProfileMutation.isLoading ? 'Saving...' : 'Save Changes'}
-                      </button>
-                      <button
+                      </motion.button>
+                      <motion.button
                         onClick={() => setIsEditing(false)}
                         className="btn btn-outline"
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.97 }}
                       >
                         Cancel
-                      </button>
+                      </motion.button>
                     </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {activeTab === 'preferences' && (
-              <div className="space-y-6">
-                {/* Dietary Preferences */}
-                <div className="card">
-                  <div className="card-header">
-                    <h2 className="card-title">Dietary Preferences</h2>
+              <motion.div
+                className="card"
+                key="preferences-tab"
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.45 }}
+              >
+                <div className="card-header">
+                  <h2 className="card-title">Food Preferences</h2>
+                </div>
+                <div className="card-content space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Dietary Restrictions
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {DIETARY_RESTRICTIONS.map(restriction => (
+                        <label key={restriction} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={(preferencesForm.dietaryRestrictions || []).includes(restriction)}
+                            onChange={() => handleArrayToggle('dietaryRestrictions', restriction)}
+                            className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span className="text-sm text-neutral-700">{restriction}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                  <div className="card-content space-y-4">
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      Cuisine Preferences
+                    </label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                      {CUISINE_PREFERENCES.map(cuisine => (
+                        <label key={cuisine} className="flex items-center space-x-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={(preferencesForm.cuisinePreferences || []).includes(cuisine)}
+                            onChange={() => handleArrayToggle('cuisinePreferences', cuisine)}
+                            className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span className="text-sm text-neutral-700">{cuisine}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-2">
-                        Dietary Restrictions
+                        Household Size
                       </label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {DIETARY_RESTRICTIONS.map(restriction => (
-                          <label key={restriction} className="flex items-center space-x-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={(preferencesForm.dietaryRestrictions || []).includes(restriction)}
-                              onChange={() => handleArrayToggle('dietaryRestrictions', restriction)}
-                              className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                            />
-                            <span className="text-sm text-neutral-700">{restriction}</span>
-                          </label>
-                        ))}
-                      </div>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={preferencesForm.householdSize || 1}
+                        onChange={(e) => setPreferencesForm(prev => ({ ...prev, householdSize: parseInt(e.target.value) || 1 }))}
+                        className="input"
+                      />
                     </div>
-
+                    
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 mb-2">
-                        Cuisine Preferences
+                        Shopping Frequency
                       </label>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                        {CUISINE_PREFERENCES.map(cuisine => (
-                          <label key={cuisine} className="flex items-center space-x-2 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={(preferencesForm.cuisinePreferences || []).includes(cuisine)}
-                              onChange={() => handleArrayToggle('cuisinePreferences', cuisine)}
-                              className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
-                            />
-                            <span className="text-sm text-neutral-700">{cuisine}</span>
-                          </label>
+                      <select
+                        value={preferencesForm.shoppingFrequency || 'Weekly'}
+                        onChange={(e) => setPreferencesForm(prev => ({ ...prev, shoppingFrequency: e.target.value }))}
+                        className="input"
+                      >
+                        {SHOPPING_FREQUENCIES.map(freq => (
+                          <option key={freq} value={freq}>{freq}</option>
                         ))}
-                      </div>
+                      </select>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
-                          Household Size
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={preferencesForm.householdSize || 1}
-                          onChange={(e) => setPreferencesForm(prev => ({ ...prev, householdSize: parseInt(e.target.value) || 1 }))}
-                          className="input"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
-                          Shopping Frequency
-                        </label>
-                        <select
-                          value={preferencesForm.shoppingFrequency || 'Weekly'}
-                          onChange={(e) => setPreferencesForm(prev => ({ ...prev, shoppingFrequency: e.target.value }))}
-                          className="input"
-                        >
-                          {SHOPPING_FREQUENCIES.map(freq => (
-                            <option key={freq} value={freq}>{freq}</option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-2">
-                          Budget Limit (£/month)
-                        </label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="10"
-                          value={preferencesForm.budgetLimit || ''}
-                          onChange={(e) => setPreferencesForm(prev => ({ ...prev, budgetLimit: parseFloat(e.target.value) || undefined }))}
-                          className="input"
-                          placeholder="Optional"
-                        />
-                      </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                        Budget Limit (£/month)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="10"
+                        value={preferencesForm.budgetLimit || ''}
+                        onChange={(e) => setPreferencesForm(prev => ({ ...prev, budgetLimit: parseFloat(e.target.value) || undefined }))}
+                        className="input"
+                        placeholder="Optional"
+                      />
                     </div>
+                  </div>
 
-                    <button
+                  <div className="flex justify-end">
+                    <motion.button
                       onClick={handlePreferencesSave}
                       disabled={updatePreferencesMutation.isLoading}
                       className="btn btn-primary"
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.97 }}
                     >
                       <Save className="h-4 w-4 mr-2" />
                       {updatePreferencesMutation.isLoading ? 'Saving...' : 'Save Preferences'}
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {activeTab === 'notifications' && (
-              <div className="card">
+              <motion.div
+                className="card"
+                key="notifications-tab"
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.45 }}
+              >
                 <div className="card-header">
-                  <h2 className="card-title">Notification Settings</h2>
+                  <h2 className="card-title">Notifications</h2>
                 </div>
                 <div className="card-content space-y-4">
                   {[
@@ -683,22 +717,33 @@ export default function Profile() {
                     </div>
                   ))}
 
-                  <button
-                    onClick={handlePreferencesSave}
-                    disabled={updatePreferencesMutation.isLoading}
-                    className="btn btn-primary"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {updatePreferencesMutation.isLoading ? 'Saving...' : 'Save Settings'}
-                  </button>
+                  <div className="flex justify-end">
+                    <motion.button
+                      onClick={handlePreferencesSave}
+                      disabled={updatePreferencesMutation.isLoading}
+                      className="btn btn-primary"
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {updatePreferencesMutation.isLoading ? 'Saving...' : 'Save Settings'}
+                    </motion.button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             )}
 
             {activeTab === 'privacy' && (
-              <div className="card">
+              <motion.div
+                className="card"
+                key="privacy-tab"
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.45 }}
+              >
                 <div className="card-header">
-                  <h2 className="card-title">Privacy Settings</h2>
+                  <h2 className="card-title">Privacy & Security</h2>
                 </div>
                 <div className="card-content space-y-4">
                   {[
@@ -723,16 +768,20 @@ export default function Profile() {
                     </div>
                   ))}
 
-                  <button
-                    onClick={handlePreferencesSave}
-                    disabled={updatePreferencesMutation.isLoading}
-                    className="btn btn-primary"
-                  >
-                    <Save className="h-4 w-4 mr-2" />
-                    {updatePreferencesMutation.isLoading ? 'Saving...' : 'Save Settings'}
-                  </button>
+                  <div className="flex justify-end">
+                    <motion.button
+                      onClick={handlePreferencesSave}
+                      disabled={updatePreferencesMutation.isLoading}
+                      className="btn btn-primary"
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {updatePreferencesMutation.isLoading ? 'Saving...' : 'Save Settings'}
+                    </motion.button>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
         </div>

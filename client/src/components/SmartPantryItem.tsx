@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Clock, AlertTriangle, Brain, TrendingUp } from 'lucide-react';
 import { mlService, type FoodItem, type ExpiryPrediction, type WastePrediction } from '../services/mlService';
 
@@ -18,7 +18,7 @@ interface SmartPantryItemProps {
   onUpdate?: (item: PantryItem) => void;
 }
 
-export default function SmartPantryItem({ item, userHistory = [], onUpdate }: SmartPantryItemProps) {
+export default function SmartPantryItem({ item, userHistory = [] }: SmartPantryItemProps) {
   const [expiryPrediction, setExpiryPrediction] = useState<ExpiryPrediction | null>(null);
   const [wastePrediction, setWastePrediction] = useState<WastePrediction | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,7 +80,6 @@ export default function SmartPantryItem({ item, userHistory = [], onUpdate }: Sm
   };
 
   const expiryStatus = getExpiryStatus();
-  const daysUntilExpiry = getDaysUntilExpiry();
 
   return (
     <div className="card hover:shadow-medium transition-all duration-200">

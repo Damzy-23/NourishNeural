@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useMutation } from 'react-query'
-import { 
-  Package, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import { motion } from 'framer-motion'
+import {
+  Package,
+  Plus,
+  Edit,
+  Trash2,
   X,
   DollarSign,
   AlertTriangle,
@@ -13,6 +14,7 @@ import {
   Archive
 } from 'lucide-react'
 import SmartPantryItem from '../components/SmartPantryItem'
+import { fadeUp, staggerContainer } from '../utils/motion'
 
 interface PantryItem {
   id: string
@@ -236,81 +238,150 @@ export default function Pantry() {
   return (
     <>
       <Helmet>
-        <title>Pantry - PantryPal</title>
+        <title>Pantry - Nourish Neural</title>
       </Helmet>
 
-      <div className="space-y-6">
+      <div className="relative space-y-8 pb-12">
+        <motion.div
+          className="pointer-events-none absolute -top-20 right-[-12%] h-64 w-64 rounded-full bg-primary-200/40 blur-3xl"
+          animate={{ y: [0, 18, 0], opacity: [0.35, 0.6, 0.35] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="pointer-events-none absolute -bottom-24 left-[-10%] h-72 w-72 rounded-full bg-accent-200/35 blur-3xl"
+          animate={{ y: [0, -16, 0], opacity: [0.3, 0.55, 0.3] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
+
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-neutral-900">Pantry</h1>
-            <p className="mt-2 text-neutral-600">
-              Track your food inventory and manage expiry dates
-            </p>
+        <motion.div
+          className="relative overflow-hidden"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
+          <div className="relative glass-card rounded-3xl p-8 md:p-10 border border-neutral-200/60 backdrop-blur-sm">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <motion.div
+                  className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg shadow-primary-500/30"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2, type: 'spring' }}
+                >
+                  <Package className="h-7 w-7 text-white" />
+                </motion.div>
+                <div>
+                  <motion.h1
+                    className="text-3xl md:text-4xl font-bold gradient-text"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.3 }}
+                  >
+                    Neural Pantry
+                  </motion.h1>
+                  <motion.p
+                    className="mt-1 text-neutral-600 text-sm md:text-base"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                  >
+                    Track and optimize your pantry inventory with AI-powered insights
+                  </motion.p>
+                </div>
+              </div>
+              <motion.button
+                onClick={() => setShowCreateForm(true)}
+                className="btn btn-primary shadow-lg hover:shadow-xl"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                whileHover={{ y: -2, boxShadow: '0 24px 45px -20px rgba(14,165,233,0.6)' }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </motion.button>
+            </div>
           </div>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="btn btn-primary"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Item
-          </button>
-        </div>
+        </motion.div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="card">
-            <div className="card-content">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-600">Total Items</p>
-                  <p className="text-2xl font-bold text-neutral-900">{stats.totalItems}</p>
+        <motion.section
+          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+        >
+          {[
+            {
+              key: 'total-items',
+              title: 'Total Items',
+              value: stats.totalItems,
+              subtitle: 'Pantry inventory',
+              Icon: Package,
+              iconColor: 'text-blue-500',
+              valueClass: 'text-neutral-900'
+            },
+            {
+              key: 'total-value',
+              title: 'Total Value',
+              value: `£${stats.totalValue.toFixed(2)}`,
+              subtitle: 'Estimated replacement cost',
+              Icon: DollarSign,
+              iconColor: 'text-green-500',
+              valueClass: 'text-neutral-900'
+            },
+            {
+              key: 'expiring-soon',
+              title: 'Expiring Soon',
+              value: stats.expiringSoon,
+              subtitle: 'Action within 3 days',
+              Icon: AlertTriangle,
+              iconColor: 'text-orange-500',
+              valueClass: 'text-orange-600'
+            },
+            {
+              key: 'low-stock',
+              title: 'Low Stock',
+              value: stats.lowStock,
+              subtitle: 'Items below threshold',
+              Icon: Archive,
+              iconColor: 'text-red-500',
+              valueClass: 'text-red-600'
+            }
+          ].map(({ key, title, value, subtitle, Icon, iconColor, valueClass }, index) => (
+            <motion.div
+              key={key}
+              className="card"
+              variants={fadeUp}
+              transition={{ duration: 0.45, delay: index * 0.05 }}
+              whileHover={{ y: -6, boxShadow: '0 28px 55px -35px rgba(14,165,233,0.3)' }}
+            >
+              <div className="card-content">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-600">{title}</p>
+                    <p className={`text-2xl font-bold ${valueClass}`}>{value}</p>
+                    <p className="text-xs text-neutral-500">{subtitle}</p>
+                  </div>
+                  <Icon className={`h-8 w-8 ${iconColor}`} />
                 </div>
-                <Package className="h-8 w-8 text-blue-500" />
               </div>
-            </div>
-          </div>
-          
-          <div className="card">
-            <div className="card-content">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-600">Total Value</p>
-                  <p className="text-2xl font-bold text-neutral-900">£{stats.totalValue.toFixed(2)}</p>
-                </div>
-                <DollarSign className="h-8 w-8 text-green-500" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="card">
-            <div className="card-content">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-600">Expiring Soon</p>
-                  <p className="text-2xl font-bold text-orange-600">{stats.expiringSoon}</p>
-                </div>
-                <AlertTriangle className="h-8 w-8 text-orange-500" />
-              </div>
-            </div>
-          </div>
-          
-          <div className="card">
-            <div className="card-content">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-neutral-600">Low Stock</p>
-                  <p className="text-2xl font-bold text-red-600">{stats.lowStock}</p>
-                </div>
-                <Archive className="h-8 w-8 text-red-500" />
-              </div>
-            </div>
-          </div>
-        </div>
+            </motion.div>
+          ))}
+        </motion.section>
 
         {/* Create Item Form */}
-        {showCreateForm && (
-          <div className="card">
+         {showCreateForm && (
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
             <div className="card-header">
               <div className="flex items-center justify-between">
                 <h2 className="card-title">Add New Pantry Item</h2>
@@ -434,26 +505,36 @@ export default function Pantry() {
               </div>
 
               <div className="flex space-x-2">
-                <button
+                <motion.button
                   onClick={handleCreateItem}
                   disabled={!newItemForm.name.trim() || createItemMutation.isLoading}
                   className="btn btn-primary"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   {createItemMutation.isLoading ? 'Adding...' : 'Add Item'}
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   onClick={() => setShowCreateForm(false)}
                   className="btn btn-outline"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   Cancel
-                </button>
+                </motion.button>
               </div>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Filters and Search */}
-        <div className="card">
+        <motion.div
+          className="card"
+          variants={fadeUp}
+          initial="hidden"
+          animate="visible"
+          transition={{ duration: 0.45 }}
+        >
           <div className="card-content">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
@@ -505,24 +586,31 @@ export default function Pantry() {
               </div>
               
               <div className="flex items-end">
-                <button
+                <motion.button
                   onClick={() => {
                     setSearchTerm('')
                     setSelectedCategory('all')
                     setFilterType('all')
                   }}
                   className="btn btn-outline w-full"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                 >
                   Clear Filters
-                </button>
+                </motion.button>
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Items Grid */}
         {filteredItems.length === 0 ? (
-          <div className="card">
+          <motion.div
+            className="card"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+          >
             <div className="card-content">
               <div className="text-center py-12">
                 <Package className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
@@ -536,19 +624,26 @@ export default function Pantry() {
                   }
                 </p>
                 {pantryItems.length === 0 && (
-                  <button
+                  <motion.button
                     onClick={() => setShowCreateForm(true)}
                     className="btn btn-primary"
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Your First Item
-                  </button>
+                  </motion.button>
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
             {filteredItems.map((item) => {
               // Convert to SmartPantryItem format
               const smartItem = {
@@ -562,7 +657,12 @@ export default function Pantry() {
               };
 
               return (
-                <div key={item.id} className="relative">
+                <motion.div
+                  key={item.id}
+                  className="relative"
+                  variants={fadeUp}
+                  transition={{ duration: 0.4 }}
+                >
                   {/* Action Buttons Overlay */}
                   <div className="absolute top-2 right-2 z-10 flex space-x-1">
                     <button
@@ -591,10 +691,10 @@ export default function Pantry() {
                       console.log('Item updated:', updatedItem);
                     }}
                   />
-                </div>
+                </motion.div>
               );
             })}
-          </div>
+          </motion.div>
         )}
       </div>
     </>

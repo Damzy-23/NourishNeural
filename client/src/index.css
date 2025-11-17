@@ -47,7 +47,7 @@
   }
   
   .input {
-    @apply flex h-11 w-full rounded-xl border-2 border-green-300 bg-green-50 px-4 py-3 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-green-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-green-400 focus:border-green-500 shadow-sm hover:shadow-md;
+    @apply flex h-11 w-full rounded-xl border-2 border-primary-300 bg-primary-50 px-4 py-3 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-all duration-200 hover:border-primary-400 focus:border-primary-500 shadow-sm hover:shadow-md;
   }
   
   .card {

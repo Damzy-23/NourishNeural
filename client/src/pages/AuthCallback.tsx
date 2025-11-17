@@ -76,7 +76,7 @@ export default function AuthCallback() {
       <div className="text-center">
         <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
         <h2 className="text-2xl font-semibold text-neutral-900 mb-2">
-          Welcome to PantryPal!
+          Welcome to Nourish Neural!
         </h2>
         <p className="text-neutral-600">
           You've been successfully signed in. Redirecting to your dashboard...
