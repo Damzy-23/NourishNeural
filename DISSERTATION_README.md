@@ -1,4 +1,4 @@
-# 🛒 PantryPal - AI-Powered Food Waste Reduction System
+# 🛒 Nourish Neural - AI-Powered Food Waste Reduction System
 
 > **Dissertation Project**: *"AI-Powered Food Waste Reduction: A Machine Learning Approach to Intelligent Household Pantry Management"*
 
@@ -9,7 +9,7 @@
 
 ## 🌟 Project Overview
 
-PantryPal is an intelligent grocery assistant that leverages artificial intelligence and machine learning to reduce household food waste, optimize shopping efficiency, and improve budget management. This project serves as the foundation for a comprehensive dissertation research study on AI-driven household management systems.
+Nourish Neural is an intelligent grocery assistant that leverages artificial intelligence and machine learning to reduce household food waste, optimize shopping efficiency, and improve budget management. This project serves as the foundation for a comprehensive dissertation research study on AI-driven household management systems.
 
 ### 🎯 Core Mission
 - **Reduce Food Waste**: Use AI to predict food expiry and suggest consumption
@@ -186,7 +186,7 @@ Machine Learning Pipeline
 ## 📁 Project Structure
 
 ```
-PantryPal/
+Nourish Neural/
 ├── 📁 client/                    # React frontend
 │   ├── 📁 src/
 │   │   ├── 📁 components/        # Reusable UI components

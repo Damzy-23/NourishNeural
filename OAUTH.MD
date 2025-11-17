@@ -1,0 +1,5 @@
+Client ID
+325135608860-8lqurmb7i8ktl25hkpf934k1iqcpt0n1.apps.googleusercontent.com
+
+Client secret
+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

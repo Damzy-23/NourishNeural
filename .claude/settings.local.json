@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run build:*)",
+      "Bash(node -c:*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(test:*)",
+      "Bash(timeout 10 node:*)",
+      "Bash(node test-password-hashing.js:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout 5 bash:*)",
+      "Bash(timeout 3 bash:*)",
+      "Bash(ping:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
