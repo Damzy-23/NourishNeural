@@ -12,7 +12,6 @@ import {
   ShoppingCart,
   Loader2,
   Sparkles,
-  MessageSquare,
   RefreshCw,
   Zap
 } from 'lucide-react'
@@ -429,9 +428,9 @@ export default function AIAssistant() {
                 "How can I meal prep for the week?",
                 "What's in season right now?",
                 "Help me use up my leftovers"
-              ].map((suggestion, index) => (
+              ].map((suggestion, idx) => (
                 <motion.button
-                  key={index}
+                  key={idx}
                   onClick={() => handleSendMessage(suggestion)}
                   disabled={chatMutation.isLoading}
                   className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-lg text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 hover:border-neutral-300 dark:hover:border-neutral-500 transition-all disabled:opacity-50"

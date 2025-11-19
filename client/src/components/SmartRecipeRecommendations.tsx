@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChefHat, Clock, Users, Star, TrendingUp, X, ShoppingCart, ChevronRight, Search, Filter, ArrowUpDown } from 'lucide-react';
+import { ChefHat, Clock, Users, Star, TrendingUp, X, ShoppingCart, Search, Filter, ArrowUpDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RecipeScaler from './RecipeScaler';
 

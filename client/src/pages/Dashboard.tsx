@@ -5,24 +5,19 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   BarChart3,
-  TrendingUp,
   ShoppingCart,
   Package,
   Plus,
   AlertTriangle,
   Clock,
-  Star,
   Zap,
   Heart,
   DollarSign,
   MapPin,
   CheckCircle,
-  ArrowRight,
-  Lightbulb,
   Target,
   Brain,
   Search,
-  Circle,
   Activity,
   Sparkles,
   ChevronRight
@@ -121,7 +116,7 @@ const quickActions: QuickAction[] = [
 
 export default function Dashboard() {
   const { user } = useAuth()
-  const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('month')
+  const [selectedPeriod] = useState<'week' | 'month' | 'year'>('month')
 
   // Fetch dashboard data
   const { data: dashboardResponse, isLoading } = useQuery(
@@ -148,32 +143,14 @@ export default function Dashboard() {
     activity: { recentLists: [], recentPantryItems: [], completedTasks: 0 }
   }
 
-  const recommendations: Recommendation[] = (recommendationsResponse as any)?.recommendations || []
+  // Recommendations available for future use
+  // const recommendations: Recommendation[] = (recommendationsResponse as any)?.recommendations || []
 
   const getGreeting = () => {
     const hour = new Date().getHours()
     if (hour < 12) return 'Good morning'
     if (hour < 18) return 'Good afternoon'
     return 'Good evening'
-  }
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'text-red-600 bg-red-50'
-      case 'medium': return 'text-orange-600 bg-orange-50'
-      case 'low': return 'text-blue-600 bg-blue-50'
-      default: return 'text-neutral-600 bg-neutral-50'
-    }
-  }
-
-  const getRecommendationIcon = (type: string) => {
-    switch (type) {
-      case 'recipe': return Lightbulb
-      case 'shopping': return ShoppingCart
-      case 'expiry': return AlertTriangle
-      case 'budget': return Target
-      default: return Star
-    }
   }
 
   if (isLoading) {

@@ -687,7 +687,7 @@ export default function GroceryLists() {
               const progress = calculateProgress(list)
               const totalCost = list.items.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0)
               const isEditing = editingList === list.id
-              
+
               return (
                 <motion.div
                   key={list.id}

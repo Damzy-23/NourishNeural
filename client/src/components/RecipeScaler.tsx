@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Users, Minus, Plus, ChefHat, Scale, Flame, Dumbbell, Wheat, Droplets } from 'lucide-react'
-import { scaleRecipe, formatIngredient, formatQuantity, getServingPresets } from '../services/recipeScaleService'
+import { scaleRecipe, formatQuantity, getServingPresets } from '../services/recipeScaleService'
 
 interface RecipeScalerProps {
   recipeName: string
@@ -17,7 +17,6 @@ interface RecipeScalerProps {
 }
 
 export default function RecipeScaler({
-  recipeName,
   ingredients,
   baseServings,
   nutritionInfo,
