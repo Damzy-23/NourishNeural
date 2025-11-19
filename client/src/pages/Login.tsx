@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
-import { Eye, EyeOff, Mail, Lock, BrainCircuit, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fadeUp, scaleIn, staggerContainer } from '../utils/motion'
 import { supabase } from '../lib/supabase'
@@ -129,7 +129,7 @@ export default function Login() {
         <meta name="description" content="Sign in to your Nourish Neural account" />
       </Helmet>
 
-      <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-primary-50 via-white to-accent-50">
+      <div className="relative min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-hidden bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900">
         <motion.div
           className="absolute -top-32 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-accent-300/25 blur-3xl"
           animate={{ y: [0, -30, 0], opacity: [0.6, 0.9, 0.6] }}
@@ -147,27 +147,27 @@ export default function Login() {
           animate="visible"
         >
           <motion.div
-            className="hidden lg:block rounded-[32px] border border-white/40 bg-white/70 backdrop-blur-xl shadow-2xl shadow-primary-500/20 p-10 space-y-6"
+            className="hidden lg:block rounded-[32px] border border-white/40 dark:border-neutral-700/60 bg-white/70 dark:bg-neutral-800/70 backdrop-blur-xl shadow-2xl shadow-primary-500/20 p-10 space-y-6"
             variants={scaleIn}
             transition={{ duration: 0.65 }}
           >
             <motion.div
-              className="inline-flex items-center space-x-3 rounded-full border border-primary-200/70 bg-white/80 px-4 py-2 text-sm font-semibold text-primary-700 shadow-soft"
+              className="inline-flex items-center space-x-3 rounded-full border border-primary-200/70 dark:border-primary-700/70 bg-white/80 dark:bg-neutral-800/80 px-4 py-2 text-sm font-semibold text-primary-700 dark:text-primary-300 shadow-soft"
               variants={fadeUp}
             >
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20">
-                <BrainCircuit className="h-4 w-4" />
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20 dark:from-primary-400/30 dark:to-accent-400/30">
+                <img src="/favicon.svg" alt="Nourish Neural" className="h-4 w-4" />
               </span>
               <span>Neural pantry intelligence, always learning</span>
             </motion.div>
             <motion.h2
-              className="text-4xl font-bold text-neutral-900 leading-tight"
+              className="text-4xl font-bold text-neutral-900 dark:text-neutral-100 leading-tight"
               variants={fadeUp}
               transition={{ duration: 0.6 }}
             >
               Welcome back to <span className="gradient-text">Nourish Neural</span>.
             </motion.h2>
-            <motion.p className="text-neutral-600 text-lg leading-relaxed" variants={fadeUp}>
+            <motion.p className="text-neutral-600 dark:text-neutral-300 text-lg leading-relaxed" variants={fadeUp}>
               Sign in to orchestrate grocery planning, predictive pantry insights, and sustainable meal rituals—all
               within a single neural dashboard.
             </motion.p>
@@ -184,18 +184,18 @@ export default function Login() {
               ].map((metric) => (
                 <motion.div
                   key={metric.label}
-                  className="rounded-2xl border border-primary-100/60 bg-white/80 px-5 py-4 text-left shadow-soft"
+                  className="rounded-2xl border border-primary-100/60 dark:border-primary-700/60 bg-white/80 dark:bg-neutral-800/80 px-5 py-4 text-left shadow-soft"
                   whileHover={{ y: -4, scale: 1.02 }}
                 >
-                  <p className="text-xs uppercase tracking-[0.18em] text-primary-500">{metric.label}</p>
-                  <p className="text-2xl font-semibold text-neutral-900 mt-1">{metric.value}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-primary-500 dark:text-primary-400">{metric.label}</p>
+                  <p className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100 mt-1">{metric.value}</p>
                 </motion.div>
               ))}
             </motion.div>
           </motion.div>
 
           <motion.div
-            className="max-w-md w-full mx-auto lg:mx-0 space-y-8 rounded-[28px] border border-white/40 bg-white/80 backdrop-blur-xl shadow-xl shadow-primary-500/10 p-10"
+            className="max-w-md w-full mx-auto lg:mx-0 space-y-8 rounded-[28px] border border-white/40 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-xl shadow-xl shadow-primary-500/10 p-10"
             variants={scaleIn}
             transition={{ duration: 0.65, delay: 0.1 }}
           >
@@ -205,27 +205,27 @@ export default function Login() {
                 variants={fadeUp}
                 transition={{ duration: 0.6 }}
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <BrainCircuit className="h-8 w-8 text-white" />
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+                  <img src="/favicon.svg" alt="Nourish Neural" className="h-16 w-16" />
                 </div>
                 <span className="text-4xl font-bold gradient-text">Nourish Neural</span>
               </motion.div>
-              <motion.h2 className="text-3xl font-bold text-neutral-900" variants={fadeUp} transition={{ duration: 0.55 }}>
+              <motion.h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100" variants={fadeUp} transition={{ duration: 0.55 }}>
                 Welcome back
               </motion.h2>
-              <motion.p className="text-neutral-600 text-base" variants={fadeUp}>
+              <motion.p className="text-neutral-600 dark:text-neutral-400 text-base" variants={fadeUp}>
                 Sign in to resume your culinary intelligence journey.
               </motion.p>
             </motion.div>
 
             {errors.general && (
               <motion.div
-                className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3"
+                className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-3"
                 initial={{ opacity: 0, y: -12 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                <p className="text-red-700 text-sm">{errors.general}</p>
+                <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 flex-shrink-0" />
+                <p className="text-red-700 dark:text-red-300 text-sm">{errors.general}</p>
               </motion.div>
             )}
 
@@ -238,12 +238,12 @@ export default function Login() {
             >
               {/* Email Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Email address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-neutral-400" />
+                    <Mail className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
                   </div>
                   <input
                     id="email"
@@ -253,24 +253,24 @@ export default function Login() {
                     value={formData.email}
                     onChange={handleChange}
                     className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                      errors.email ? 'border-red-300 bg-red-50' : 'border-neutral-300 bg-white'
+                      errors.email ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 dark:text-neutral-100'
                     }`}
                     placeholder="Enter your email"
                   />
                 </div>
                 {errors.email && (
-                  <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
                 )}
               </div>
 
               {/* Password Field */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-neutral-400" />
+                    <Lock className="h-5 w-5 text-neutral-400 dark:text-neutral-500" />
                   </div>
                   <input
                     id="password"
@@ -280,7 +280,7 @@ export default function Login() {
                     value={formData.password}
                     onChange={handleChange}
                     className={`block w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                      errors.password ? 'border-red-300 bg-red-50' : 'border-neutral-300 bg-white'
+                      errors.password ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 dark:text-neutral-100'
                     }`}
                     placeholder="Enter your password"
                   />
@@ -290,14 +290,14 @@ export default function Login() {
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-neutral-400 hover:text-neutral-600" />
+                      <EyeOff className="h-5 w-5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300" />
                     ) : (
-                      <Eye className="h-5 w-5 text-neutral-400 hover:text-neutral-600" />
+                      <Eye className="h-5 w-5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300" />
                     )}
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="mt-1 text-sm text-red-600">{errors.password}</p>
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.password}</p>
                 )}
               </div>
 
@@ -308,15 +308,15 @@ export default function Login() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 rounded"
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 dark:border-neutral-600 rounded"
                   />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-700">
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-neutral-700 dark:text-neutral-300">
                     Remember me
                   </label>
                 </div>
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-primary-600 hover:text-primary-500 transition-colors"
+                  className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
                 >
                   Forgot password?
                 </Link>
@@ -343,10 +343,10 @@ export default function Login() {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-neutral-300" />
+                  <div className="w-full border-t border-neutral-300 dark:border-neutral-600" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-neutral-500">Or continue with</span>
+                  <span className="px-2 bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">Or continue with</span>
                 </div>
               </div>
             </div>
@@ -359,7 +359,7 @@ export default function Login() {
             >
               <button
                 type="button"
-                className="w-full inline-flex justify-center py-2 px-4 border border-neutral-300 rounded-lg shadow-sm bg-white text-sm font-medium text-neutral-500 hover:bg-neutral-50 transition-colors"
+                className="w-full inline-flex justify-center py-2 px-4 border border-neutral-300 dark:border-neutral-600 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-sm font-medium text-neutral-500 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-600 transition-colors"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -371,7 +371,7 @@ export default function Login() {
               </button>
               <button
                 type="button"
-                className="w-full inline-flex justify-center py-2 px-4 border border-neutral-300 rounded-lg shadow-sm bg-white text-sm font-medium text-neutral-500 hover:bg-neutral-50 transition-colors"
+                className="w-full inline-flex justify-center py-2 px-4 border border-neutral-300 dark:border-neutral-600 rounded-lg shadow-sm bg-white dark:bg-neutral-700 text-sm font-medium text-neutral-500 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-600 transition-colors"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -382,11 +382,11 @@ export default function Login() {
 
             {/* Sign Up Link */}
             <motion.div className="text-center" variants={fadeUp} transition={{ duration: 0.5, delay: 0.12 }}>
-              <p className="text-neutral-600">
+              <p className="text-neutral-600 dark:text-neutral-400">
                 Don't have an account?{' '}
                 <Link
                   to="/register"
-                  className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
+                  className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
                 >
                   Sign up for free
                 </Link>

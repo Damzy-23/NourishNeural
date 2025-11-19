@@ -24,7 +24,8 @@ import {
   Search,
   Circle,
   Activity,
-  Sparkles
+  Sparkles,
+  ChevronRight
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
@@ -194,623 +195,428 @@ export default function Dashboard() {
       </Helmet>
 
       <div className="relative min-h-screen pb-16">
-        {/* Subtle gradient background blurs */}
-        <motion.div
-          className="pointer-events-none fixed top-0 right-0 h-[500px] w-[500px] rounded-full bg-blue-100/40 blur-3xl"
-          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="pointer-events-none fixed bottom-0 left-0 h-[400px] w-[400px] rounded-full bg-primary-100/30 blur-3xl"
-          animate={{ scale: [1, 1.15, 1], opacity: [0.25, 0.4, 0.25] }}
-          transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
-        />
+        {/* Subtle gradient background */}
+        <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-blue-50/30 via-white to-primary-50/20 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800"></div>
 
-        {/* Header */}
-        <motion.div
-          className="mb-12"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <motion.h1
-                className="text-5xl md:text-6xl font-black text-neutral-900 mb-3"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-              >
-                {getGreeting()}, <span className="bg-gradient-to-r from-blue-600 via-primary-600 to-blue-500 bg-clip-text text-transparent">{(user as any)?.firstName || 'there'}</span>
-              </motion.h1>
-              <motion.p
-                className="text-lg text-neutral-500 max-w-2xl"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                Here's your intelligent kitchen overview
-              </motion.p>
-            </div>
-            <motion.div
-              className="hidden md:flex items-center space-x-3"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="text-right">
-                <p className="text-sm text-neutral-400 uppercase tracking-wide font-semibold">
-                  {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
-                </p>
-                <p className="text-lg font-bold text-neutral-900">
-                  {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </p>
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Bento Grid Layout */}
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-6 mb-12"
-          variants={staggerContainer}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Hero Stat - Active Lists (Large) */}
+        <div className="relative">
+          {/* Header */}
           <motion.div
-            className="md:col-span-3 lg:col-span-4 row-span-2"
-            variants={fadeUp}
+            className="mb-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
           >
-            <motion.div
-              className="relative h-full bg-white rounded-3xl border border-neutral-200/60 overflow-hidden group"
-              whileHover={{ y: -4, boxShadow: '0 20px 40px -15px rgba(59, 130, 246, 0.15)' }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-blue-50/50"></div>
-              <div className="relative p-8 h-full flex flex-col justify-between">
-                <div>
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-500/10 mb-6 group-hover:scale-110 transition-transform duration-300">
-                    <ShoppingCart className="w-7 h-7 text-blue-600" />
-                  </div>
-                  <p className="text-sm font-semibold text-neutral-500 uppercase tracking-wider mb-2">Active Lists</p>
-                  <div className="flex items-baseline space-x-3 mb-3">
-                    <h2 className="text-7xl font-black text-neutral-900">{stats.groceryLists.active}</h2>
-                    <span className="text-2xl font-bold text-neutral-400">/ {stats.groceryLists.total}</span>
-                  </div>
-                  <p className="text-base text-neutral-600">{stats.groceryLists.itemsCount} items across all lists</p>
-                </div>
-                <div className="flex items-center space-x-2 text-blue-600 font-medium">
-                  <span className="text-sm">View all lists</span>
-                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Pantry Items (Medium) */}
-          <motion.div
-            className="md:col-span-3 lg:col-span-4"
-            variants={fadeUp}
-            transition={{ delay: 0.1 }}
-          >
-            <motion.div
-              className="relative h-full bg-white rounded-3xl border border-neutral-200/60 overflow-hidden group"
-              whileHover={{ y: -4, boxShadow: '0 20px 40px -15px rgba(14, 165, 233, 0.15)' }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-primary-50/30"></div>
-              <div className="relative p-8">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-primary-500/10 group-hover:scale-110 transition-transform duration-300">
-                    <Package className="w-6 h-6 text-primary-600" />
-                  </div>
-                  <span className="text-xs font-semibold text-neutral-500 uppercase tracking-wider">Pantry</span>
-                </div>
-                <div className="flex items-baseline space-x-2 mb-2">
-                  <h3 className="text-5xl font-black text-neutral-900">{stats.pantry.totalItems}</h3>
-                  <span className="text-lg font-bold text-neutral-400">items</span>
-                </div>
-                <p className="text-sm text-neutral-600">Worth £{stats.pantry.totalValue.toFixed(2)}</p>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Spending This Month (Medium) */}
-          <motion.div
-            className="md:col-span-3 lg:col-span-4"
-            variants={fadeUp}
-            transition={{ delay: 0.15 }}
-          >
-            <motion.div
-              className="relative h-full bg-white rounded-3xl border border-neutral-200/60 overflow-hidden group"
-              whileHover={{ y: -4, boxShadow: '0 20px 40px -15px rgba(251, 146, 60, 0.15)' }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-orange-50 via-white to-orange-50/30"></div>
-              <div className="relative p-8">
-                <div className="flex items-start justify-between mb-6">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-orange-500/10 group-hover:scale-110 transition-transform duration-300">
-                    <DollarSign className="w-6 h-6 text-orange-600" />
-                  </div>
-                  {stats.spending.trend !== 'stable' && (
-                    <div className={`flex items-center space-x-1 px-2 py-1 rounded-lg ${stats.spending.trend === 'up' ? 'bg-red-50' : 'bg-green-50'}`}>
-                      <TrendingUp className={`w-4 h-4 ${stats.spending.trend === 'up' ? 'text-red-500' : 'text-green-500 rotate-180'}`} />
-                      <span className={`text-xs font-bold ${stats.spending.trend === 'up' ? 'text-red-600' : 'text-green-600'}`}>
-                        {stats.spending.trend === 'up' ? 'Up' : 'Down'}
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">This Month</p>
-                <h3 className="text-5xl font-black text-neutral-900 mb-2">£{stats.spending.thisMonth.toFixed(2)}</h3>
-                <p className="text-sm text-neutral-600">vs £{stats.spending.lastMonth.toFixed(2)} last month</p>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Expiring Soon (Small Alert) */}
-          <motion.div
-            className="md:col-span-3 lg:col-span-4"
-            variants={fadeUp}
-            transition={{ delay: 0.2 }}
-          >
-            <motion.div
-              className="relative h-full bg-white rounded-3xl border border-red-200/60 overflow-hidden group"
-              whileHover={{ y: -4, boxShadow: '0 20px 40px -15px rgba(239, 68, 68, 0.15)' }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-red-50 via-white to-red-50/30"></div>
-              <div className="relative p-8">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-red-500/10 group-hover:scale-110 transition-transform duration-300">
-                    <AlertTriangle className="w-6 h-6 text-red-600" />
-                  </div>
-                  {stats.pantry.expiringSoon > 0 && (
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-red-500"
-                      animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    />
-                  )}
-                </div>
-                <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-2">Expiring Soon</p>
-                <div className="flex items-baseline space-x-2 mb-2">
-                  <h3 className="text-5xl font-black text-neutral-900">{stats.pantry.expiringSoon}</h3>
-                  <span className="text-lg font-bold text-neutral-400">items</span>
-                </div>
-                <p className="text-sm text-neutral-600">{stats.pantry.lowStock} low stock</p>
-              </div>
-            </motion.div>
-          </motion.div>
-        </motion.div>
-
-        {/* Quick Actions - Horizontal Scroll */}
-        <motion.div
-          className="mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <h2 className="text-2xl font-bold text-neutral-900 mb-6">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {quickActions.map((action, index) => {
-              const Icon = action.icon
-              return (
-                <MotionLink
-                  key={action.id}
-                  to={action.link}
-                  whileHover={{ y: -6, scale: 1.02 }}
-                  transition={{ duration: 0.2, type: 'spring', stiffness: 300 }}
-                >
-                  <div className="relative bg-white rounded-2xl border border-neutral-200/60 p-6 overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="relative">
-                      <motion.div
-                        className={`inline-flex items-center justify-center w-12 h-12 ${action.color} rounded-xl mb-4 shadow-lg`}
-                        whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
-                        transition={{ duration: 0.4 }}
-                      >
-                        <Icon className="w-6 h-6 text-white" />
-                      </motion.div>
-                      <h3 className="font-bold text-neutral-900 mb-1 group-hover:text-blue-600 transition-colors">
-                        {action.title}
-                      </h3>
-                      <p className="text-xs text-neutral-600">{action.description}</p>
-                    </div>
-                  </div>
-                </MotionLink>
-              )
-            })}
-          </div>
-        </motion.div>
-
-        {/* AI Features Section */}
-        <motion.div
-          className="mb-12"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg shadow-purple-500/30">
-                <Sparkles className="w-6 h-6 text-white" />
-              </div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-neutral-900">AI Intelligence</h2>
-                <p className="text-sm text-neutral-500">Powered by neural networks</p>
+                <h1 className="text-4xl font-black text-neutral-900 dark:text-neutral-100 mb-2">
+                  {getGreeting()}, <span className="text-primary-600 dark:text-primary-400">{(user as any)?.firstName || 'there'}</span>
+                </h1>
+                <p className="text-neutral-600 dark:text-neutral-400">
+                  {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                </p>
               </div>
             </div>
-            <motion.span
-              className="px-4 py-2 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200/50 text-purple-700 text-xs font-bold rounded-full"
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ duration: 3, repeat: Infinity }}
-            >
-              ✨ Beta
-            </motion.span>
-          </div>
+          </motion.div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Food Classifier */}
-            <motion.div
-              className="bg-white rounded-3xl border border-neutral-200/60 p-8 hover:border-blue-300/60 transition-all duration-300"
-              whileHover={{ y: -4, boxShadow: '0 20px 40px -15px rgba(59, 130, 246, 0.15)' }}
-            >
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-blue-500/10">
-                  <Search className="w-5 h-5 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-bold text-neutral-900">Smart Food Classifier</h3>
-              </div>
-              <p className="text-sm text-neutral-600 mb-6 leading-relaxed">
-                Use AI to automatically categorize food items for better pantry management.
-              </p>
-              <SmartFoodClassifier
-                placeholder="Enter food name (e.g., 'Whole Milk 1L')"
-                onClassification={(result) => {
-                  console.log('Classification result:', result);
-                }}
-              />
-            </motion.div>
-
-            {/* AI Status */}
-            <motion.div
-              className="bg-white rounded-3xl border border-neutral-200/60 p-8 hover:border-green-300/60 transition-all duration-300"
-              whileHover={{ y: -4, boxShadow: '0 20px 40px -15px rgba(34, 197, 94, 0.15)' }}
-            >
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-green-500/10">
-                  <Activity className="w-5 h-5 text-green-600" />
-                </div>
-                <h3 className="text-xl font-bold text-neutral-900">AI Service Status</h3>
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-green-50 to-transparent border border-green-100">
-                  <span className="text-sm font-semibold text-neutral-700">Neural Models</span>
-                  <div className="flex items-center space-x-2">
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-green-500"
-                      animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    />
-                    <span className="text-sm font-bold text-green-600">Online</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                    <p className="text-xs text-neutral-500 mb-1 font-semibold">Accuracy</p>
-                    <p className="text-3xl font-black text-neutral-900">97%</p>
-                  </div>
-                  <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-                    <p className="text-xs text-neutral-500 mb-1 font-semibold">Response</p>
-                    <p className="text-3xl font-black text-neutral-900">420ms</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Smart Components */}
-        <div className="space-y-8 mb-12">
-          <SmartRecipeRecommendations
-            pantryItems={[
+          {/* Key Metrics Row */}
+          <motion.div
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            {[
               {
-                id: '1',
-                name: 'Whole Milk 1L',
-                quantity: 2,
-                unit: 'bottles',
-                category: 'Dairy',
-                expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                estimatedPrice: 2.50,
-                notes: 'Organic brand'
+                label: 'Active Lists',
+                value: stats.groceryLists.active,
+                total: stats.groceryLists.total,
+                icon: ShoppingCart,
+                color: 'blue',
+                trend: null
               },
               {
-                id: '2',
-                name: 'Chicken Breast 500g',
-                quantity: 1,
-                unit: 'pack',
-                category: 'Meat',
-                expiryDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-                purchaseDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                estimatedPrice: 4.50,
-                notes: 'Free-range'
-              }
-            ]}
-            userPreferences={{
-              dietaryRestrictions: [],
-              maxCookingTime: 60,
-              servingSize: 4
-            }}
-          />
-          <SmartShoppingListGenerator
-            pantryItems={[
-              {
-                id: '1',
-                name: 'Whole Milk 1L',
-                quantity: 2,
-                unit: 'bottles',
-                category: 'Dairy',
-                expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                estimatedPrice: 2.50,
-                notes: 'Organic brand'
+                label: 'Pantry Items',
+                value: stats.pantry.totalItems,
+                subtitle: `£${stats.pantry.totalValue.toFixed(2)}`,
+                icon: Package,
+                color: 'primary',
+                trend: null
               },
               {
-                id: '2',
-                name: 'Chicken Breast 500g',
-                quantity: 1,
-                unit: 'pack',
-                category: 'Meat',
-                expiryDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-                purchaseDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                estimatedPrice: 4.50,
-                notes: 'Free-range'
-              }
-            ]}
-            budgetLimit={100}
-            householdSize={4}
-          />
-          <SmartWasteDashboard
-            pantryItems={[
-              {
-                id: '1',
-                name: 'Whole Milk 1L',
-                quantity: 2,
-                unit: 'bottles',
-                category: 'Dairy',
-                expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                estimatedPrice: 2.50,
-                notes: 'Organic brand'
+                label: 'This Month',
+                value: `£${stats.spending.thisMonth.toFixed(2)}`,
+                subtitle: stats.spending.trend === 'up' ? '↑ vs last' : stats.spending.trend === 'down' ? '↓ vs last' : '— stable',
+                icon: DollarSign,
+                color: 'green',
+                trend: stats.spending.trend
               },
               {
-                id: '2',
-                name: 'Chicken Breast 500g',
-                quantity: 1,
-                unit: 'pack',
-                category: 'Meat',
-                expiryDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-                purchaseDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-                estimatedPrice: 4.50,
-                notes: 'Free-range'
+                label: 'Expiring Soon',
+                value: stats.pantry.expiringSoon,
+                subtitle: `${stats.pantry.lowStock} low stock`,
+                icon: AlertTriangle,
+                color: stats.pantry.expiringSoon > 0 ? 'red' : 'neutral',
+                trend: null
               }
-            ]}
-          />
-        </div>
-
-        {/* Bottom Grid - Activity & Insights */}
-        <motion.div
-          className="grid grid-cols-1 lg:grid-cols-3 gap-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-        >
-          {/* Recent Activity - 2 columns */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Recommendations */}
-            {recommendations.length > 0 && (
-              <div className="bg-white rounded-3xl border border-neutral-200/60 p-8">
-                <div className="flex items-center space-x-3 mb-6">
-                  <Star className="h-6 w-6 text-yellow-500" />
-                  <h3 className="text-xl font-bold text-neutral-900">Smart Recommendations</h3>
+            ].map((metric, index) => (
+              <motion.div
+                key={metric.label}
+                variants={fadeUp}
+                transition={{ delay: index * 0.05 }}
+              >
+                <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 p-5 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={`w-10 h-10 rounded-xl bg-${metric.color}-100 dark:bg-${metric.color}-900/30 flex items-center justify-center`}>
+                      <metric.icon className={`w-5 h-5 text-${metric.color}-600 dark:text-${metric.color}-400`} />
+                    </div>
+                    {metric.trend && metric.trend !== 'stable' && (
+                      <div className={`text-xs font-semibold ${metric.trend === 'up' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                        {metric.trend === 'up' ? '↑' : '↓'}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">{metric.label}</p>
+                  <p className="text-2xl font-black text-neutral-900 dark:text-neutral-100">
+                    {metric.value}
+                    {metric.total !== undefined && <span className="text-lg text-neutral-400 dark:text-neutral-500 font-bold ml-1">/ {metric.total}</span>}
+                  </p>
+                  {metric.subtitle && (
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{metric.subtitle}</p>
+                  )}
                 </div>
-                <div className="space-y-3">
-                  {recommendations.slice(0, 3).map((rec) => {
-                    const Icon = getRecommendationIcon(rec.type)
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            {/* Left Column - 2/3 width */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Quick Actions */}
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Quick Actions</h2>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {quickActions.map((action) => {
+                    const Icon = action.icon
                     return (
-                      <motion.div
-                        key={rec.id}
-                        className="flex items-start space-x-4 p-4 bg-neutral-50 rounded-2xl border border-neutral-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all"
-                        whileHover={{ x: 4 }}
+                      <MotionLink
+                        key={action.id}
+                        to={action.link}
+                        className="group"
+                        whileHover={{ y: -4 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${getPriorityColor(rec.priority)}`}>
-                          <Icon className="h-5 w-5" />
+                        <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all">
+                          <div className={`w-10 h-10 ${action.color} rounded-lg flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                            <Icon className="w-5 h-5 text-white" />
+                          </div>
+                          <p className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm mb-0.5">{action.title}</p>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">{action.description}</p>
                         </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-neutral-900 mb-1">{rec.title}</h4>
-                          <p className="text-sm text-neutral-600 mb-2">{rec.description}</p>
-                          <Link
-                            to={rec.link}
-                            className="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center group"
-                          >
-                            {rec.action}
-                            <ArrowRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                          </Link>
-                        </div>
-                      </motion.div>
+                      </MotionLink>
                     )
                   })}
                 </div>
-              </div>
-            )}
+              </motion.section>
 
-            {/* Recent Lists */}
-            <div className="bg-white rounded-3xl border border-neutral-200/60 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-neutral-900">Recent Lists</h3>
-                <Link to="/grocery-lists" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
-                  View all
-                </Link>
-              </div>
-              {stats.activity.recentLists.length > 0 ? (
-                <div className="space-y-3">
-                  {stats.activity.recentLists.slice(0, 3).map((list: any) => (
-                    <motion.div
-                      key={list.id}
-                      className="flex items-center justify-between p-4 bg-neutral-50 rounded-2xl border border-neutral-100 hover:border-blue-200 hover:bg-blue-50/50 transition-all"
-                      whileHover={{ x: 4 }}
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center">
-                          <ShoppingCart className="h-5 w-5 text-blue-600" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-neutral-900">{list.name}</h4>
-                          <p className="text-sm text-neutral-600">
-                            {list.items?.length || 0} items • {list.progress || 0}% complete
-                          </p>
+              {/* AI Features */}
+              <motion.section
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-white" />
+                    </div>
+                    <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">AI Intelligence</h2>
+                  </div>
+                  <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-full">Beta</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Food Classifier */}
+                  <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5 hover:shadow-md transition-shadow">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                        <Search className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
+                      <h3 className="font-bold text-neutral-900 dark:text-neutral-100">Food Classifier</h3>
+                    </div>
+                    <SmartFoodClassifier
+                      placeholder="Enter food name..."
+                      onClassification={(result) => console.log(result)}
+                    />
+                  </div>
+
+                  {/* AI Status */}
+                  <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5 hover:shadow-md transition-shadow">
+                    <div className="flex items-center space-x-2 mb-4">
+                      <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                        <Activity className="w-4 h-4 text-green-600 dark:text-green-400" />
+                      </div>
+                      <h3 className="font-bold text-neutral-900 dark:text-neutral-100">Service Status</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Neural Models</span>
+                        <div className="flex items-center space-x-1.5">
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                          <span className="text-xs font-bold text-green-600 dark:text-green-400">Online</span>
                         </div>
                       </div>
-                      {list.status === 'completed' && (
-                        <CheckCircle className="h-5 w-5 text-green-500" />
-                      )}
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <ShoppingCart className="h-12 w-12 text-neutral-300 mx-auto mb-3" />
-                  <p className="text-neutral-600 mb-4">No grocery lists yet</p>
-                  <Link to="/grocery-lists" className="btn btn-primary">
-                    Create Your First List
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Sidebar - 1 column */}
-          <div className="space-y-6">
-            {/* Goals */}
-            <div className="bg-white rounded-3xl border border-neutral-200/60 p-8">
-              <div className="flex items-center space-x-3 mb-6">
-                <Target className="h-6 w-6 text-primary-500" />
-                <h3 className="text-xl font-bold text-neutral-900">Weekly Goals</h3>
-              </div>
-              <div className="space-y-5">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-neutral-700">Shopping lists</span>
-                    <span className="text-sm font-bold text-neutral-900">2/3</span>
-                  </div>
-                  <div className="w-full bg-neutral-100 rounded-full h-2 overflow-hidden">
-                    <motion.div
-                      className="bg-gradient-to-r from-primary-500 to-blue-500 h-2 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: '67%' }}
-                      transition={{ duration: 1, delay: 0.2 }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-neutral-700">Expiry checks</span>
-                    <span className="text-sm font-bold text-neutral-900">5/8</span>
-                  </div>
-                  <div className="w-full bg-neutral-100 rounded-full h-2 overflow-hidden">
-                    <motion.div
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: '63%' }}
-                      transition={{ duration: 1, delay: 0.3 }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-neutral-700">New recipes</span>
-                    <span className="text-sm font-bold text-neutral-900">1/2</span>
-                  </div>
-                  <div className="w-full bg-neutral-100 rounded-full h-2 overflow-hidden">
-                    <motion.div
-                      className="bg-gradient-to-r from-orange-500 to-red-500 h-2 rounded-full"
-                      initial={{ width: 0 }}
-                      animate={{ width: '50%' }}
-                      transition={{ duration: 1, delay: 0.4 }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Pantry Breakdown */}
-            <div className="bg-white rounded-3xl border border-neutral-200/60 p-8">
-              <div className="flex items-center space-x-3 mb-6">
-                <BarChart3 className="h-6 w-6 text-purple-500" />
-                <h3 className="text-xl font-bold text-neutral-900">Pantry Mix</h3>
-              </div>
-              {Object.keys(stats.pantry.categories).length > 0 ? (
-                <div className="space-y-4">
-                  {Object.entries(stats.pantry.categories)
-                    .sort(([,a], [,b]) => b - a)
-                    .slice(0, 5)
-                    .map(([category, count]) => (
-                    <div key={category} className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-neutral-700">{category}</span>
-                      <div className="flex items-center space-x-3">
-                        <div className="w-20 bg-neutral-100 rounded-full h-2 overflow-hidden">
-                          <motion.div
-                            className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full"
-                            initial={{ width: 0 }}
-                            animate={{ width: `${(count / stats.pantry.totalItems) * 100}%` }}
-                            transition={{ duration: 1, delay: 0.2 }}
-                          />
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-600">
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Accuracy</p>
+                          <p className="text-xl font-black text-neutral-900 dark:text-neutral-100">97%</p>
                         </div>
-                        <span className="text-sm font-bold text-neutral-900 w-8 text-right">{count}</span>
+                        <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-600">
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Response</p>
+                          <p className="text-xl font-black text-neutral-900 dark:text-neutral-100">420ms</p>
+                        </div>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Package className="h-10 w-10 text-neutral-300 mx-auto mb-3" />
-                  <p className="text-sm text-neutral-600">No items yet</p>
-                </div>
+              </motion.section>
+
+              {/* Recent Activity */}
+              {stats.activity.recentLists.length > 0 && (
+                <motion.section
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Recent Lists</h2>
+                    <Link to="/app/grocery-lists" className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center">
+                      View all <ChevronRight className="w-4 h-4 ml-1" />
+                    </Link>
+                  </div>
+                  <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 divide-y divide-neutral-200 dark:divide-neutral-700">
+                    {stats.activity.recentLists.slice(0, 3).map((list: any) => (
+                      <div key={list.id} className="p-4 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                              <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                            </div>
+                            <div>
+                              <p className="font-semibold text-neutral-900 dark:text-neutral-100">{list.name}</p>
+                              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                {list.items?.length || 0} items • {list.progress || 0}% complete
+                              </p>
+                            </div>
+                          </div>
+                          {list.status === 'completed' && (
+                            <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.section>
               )}
             </div>
 
-            {/* Today's Activity */}
-            <div className="bg-white rounded-3xl border border-neutral-200/60 p-8">
-              <h3 className="text-xl font-bold text-neutral-900 mb-6">Today</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="text-sm font-medium text-neutral-700">Tasks done</span>
+            {/* Right Column - 1/3 width */}
+            <div className="space-y-6">
+              {/* Weekly Goals */}
+              <motion.section
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5">
+                  <div className="flex items-center space-x-2 mb-5">
+                    <Target className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    <h3 className="font-bold text-neutral-900 dark:text-neutral-100">Weekly Goals</h3>
                   </div>
-                  <span className="font-bold text-neutral-900">{stats.activity.completedTasks}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Clock className="h-5 w-5 text-blue-500" />
-                    <span className="text-sm font-medium text-neutral-700">Time saved</span>
+                  <div className="space-y-4">
+                    {[
+                      { label: 'Shopping lists', current: 2, target: 3, color: 'primary' },
+                      { label: 'Expiry checks', current: 5, target: 8, color: 'blue' },
+                      { label: 'New recipes', current: 1, target: 2, color: 'orange' }
+                    ].map((goal) => (
+                      <div key={goal.label}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{goal.label}</span>
+                          <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100">{goal.current}/{goal.target}</span>
+                        </div>
+                        <div className="w-full bg-neutral-100 dark:bg-neutral-700 rounded-full h-2">
+                          <motion.div
+                            className={`bg-gradient-to-r from-${goal.color}-500 to-${goal.color}-600 h-2 rounded-full`}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${(goal.current / goal.target) * 100}%` }}
+                            transition={{ duration: 1, delay: 0.3 }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <span className="font-bold text-neutral-900">2.5h</span>
                 </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Heart className="h-5 w-5 text-red-500" />
-                    <span className="text-sm font-medium text-neutral-700">Money saved</span>
+              </motion.section>
+
+              {/* Pantry Breakdown */}
+              <motion.section
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5">
+                  <div className="flex items-center space-x-2 mb-5">
+                    <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                    <h3 className="font-bold text-neutral-900 dark:text-neutral-100">Pantry Mix</h3>
                   </div>
-                  <span className="font-bold text-neutral-900">£{stats.spending.saved.toFixed(2)}</span>
+                  {Object.keys(stats.pantry.categories).length > 0 ? (
+                    <div className="space-y-3">
+                      {Object.entries(stats.pantry.categories)
+                        .sort(([,a], [,b]) => b - a)
+                        .slice(0, 5)
+                        .map(([category, count]) => (
+                        <div key={category} className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{category}</span>
+                          <div className="flex items-center space-x-2">
+                            <div className="w-16 bg-neutral-100 dark:bg-neutral-700 rounded-full h-1.5">
+                              <motion.div
+                                className="bg-gradient-to-r from-purple-500 to-blue-500 h-1.5 rounded-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(count / stats.pantry.totalItems) * 100}%` }}
+                                transition={{ duration: 1, delay: 0.2 }}
+                              />
+                            </div>
+                            <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100 w-6 text-right">{count}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <Package className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mx-auto mb-2" />
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">No items yet</p>
+                    </div>
+                  )}
                 </div>
-              </div>
+              </motion.section>
+
+              {/* Today's Activity */}
+              <motion.section
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5">
+                  <h3 className="font-bold text-neutral-900 dark:text-neutral-100 mb-4">Today</h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />
+                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Tasks done</span>
+                      </div>
+                      <span className="font-bold text-neutral-900 dark:text-neutral-100">{stats.activity.completedTasks}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Clock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Time saved</span>
+                      </div>
+                      <span className="font-bold text-neutral-900 dark:text-neutral-100">2.5h</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Heart className="w-4 h-4 text-red-500 dark:text-red-400" />
+                        <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Money saved</span>
+                      </div>
+                      <span className="font-bold text-neutral-900 dark:text-neutral-100">£{stats.spending.saved.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.section>
             </div>
           </div>
-        </motion.div>
+
+          {/* Expandable Sections */}
+          <div className="space-y-6">
+            {/* Smart Components - Collapsible */}
+            <details className="group">
+              <summary className="cursor-pointer bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5 hover:shadow-md transition-all">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-primary-500 flex items-center justify-center">
+                      <Brain className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Smart Recommendations</h2>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">AI-powered insights for your kitchen</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-neutral-400 dark:text-neutral-500 group-open:rotate-90 transition-transform" />
+                </div>
+              </summary>
+              <div className="mt-4 space-y-6">
+                <SmartRecipeRecommendations
+                  pantryItems={[
+                    {
+                      id: '1',
+                      name: 'Whole Milk 1L',
+                      quantity: 2,
+                      unit: 'bottles',
+                      category: 'Dairy',
+                      expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+                      purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                      estimatedPrice: 2.50,
+                      notes: 'Organic brand'
+                    }
+                  ]}
+                  userPreferences={{
+                    dietaryRestrictions: [],
+                    maxCookingTime: 60,
+                    servingSize: 4
+                  }}
+                />
+                <SmartShoppingListGenerator
+                  pantryItems={[
+                    {
+                      id: '1',
+                      name: 'Whole Milk 1L',
+                      quantity: 2,
+                      unit: 'bottles',
+                      category: 'Dairy',
+                      expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+                      purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                      estimatedPrice: 2.50,
+                      notes: 'Organic brand'
+                    }
+                  ]}
+                  budgetLimit={100}
+                  householdSize={4}
+                />
+                <SmartWasteDashboard
+                  pantryItems={[
+                    {
+                      id: '1',
+                      name: 'Whole Milk 1L',
+                      quantity: 2,
+                      unit: 'bottles',
+                      category: 'Dairy',
+                      expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+                      purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+                      estimatedPrice: 2.50,
+                      notes: 'Organic brand'
+                    }
+                  ]}
+                />
+              </div>
+            </details>
+          </div>
+        </div>
       </div>
     </>
   )

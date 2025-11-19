@@ -21,12 +21,18 @@ router.get('/profile', authenticateJWT, async (req, res) => {
       .first();
     
     res.json({
-      user: {
+      profile: {
         id: user.id,
         email: user.email,
         firstName: user.first_name,
         lastName: user.last_name,
         avatarUrl: user.avatar_url,
+        phone: user.phone,
+        age: user.age,
+        address: user.address,
+        city: user.city,
+        postalCode: user.postal_code,
+        country: user.country,
         isVerified: user.is_verified,
         role: user.role,
         createdAt: user.created_at,
@@ -43,18 +49,47 @@ router.get('/profile', authenticateJWT, async (req, res) => {
 // Update user profile
 router.put('/profile', authenticateJWT, async (req, res) => {
   try {
-    const { firstName, lastName, avatarUrl } = req.body;
-    
+    const {
+      firstName,
+      lastName,
+      name,
+      avatarUrl,
+      email,
+      phone,
+      age,
+      address,
+      city,
+      postalCode,
+      country
+    } = req.body;
+
+    // Parse name into firstName and lastName if provided
+    let parsedFirstName = firstName;
+    let parsedLastName = lastName;
+
+    if (name && !firstName && !lastName) {
+      const nameParts = name.split(' ');
+      parsedFirstName = nameParts[0] || '';
+      parsedLastName = nameParts.slice(1).join(' ') || '';
+    }
+
     const [updatedUser] = await db('users')
       .where({ id: req.user.id })
       .update({
-        first_name: firstName,
-        last_name: lastName,
+        first_name: parsedFirstName,
+        last_name: parsedLastName,
         avatar_url: avatarUrl,
+        email: email,
+        phone: phone,
+        age: age,
+        address: address,
+        city: city,
+        postal_code: postalCode,
+        country: country,
         updated_at: new Date()
       })
       .returning('*');
-    
+
     res.json({
       user: {
         id: updatedUser.id,
@@ -62,6 +97,12 @@ router.put('/profile', authenticateJWT, async (req, res) => {
         firstName: updatedUser.first_name,
         lastName: updatedUser.last_name,
         avatarUrl: updatedUser.avatar_url,
+        phone: updatedUser.phone,
+        age: updatedUser.age,
+        address: updatedUser.address,
+        city: updatedUser.city,
+        postalCode: updatedUser.postal_code,
+        country: updatedUser.country,
         isVerified: updatedUser.is_verified,
         role: updatedUser.role,
         createdAt: updatedUser.created_at,

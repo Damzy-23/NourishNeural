@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ChefHat, Clock, Users, Star, TrendingUp } from 'lucide-react';
+import { ChefHat, Clock, Users, Star, TrendingUp, X, ShoppingCart, ChevronRight, Search, Filter, ArrowUpDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import RecipeScaler from './RecipeScaler';
 
 interface Recipe {
   id: string;
@@ -12,6 +14,7 @@ interface Recipe {
   rating: number;
   category: string;
   imageUrl?: string;
+  instructions?: string[];
   nutritionInfo?: {
     calories: number;
     protein: number;
@@ -29,13 +32,18 @@ interface SmartRecipeRecommendationsProps {
   };
 }
 
-export default function SmartRecipeRecommendations({ 
-  pantryItems, 
-  userPreferences 
+export default function SmartRecipeRecommendations({
+  pantryItems,
+  userPreferences
 }: SmartRecipeRecommendationsProps) {
   const [recommendedRecipes, setRecommendedRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [showRecipeModal, setShowRecipeModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'rating' | 'time' | 'name'>('rating');
 
   useEffect(() => {
     if (pantryItems.length > 0) {
@@ -52,48 +60,85 @@ export default function SmartRecipeRecommendations({
         id: '1',
         name: 'Quick Pasta Primavera',
         description: 'Fresh vegetables with pasta in a light cream sauce',
-        ingredients: ['Pasta', 'Tomatoes', 'Onions', 'Garlic', 'Cream'],
+        ingredients: ['400g Pasta', '3 Tomatoes', '1 Onion', '4 cloves Garlic', '200ml Cream', '2 tbsp Olive Oil', '1/2 tsp Salt', '1/4 tsp Black Pepper', 'Fresh Basil', '50g Parmesan'],
         cookingTime: 25,
         servings: 4,
         difficulty: 'Easy',
         rating: 4.5,
         category: 'Italian',
+        instructions: [
+          'Boil pasta in salted water until al dente, about 8-10 minutes',
+          'Sauté chopped onions and garlic in olive oil until fragrant',
+          'Add diced tomatoes and cook for 5 minutes',
+          'Pour in cream and simmer for 3 minutes',
+          'Toss cooked pasta with the sauce',
+          'Season with salt, pepper, and fresh basil',
+          'Serve hot with grated Parmesan cheese'
+        ],
         nutritionInfo: { calories: 420, protein: 15, carbs: 65, fat: 12 }
       },
       {
         id: '2',
         name: 'Stir-Fry Chicken & Vegetables',
         description: 'Asian-inspired stir-fry with fresh vegetables',
-        ingredients: ['Chicken Breast', 'Bell Peppers', 'Broccoli', 'Soy Sauce', 'Rice'],
+        ingredients: ['500g Chicken Breast', '2 Bell Peppers', '200g Broccoli', '3 tbsp Soy Sauce', '300g Rice', '1 tbsp Sesame Oil', '1 inch Ginger', '3 cloves Garlic', '1 tbsp Cornstarch'],
         cookingTime: 20,
         servings: 3,
         difficulty: 'Easy',
         rating: 4.3,
         category: 'Asian',
+        instructions: [
+          'Cook rice according to package instructions',
+          'Slice chicken into thin strips and season with cornstarch',
+          'Heat sesame oil in a wok over high heat',
+          'Stir-fry chicken until golden, about 3-4 minutes',
+          'Add ginger, garlic, and vegetables, stir-fry for 3 minutes',
+          'Add soy sauce and toss to combine',
+          'Serve over steamed rice'
+        ],
         nutritionInfo: { calories: 380, protein: 28, carbs: 35, fat: 15 }
       },
       {
         id: '3',
         name: 'Mediterranean Quinoa Bowl',
         description: 'Healthy quinoa bowl with fresh vegetables and feta',
-        ingredients: ['Quinoa', 'Cucumber', 'Tomatoes', 'Olives', 'Feta Cheese'],
+        ingredients: ['1 cup Quinoa', '1 Cucumber', '2 Tomatoes', '1/2 cup Olives', '100g Feta Cheese', '2 tbsp Olive Oil', '1 Lemon', '1/4 cup Fresh Parsley', 'Salt and Pepper'],
         cookingTime: 30,
         servings: 2,
         difficulty: 'Medium',
         rating: 4.7,
         category: 'Mediterranean',
+        instructions: [
+          'Rinse quinoa and cook in 2 cups of water for 15 minutes',
+          'Dice cucumber and tomatoes',
+          'Slice olives and crumble feta cheese',
+          'Fluff quinoa and let cool slightly',
+          'Combine all vegetables with quinoa',
+          'Dress with olive oil, lemon juice, salt, and pepper',
+          'Garnish with fresh parsley and serve'
+        ],
         nutritionInfo: { calories: 350, protein: 12, carbs: 45, fat: 18 }
       },
       {
         id: '4',
         name: 'Classic Beef Stew',
         description: 'Hearty beef stew with root vegetables',
-        ingredients: ['Beef', 'Carrots', 'Potatoes', 'Onions', 'Beef Stock'],
+        ingredients: ['750g Beef Chuck', '4 Carrots', '500g Potatoes', '2 Onions', '500ml Beef Stock', '2 tbsp Tomato Paste', '2 tbsp Flour', '3 cloves Garlic', '2 Bay Leaves', '1 tsp Thyme'],
         cookingTime: 120,
         servings: 6,
         difficulty: 'Medium',
         rating: 4.8,
         category: 'Comfort Food',
+        instructions: [
+          'Cut beef into 2-inch cubes and season with salt and pepper',
+          'Coat beef in flour and brown in batches in a Dutch oven',
+          'Sauté onions and garlic until softened',
+          'Add tomato paste and cook for 1 minute',
+          'Return beef to pot with stock, bay leaves, and thyme',
+          'Bring to boil, then reduce to simmer for 1.5 hours',
+          'Add carrots and potatoes, cook for 30 more minutes',
+          'Season to taste and serve hot'
+        ],
         nutritionInfo: { calories: 450, protein: 35, carbs: 25, fat: 22 }
       }
     ];
@@ -173,21 +218,109 @@ export default function SmartRecipeRecommendations({
         </div>
       </div>
 
-      {/* Filter */}
-      <div className="flex space-x-2 overflow-x-auto">
-        {['all', 'Easy', 'Medium', 'Hard'].map((filter) => (
-          <button
-            key={filter}
-            onClick={() => setSelectedCategory(filter)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              selectedCategory === filter
-                ? 'bg-orange-500 text-white'
-                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-            }`}
-          >
-            {filter === 'all' ? 'All Recipes' : filter}
-          </button>
-        ))}
+      {/* Search and Filters */}
+      <div className="card">
+        <div className="card-content">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Search */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <Search className="h-4 w-4 inline mr-1" />
+                Search Recipes
+              </label>
+              <div className="relative">
+                <Search className="h-4 w-4 absolute left-3 top-3 text-neutral-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="input pl-10"
+                  placeholder="Search by name..."
+                />
+              </div>
+            </div>
+
+            {/* Difficulty Filter */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <Filter className="h-4 w-4 inline mr-1" />
+                Difficulty
+              </label>
+              <select
+                value={difficultyFilter}
+                onChange={(e) => setDifficultyFilter(e.target.value)}
+                className="input"
+              >
+                <option value="all">All Levels</option>
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+
+            {/* Category Filter */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <ChefHat className="h-4 w-4 inline mr-1" />
+                Category
+              </label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="input"
+              >
+                <option value="all">All Categories</option>
+                <option value="Italian">Italian</option>
+                <option value="Asian">Asian</option>
+                <option value="Mediterranean">Mediterranean</option>
+                <option value="Comfort Food">Comfort Food</option>
+                <option value="Healthy">Healthy</option>
+              </select>
+            </div>
+
+            {/* Sort By */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <ArrowUpDown className="h-4 w-4 inline mr-1" />
+                Sort By
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'rating' | 'time' | 'name')}
+                className="input"
+              >
+                <option value="rating">Highest Rated</option>
+                <option value="time">Quickest</option>
+                <option value="name">Name (A-Z)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Clear Filters Button */}
+          <div className="mt-4 flex justify-between items-center pt-4 border-t border-neutral-200">
+            <p className="text-sm text-neutral-600">
+              Showing <span className="font-semibold text-neutral-900">{recommendedRecipes.filter(recipe => {
+                const matchesSearch = recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  recipe.description.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesDifficulty = difficultyFilter === 'all' || recipe.difficulty === difficultyFilter;
+                const matchesCategory = selectedCategory === 'all' || recipe.category === selectedCategory;
+                return matchesSearch && matchesDifficulty && matchesCategory;
+              }).length}</span> of{' '}
+              <span className="font-semibold text-neutral-900">{recommendedRecipes.length}</span> recipes
+            </p>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setDifficultyFilter('all');
+                setSelectedCategory('all');
+                setSortBy('rating');
+              }}
+              className="btn btn-outline btn-sm"
+            >
+              Clear Filters
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Recipes Grid */}
@@ -206,7 +339,25 @@ export default function SmartRecipeRecommendations({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {recommendedRecipes
-            .filter(recipe => selectedCategory === 'all' || recipe.difficulty === selectedCategory)
+            .filter(recipe => {
+              const matchesSearch = recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                recipe.description.toLowerCase().includes(searchTerm.toLowerCase());
+              const matchesDifficulty = difficultyFilter === 'all' || recipe.difficulty === difficultyFilter;
+              const matchesCategory = selectedCategory === 'all' || recipe.category === selectedCategory;
+              return matchesSearch && matchesDifficulty && matchesCategory;
+            })
+            .sort((a, b) => {
+              switch (sortBy) {
+                case 'rating':
+                  return b.rating - a.rating;
+                case 'time':
+                  return a.cookingTime - b.cookingTime;
+                case 'name':
+                  return a.name.localeCompare(b.name);
+                default:
+                  return 0;
+              }
+            })
             .map((recipe) => (
             <div key={recipe.id} className="card hover:shadow-medium transition-all duration-200 group">
               <div className="card-content">
@@ -281,7 +432,13 @@ export default function SmartRecipeRecommendations({
                 </div>
 
                 {/* Action Button */}
-                <button className="w-full btn btn-outline btn-sm group-hover:btn-primary transition-colors">
+                <button
+                  onClick={() => {
+                    setSelectedRecipe(recipe);
+                    setShowRecipeModal(true);
+                  }}
+                  className="w-full btn btn-outline btn-sm group-hover:btn-primary transition-colors"
+                >
                   <ChefHat className="h-4 w-4 mr-2" />
                   View Recipe
                 </button>
@@ -303,6 +460,124 @@ export default function SmartRecipeRecommendations({
           </div>
         </div>
       )}
+
+      {/* No Filtered Results Message */}
+      {!isLoading && recommendedRecipes.length > 0 && recommendedRecipes.filter(recipe => {
+        const matchesSearch = recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          recipe.description.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesDifficulty = difficultyFilter === 'all' || recipe.difficulty === difficultyFilter;
+        const matchesCategory = selectedCategory === 'all' || recipe.category === selectedCategory;
+        return matchesSearch && matchesDifficulty && matchesCategory;
+      }).length === 0 && (
+        <div className="card">
+          <div className="card-content text-center py-8">
+            <Search className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-neutral-900 mb-2">No recipes match your filters</h3>
+            <p className="text-neutral-600 mb-4">
+              Try adjusting your search or filter criteria.
+            </p>
+            <button
+              onClick={() => {
+                setSearchTerm('');
+                setDifficultyFilter('all');
+                setSelectedCategory('all');
+                setSortBy('rating');
+              }}
+              className="btn btn-primary"
+            >
+              Clear All Filters
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Recipe Detail Modal */}
+      <AnimatePresence>
+        {showRecipeModal && selectedRecipe && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-neutral-200 px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-neutral-900">{selectedRecipe.name}</h2>
+                  <p className="text-sm text-neutral-600 mt-1">{selectedRecipe.description}</p>
+                </div>
+                <button
+                  onClick={() => setShowRecipeModal(false)}
+                  className="btn btn-ghost btn-sm"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6 space-y-6">
+                {/* Recipe Meta */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4 text-sm text-neutral-600">
+                    <div className="flex items-center space-x-1">
+                      <Clock className="h-4 w-4" />
+                      <span>{selectedRecipe.cookingTime} min</span>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${getDifficultyColor(selectedRecipe.difficulty)}`}>
+                      {selectedRecipe.difficulty}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <Star className="h-5 w-5 text-yellow-500 fill-current" />
+                    <span className="font-semibold text-neutral-900">{selectedRecipe.rating}</span>
+                  </div>
+                </div>
+
+                {/* Recipe Scaler with Ingredients and Nutrition */}
+                <RecipeScaler
+                  recipeName={selectedRecipe.name}
+                  ingredients={selectedRecipe.ingredients}
+                  baseServings={selectedRecipe.servings}
+                  nutritionInfo={selectedRecipe.nutritionInfo}
+                />
+
+                {/* Instructions */}
+                <div>
+                  <h3 className="font-semibold text-neutral-900 mb-3 flex items-center">
+                    <ChefHat className="h-5 w-5 mr-2 text-orange-600" />
+                    Instructions
+                  </h3>
+                  <ol className="space-y-3">
+                    {(selectedRecipe.instructions || ['Instructions coming soon...']).map((instruction, index) => (
+                      <li key={index} className="flex items-start space-x-3">
+                        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-orange-100 text-orange-600 text-sm font-semibold flex items-center justify-center">
+                          {index + 1}
+                        </span>
+                        <span className="text-neutral-700 flex-1">{instruction}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex space-x-3 pt-4 border-t border-neutral-200">
+                  <button className="flex-1 btn btn-primary">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add Missing to List
+                  </button>
+                  <button
+                    onClick={() => setShowRecipeModal(false)}
+                    className="flex-1 btn btn-outline"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

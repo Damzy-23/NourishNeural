@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from 'react-query'
 import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './hooks/useAuth'
+import { ThemeProvider } from './contexts/ThemeContext'
 import App from './App.tsx'
 import './index.css'
 
@@ -23,10 +24,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <BrowserRouter>
-            <App />
-            <Toaster
+        <ThemeProvider>
+          <AuthProvider>
+            <BrowserRouter>
+              <App />
+              <Toaster
               position="top-right"
               toastOptions={{
                 duration: 4000,
@@ -49,9 +51,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   },
                 },
               }}
-            />
-          </BrowserRouter>
-        </AuthProvider>
+              />
+            </BrowserRouter>
+          </AuthProvider>
+        </ThemeProvider>
       </QueryClientProvider>
     </HelmetProvider>
   </React.StrictMode>,

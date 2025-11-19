@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
-import { Eye, EyeOff, Mail, Lock, User, BrainCircuit, AlertCircle, CheckCircle } from 'lucide-react'
+import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fadeUp, scaleIn, staggerContainer } from '../utils/motion'
 import { supabase } from '../lib/supabase'
@@ -225,7 +225,7 @@ export default function Register() {
         <meta name="description" content="Sign up for Nourish Neural and start managing your food smarter" />
       </Helmet>
 
-      <div className="min-h-screen gradient-bg-primary flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="min-h-screen gradient-bg-primary dark:bg-gradient-to-br dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
         <motion.div
           className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-accent-300/25 blur-3xl"
           animate={{ y: [0, -30, 0], opacity: [0.6, 0.9, 0.6] }}
@@ -243,25 +243,25 @@ export default function Register() {
           animate="visible"
         >
           <motion.div
-            className="hidden lg:flex flex-col justify-between rounded-[32px] border border-white/50 bg-white/80 backdrop-blur-xl shadow-2xl shadow-primary-500/20 p-10 space-y-8"
+            className="hidden lg:flex flex-col justify-between rounded-[32px] border border-white/50 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-xl shadow-2xl shadow-primary-500/20 p-10 space-y-8"
             variants={scaleIn}
             transition={{ duration: 0.7 }}
           >
             <motion.div
-              className="inline-flex items-center space-x-3 rounded-full border border-primary-200/70 bg-white/85 px-4 py-2 text-sm font-semibold text-primary-700 shadow-soft"
+              className="inline-flex items-center space-x-3 rounded-full border border-primary-200/70 dark:border-primary-700/70 bg-white/85 dark:bg-neutral-800/85 px-4 py-2 text-sm font-semibold text-primary-700 dark:text-primary-300 shadow-soft"
               variants={fadeUp}
             >
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20">
-                <BrainCircuit className="h-4 w-4" />
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20 dark:from-primary-400/30 dark:to-accent-400/30">
+                <img src="/favicon.svg" alt="Nourish Neural" className="h-4 w-4" />
               </span>
               <span>Activate neural nourishment for your household</span>
             </motion.div>
 
             <motion.div className="space-y-4" variants={fadeUp} transition={{ duration: 0.65 }}>
-              <h2 className="text-4xl font-bold text-neutral-900 leading-tight">
+              <h2 className="text-4xl font-bold text-neutral-900 dark:text-neutral-100 leading-tight">
                 Create your <span className="gradient-text">Nourish Neural</span> identity.
               </h2>
-              <p className="text-neutral-600 text-lg leading-relaxed">
+              <p className="text-neutral-600 dark:text-neutral-300 text-lg leading-relaxed">
                 Unlock predictive grocery planning, AI-crafted pantry insights, and zero-waste coaching—all tuned to
                 your lifestyle.
               </p>
@@ -271,14 +271,14 @@ export default function Register() {
               {onboardingHighlights.map((highlight, index) => (
                 <motion.li
                   key={highlight}
-                  className="flex items-start space-x-3 rounded-2xl border border-primary-100/60 bg-white/75 px-5 py-4 shadow-soft"
+                  className="flex items-start space-x-3 rounded-2xl border border-primary-100/60 dark:border-primary-700/60 bg-white/75 dark:bg-neutral-800/75 px-5 py-4 shadow-soft"
                   variants={fadeUp}
                   transition={{ duration: 0.5, delay: index * 0.06 }}
                 >
-                  <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary-500/15 text-primary-600">
+                  <span className="mt-1 inline-flex h-6 w-6 items-center justify-center rounded-full bg-primary-500/15 dark:bg-primary-500/25 text-primary-600 dark:text-primary-400">
                     <CheckCircle className="h-4 w-4" />
                   </span>
-                  <span className="text-neutral-700 text-sm leading-relaxed">{highlight}</span>
+                  <span className="text-neutral-700 dark:text-neutral-300 text-sm leading-relaxed">{highlight}</span>
                 </motion.li>
               ))}
             </motion.ul>
@@ -292,18 +292,18 @@ export default function Register() {
               ].map((stat) => (
                 <motion.div
                   key={stat.label}
-                  className="rounded-2xl border border-primary-100/70 bg-white/80 px-5 py-4 text-left shadow-soft"
+                  className="rounded-2xl border border-primary-100/70 dark:border-primary-700/60 bg-white/80 dark:bg-neutral-800/80 px-5 py-4 text-left shadow-soft"
                   whileHover={{ y: -4, scale: 1.03 }}
                 >
-                  <p className="text-xs uppercase tracking-[0.18em] text-primary-500">{stat.label}</p>
-                  <p className="text-2xl font-semibold text-neutral-900 mt-1">{stat.value}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] text-primary-500 dark:text-primary-400">{stat.label}</p>
+                  <p className="text-2xl font-semibold text-neutral-900 dark:text-neutral-100 mt-1">{stat.value}</p>
                 </motion.div>
               ))}
             </motion.div>
           </motion.div>
 
           <motion.div
-            className="max-w-md w-full mx-auto lg:mx-0 space-y-8 rounded-[28px] border border-white/40 bg-white/85 backdrop-blur-xl shadow-xl shadow-primary-500/10 p-10"
+            className="max-w-md w-full mx-auto lg:mx-0 space-y-8 rounded-[28px] border border-white/40 dark:border-neutral-700/60 bg-white/85 dark:bg-neutral-800/85 backdrop-blur-xl shadow-xl shadow-primary-500/10 p-10"
             variants={scaleIn}
             transition={{ duration: 0.7, delay: 0.12 }}
           >
@@ -313,27 +313,27 @@ export default function Register() {
                 variants={fadeUp}
                 transition={{ duration: 0.6 }}
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-lg">
-                  <BrainCircuit className="h-8 w-8 text-white" />
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+                  <img src="/favicon.svg" alt="Nourish Neural" className="h-16 w-16" />
                 </div>
                 <span className="text-4xl font-bold gradient-text">Nourish Neural</span>
               </motion.div>
-              <motion.h2 className="text-3xl font-bold text-neutral-900" variants={fadeUp} transition={{ duration: 0.55 }}>
+              <motion.h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100" variants={fadeUp} transition={{ duration: 0.55 }}>
                 Create your account
               </motion.h2>
-              <motion.p className="text-neutral-600 text-base" variants={fadeUp}>
+              <motion.p className="text-neutral-600 dark:text-neutral-400 text-base" variants={fadeUp}>
                 Calibrate your culinary copilot in under two minutes.
               </motion.p>
             </motion.div>
 
             {errors.general && (
               <motion.div
-                className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-3"
+                className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg flex items-center space-x-3"
                 initial={{ opacity: 0, y: -12 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                <p className="text-red-700 text-sm">{errors.general}</p>
+                <AlertCircle className="h-5 w-5 text-red-500 dark:text-red-400 flex-shrink-0" />
+                <p className="text-red-700 dark:text-red-300 text-sm">{errors.general}</p>
               </motion.div>
             )}
 
@@ -347,7 +347,7 @@ export default function Register() {
               {/* Name Fields */}
               <motion.div className="grid grid-cols-1 gap-4 md:grid-cols-2" variants={fadeUp}>
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label htmlFor="firstName" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     First name
                   </label>
                   <div className="relative">
@@ -362,7 +362,7 @@ export default function Register() {
                       value={formData.firstName}
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                        errors.firstName ? 'border-red-300 bg-red-50' : 'border-neutral-300 bg-white'
+                        errors.firstName ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 dark:text-neutral-100'
                       }`}
                       placeholder="John"
                     />
@@ -373,7 +373,7 @@ export default function Register() {
                 </div>
 
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label htmlFor="lastName" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Last name
                   </label>
                   <div className="relative">
@@ -388,7 +388,7 @@ export default function Register() {
                       value={formData.lastName}
                       onChange={handleChange}
                       className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                        errors.lastName ? 'border-red-300 bg-red-50' : 'border-neutral-300 bg-white'
+                        errors.lastName ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 dark:text-neutral-100'
                       }`}
                       placeholder="Doe"
                     />
@@ -401,7 +401,7 @@ export default function Register() {
 
               {/* Email Field */}
               <motion.div variants={fadeUp}>
-                <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Email address
                 </label>
                 <div className="relative">
@@ -416,7 +416,7 @@ export default function Register() {
                     value={formData.email}
                     onChange={handleChange}
                     className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                      errors.email ? 'border-red-300 bg-red-50' : 'border-neutral-300 bg-white'
+                      errors.email ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 dark:text-neutral-100'
                     }`}
                     placeholder="john@example.com"
                   />
@@ -428,7 +428,7 @@ export default function Register() {
 
               {/* Age Field */}
               <motion.div variants={fadeUp}>
-                <label htmlFor="age" className="block text-sm font-medium text-neutral-700 mb-2">
+                <label htmlFor="age" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Age
                 </label>
                 <div className="relative">
@@ -445,7 +445,7 @@ export default function Register() {
                     value={formData.age}
                     onChange={handleChange}
                     className={`block w-full pl-10 pr-3 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                      errors.age ? 'border-red-300 bg-red-50' : 'border-neutral-300 bg-white'
+                      errors.age ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 dark:text-neutral-100'
                     }`}
                     placeholder="Enter your age"
                   />
@@ -457,7 +457,7 @@ export default function Register() {
 
               {/* Password Field */}
               <motion.div variants={fadeUp}>
-                <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Password
                 </label>
                 <div className="relative">
@@ -472,7 +472,7 @@ export default function Register() {
                     value={formData.password}
                     onChange={handleChange}
                     className={`block w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                      errors.password ? 'border-red-300 bg-red-50' : 'border-neutral-300 bg-white'
+                      errors.password ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 dark:text-neutral-100'
                     }`}
                     placeholder="Create a strong password"
                   />
@@ -511,7 +511,7 @@ export default function Register() {
 
               {/* Confirm Password Field */}
               <motion.div variants={fadeUp}>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-700 mb-2">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Confirm password
                 </label>
                 <div className="relative">
@@ -526,7 +526,7 @@ export default function Register() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     className={`block w-full pl-10 pr-12 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                      errors.confirmPassword ? 'border-red-300 bg-red-50' : 'border-neutral-300 bg-white'
+                      errors.confirmPassword ? 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20' : 'border-neutral-300 dark:border-neutral-600 bg-white dark:bg-neutral-700 dark:text-neutral-100'
                     }`}
                     placeholder="Confirm your password"
                   />
@@ -560,13 +560,13 @@ export default function Register() {
                       errors.agreeToTerms ? 'border-red-300' : ''
                     }`}
                   />
-                  <label htmlFor="agreeToTerms" className="text-sm text-neutral-700">
+                  <label htmlFor="agreeToTerms" className="text-sm text-neutral-700 dark:text-neutral-300">
                     I agree to the{' '}
-                    <Link to="/terms" className="text-primary-600 hover:text-primary-500 transition-colors">
+                    <Link to="/terms" className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors">
                       Terms of Service
                     </Link>{' '}
                     and{' '}
-                    <Link to="/privacy" className="text-primary-600 hover:text-primary-500 transition-colors">
+                    <Link to="/privacy" className="text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors">
                       Privacy Policy
                     </Link>
                   </label>
@@ -602,10 +602,10 @@ export default function Register() {
             <motion.div className="mt-6" variants={fadeUp} transition={{ duration: 0.5, delay: 0.08 }}>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-neutral-300" />
+                  <div className="w-full border-t border-neutral-300 dark:border-neutral-600" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-neutral-500">Or continue with</span>
+                  <span className="px-2 bg-white dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400">Or continue with</span>
                 </div>
               </div>
             </motion.div>
@@ -642,11 +642,11 @@ export default function Register() {
 
           {/* Sign In Link */}
           <motion.div className="text-center" variants={fadeUp} transition={{ duration: 0.5, delay: 0.18 }}>
-            <p className="text-neutral-600">
+            <p className="text-neutral-600 dark:text-neutral-400">
               Already have an account?{' '}
               <Link
                 to="/login"
-                className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
+                className="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500 dark:hover:text-primary-300 transition-colors"
               >
                 Sign in here
               </Link>

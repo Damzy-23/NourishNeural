@@ -25,6 +25,7 @@ const storeRoutes = require('./routes/stores');
 const aiRoutes = require('./routes/ai');
 const pantryRoutes = require('./routes/pantry');
 const mlRoutes = require('./routes/ml');
+const smartFeaturesRoutes = require('./routes/smart-features');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -140,20 +141,26 @@ app.get('/api/pantry/categories', (req, res) => {
   });
 });
 
+// Mock grocery lists in-memory storage
+let mockGroceryLists = [
+  { id: '1', name: 'Weekly Shopping', status: 'active', items: [
+    { id: '1', name: 'Milk', quantity: 2, unit: 'litres', category: 'Dairy', isChecked: false, estimatedPrice: 2.40 },
+    { id: '2', name: 'Bread', quantity: 1, unit: 'loaf', category: 'Grains', isChecked: true, estimatedPrice: 1.50 },
+    { id: '3', name: 'Apples', quantity: 6, unit: 'pieces', category: 'Fruits', isChecked: false, estimatedPrice: 3.00 }
+  ], totalEstimatedCost: 6.90, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+  { id: '2', name: 'Dinner Party', status: 'completed', items: [
+    { id: '4', name: 'Wine', quantity: 2, unit: 'bottles', category: 'Beverages', isChecked: true, estimatedPrice: 12.00 },
+    { id: '5', name: 'Cheese', quantity: 200, unit: 'grams', category: 'Dairy', isChecked: true, estimatedPrice: 4.00 }
+  ], totalEstimatedCost: 16.00, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+];
+
+let nextListId = 3;
+let nextItemId = 6;
+
 // Mock grocery lists endpoints
 app.get('/api/groceries', (req, res) => {
   res.json({
-    lists: [
-      { id: 1, name: 'Weekly Shopping', status: 'active', items: [
-        { id: 1, name: 'Milk', quantity: 2, unit: 'litres', category: 'Dairy', isChecked: false, estimatedPrice: 2.40 },
-        { id: 2, name: 'Bread', quantity: 1, unit: 'loaf', category: 'Grains', isChecked: true, estimatedPrice: 1.50 },
-        { id: 3, name: 'Apples', quantity: 6, unit: 'pieces', category: 'Fruits', isChecked: false, estimatedPrice: 3.00 }
-      ], totalEstimatedCost: 6.90, createdAt: new Date().toISOString() },
-      { id: 2, name: 'Dinner Party', status: 'completed', items: [
-        { id: 4, name: 'Wine', quantity: 2, unit: 'bottles', category: 'Beverages', isChecked: true, estimatedPrice: 12.00 },
-        { id: 5, name: 'Cheese', quantity: 200, unit: 'grams', category: 'Dairy', isChecked: true, estimatedPrice: 4.00 }
-      ], totalEstimatedCost: 16.00, createdAt: new Date().toISOString() }
-    ]
+    lists: mockGroceryLists
   });
 });
 
@@ -169,6 +176,7 @@ app.post('/api/ai/chat', (req, res) => {
 
 // API routes - Use Supabase auth routes
 app.use('/api/auth', supabaseAuthRoutes);
+app.use('/api/smart', smartFeaturesRoutes);
 // app.use('/api/users', userRoutes);
 
 // Mock endpoints must be defined before route handlers to take precedence
@@ -227,42 +235,91 @@ app.put('/api/users/profile', async (req, res) => {
     }
 
     const token = authHeader.substring(7);
-    const session = mockDB.getSession(token);
 
-    if (!session) {
+    // Use Supabase to verify token and get user
+    if (!supabase) {
+      return res.status(500).json({
+        error: 'Supabase not configured',
+        details: 'Please set SUPABASE_URL and SUPABASE_SERVICE_KEY in your .env file'
+      });
+    }
+
+    // Get user from token
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
       return res.status(401).json({
         error: 'Invalid token',
         details: 'Token is invalid or expired'
       });
     }
 
-    const user = mockDB.getUserById(session.userId);
-    if (!user) {
-      return res.status(404).json({
-        error: 'User not found',
-        details: 'User profile not found'
+    // Parse name into firstName and lastName if provided
+    let firstName = req.body.firstName;
+    let lastName = req.body.lastName;
+
+    if (req.body.name && !req.body.firstName && !req.body.lastName) {
+      const nameParts = req.body.name.split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || '';
+    }
+
+    // Update user profile in Supabase
+    const { data: updatedProfile, error: updateError } = await supabase
+      .from('user_profiles')
+      .upsert({
+        id: user.id,
+        first_name: firstName || user.user_metadata?.first_name,
+        last_name: lastName || user.user_metadata?.last_name,
+        email: req.body.email || user.email,
+        age: req.body.age !== undefined ? req.body.age : null,
+        phone: req.body.phone !== undefined ? req.body.phone : null,
+        address: req.body.address !== undefined ? req.body.address : null,
+        city: req.body.city !== undefined ? req.body.city : null,
+        postal_code: req.body.postalCode !== undefined ? req.body.postalCode : null,
+        country: req.body.country !== undefined ? req.body.country : null,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'id' })
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Supabase profile update error:', updateError);
+      return res.status(500).json({
+        error: 'Failed to update profile',
+        details: updateError.message
       });
     }
 
-    // Update user data (now async - password will be hashed if provided)
-    const updatedUser = await mockDB.updateUser(user.email, {
-      firstName: req.body.firstName || user.firstName,
-      lastName: req.body.lastName || user.lastName,
-      age: req.body.age || user.age,
-      phone: req.body.phone || user.phone,
-      address: req.body.address || user.address,
-      city: req.body.city || user.city,
-      postalCode: req.body.postalCode || user.postalCode,
-      country: req.body.country || user.country
+    // Also update user metadata in Supabase Auth
+    await supabase.auth.admin.updateUserById(user.id, {
+      user_metadata: {
+        first_name: firstName || user.user_metadata?.first_name,
+        last_name: lastName || user.user_metadata?.last_name,
+        age: req.body.age !== undefined ? req.body.age : user.user_metadata?.age
+      }
     });
-
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = updatedUser;
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      user: userWithoutPassword
+      user: {
+        id: user.id,
+        email: req.body.email || user.email,
+        firstName: updatedProfile?.first_name || firstName,
+        lastName: updatedProfile?.last_name || lastName,
+        age: updatedProfile?.age || req.body.age,
+        phone: updatedProfile?.phone || req.body.phone,
+        address: updatedProfile?.address || req.body.address,
+        city: updatedProfile?.city || req.body.city,
+        postalCode: updatedProfile?.postal_code || req.body.postalCode,
+        country: updatedProfile?.country || req.body.country,
+        avatarUrl: updatedProfile?.avatar_url || null,
+        isVerified: user.email_confirmed_at != null,
+        role: user.role || 'user',
+        createdAt: user.created_at,
+        updatedAt: updatedProfile?.updated_at || new Date().toISOString()
+      }
     });
   } catch (error) {
     console.error('Profile update error:', error);
@@ -411,7 +468,7 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.get('/api/auth/me', (req, res) => {
+app.get('/api/auth/me', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -422,27 +479,49 @@ app.get('/api/auth/me', (req, res) => {
     }
 
     const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-    const session = mockDB.getSession(token);
-    
-    if (!session) {
+
+    // Use Supabase to verify token and get user
+    if (!supabase) {
+      return res.status(500).json({
+        error: 'Supabase not configured',
+        details: 'Please set SUPABASE_URL and SUPABASE_SERVICE_KEY in your .env file'
+      });
+    }
+
+    // Get user from token
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
       return res.status(401).json({
         error: 'Invalid token',
         details: 'Token is invalid or expired'
       });
     }
 
-    const user = mockDB.getUserById(session.userId);
-    if (!user) {
-      return res.status(401).json({
-        error: 'User not found',
-        details: 'User associated with token no longer exists'
-      });
-    }
+    // Get user profile from Supabase
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
-
-    res.json(userWithoutPassword);
+    res.json({
+      id: user.id,
+      email: user.email,
+      firstName: profile?.first_name || user.user_metadata?.first_name || '',
+      lastName: profile?.last_name || user.user_metadata?.last_name || '',
+      age: profile?.age || user.user_metadata?.age || null,
+      phone: profile?.phone || null,
+      address: profile?.address || null,
+      city: profile?.city || null,
+      postalCode: profile?.postal_code || null,
+      country: profile?.country || null,
+      avatarUrl: profile?.avatar_url || null,
+      isVerified: user.email_confirmed_at != null,
+      role: user.role || 'user',
+      createdAt: user.created_at,
+      updatedAt: profile?.updated_at || user.updated_at
+    });
   } catch (error) {
     console.error('Auth me error:', error);
     res.status(500).json({
@@ -513,26 +592,85 @@ app.put('/api/users/profile', (req, res) => {
 // Mock grocery list operations
 app.post('/api/groceries', (req, res) => {
   const { name, items } = req.body;
+
+  // Create items with IDs
+  const listItems = (items || []).map(item => ({
+    ...item,
+    id: String(nextItemId++),
+    isChecked: false
+  }));
+
+  const totalCost = listItems.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0);
+
+  const newList = {
+    id: String(nextListId++),
+    name: name || 'New Grocery List',
+    items: listItems,
+    status: 'active',
+    totalEstimatedCost: totalCost,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  };
+
+  mockGroceryLists.push(newList);
+
   res.json({
     success: true,
     message: 'Grocery list created successfully',
-    list: {
-      id: Date.now().toString(),
-      name: name || 'New Grocery List',
-      items: items || [],
-      status: 'active',
-      totalEstimatedCost: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    list: newList
   });
 });
 
 app.delete('/api/groceries/:id', (req, res) => {
   const { id } = req.params;
+  const initialLength = mockGroceryLists.length;
+  mockGroceryLists = mockGroceryLists.filter(list => list.id !== id);
+
+  if (mockGroceryLists.length < initialLength) {
+    res.json({
+      success: true,
+      message: `Grocery list ${id} deleted successfully`
+    });
+  } else {
+    res.status(404).json({
+      success: false,
+      error: 'Grocery list not found'
+    });
+  }
+});
+
+// Mock toggle grocery item endpoint
+app.patch('/api/groceries/:listId/items/:itemId/toggle', (req, res) => {
+  const { listId, itemId } = req.params;
+
+  // Find the list
+  const list = mockGroceryLists.find(l => l.id === listId);
+
+  if (!list) {
+    return res.status(404).json({
+      success: false,
+      error: 'Grocery list not found'
+    });
+  }
+
+  // Find and toggle the item
+  const item = list.items.find(i => i.id === itemId);
+
+  if (!item) {
+    return res.status(404).json({
+      success: false,
+      error: 'Item not found'
+    });
+  }
+
+  // Toggle the checked status
+  item.isChecked = !item.isChecked;
+  list.updatedAt = new Date().toISOString();
+
   res.json({
     success: true,
-    message: `Grocery list ${id} deleted successfully`
+    message: 'Item status updated successfully',
+    item: item
   });
 });
 

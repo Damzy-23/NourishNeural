@@ -294,10 +294,10 @@ export default function AIAssistant() {
                   <Sparkles className="w-8 h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-5xl font-black text-neutral-900">
+                  <h1 className="text-5xl font-black text-neutral-900 dark:text-neutral-100">
                     Nurexa <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-primary-500 bg-clip-text text-transparent">AI</span>
                   </h1>
-                  <p className="text-lg text-neutral-500 mt-1">
+                  <p className="text-lg text-neutral-500 dark:text-neutral-400 mt-1">
                     Your intelligent culinary assistant
                   </p>
                 </div>
@@ -325,7 +325,7 @@ export default function AIAssistant() {
           initial="hidden"
           animate="visible"
         >
-          <h2 className="text-xl font-bold text-neutral-900 mb-4">Quick Actions</h2>
+          <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {AI_FEATURES.map((feature, index) => {
               const Icon = feature.icon
@@ -334,10 +334,10 @@ export default function AIAssistant() {
                   key={feature.id}
                   onClick={() => handleFeatureClick(feature)}
                   disabled={chatMutation.isLoading}
-                  className={`relative overflow-hidden bg-white rounded-2xl border-2 p-5 transition-all duration-300 ${
+                  className={`relative overflow-hidden bg-white dark:bg-neutral-800 rounded-2xl border-2 p-5 transition-all duration-300 ${
                     selectedFeature === feature.id
-                      ? 'border-primary-400 shadow-lg shadow-primary-500/20'
-                      : 'border-neutral-200 hover:border-neutral-300 hover:shadow-md'
+                      ? 'border-primary-400 dark:border-primary-500 shadow-lg shadow-primary-500/20'
+                      : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 hover:shadow-md'
                   }`}
                   variants={fadeUp}
                   whileHover={{ y: -4, scale: 1.02 }}
@@ -348,8 +348,8 @@ export default function AIAssistant() {
                     <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-3 shadow-lg`}>
                       <Icon className="h-6 w-6 text-white" />
                     </div>
-                    <h3 className="font-bold text-neutral-900 text-sm mb-1">{feature.name}</h3>
-                    <p className="text-xs text-neutral-600">{feature.description}</p>
+                    <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm mb-1">{feature.name}</h3>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400">{feature.description}</p>
                   </div>
                 </motion.button>
               )
@@ -366,7 +366,7 @@ export default function AIAssistant() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           {/* Messages Area */}
-          <div className="h-[500px] overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-neutral-50/50 to-white">
+          <div className="h-[500px] overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-neutral-50/50 to-white dark:from-neutral-900/50 dark:to-neutral-800">
             {messages.map(renderMessage)}
 
             {/* Loading indicator */}
@@ -394,7 +394,7 @@ export default function AIAssistant() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t-2 border-neutral-200 bg-white p-5">
+          <div className="border-t-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5">
             <div className="flex space-x-3 mb-3">
               <div className="flex-1">
                 <textarea
@@ -402,7 +402,7 @@ export default function AIAssistant() {
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Ask me anything about cooking, nutrition, or food shopping..."
-                  className="w-full px-4 py-3 border-2 border-neutral-200 rounded-xl resize-none focus:outline-none focus:border-primary-400 focus:ring-4 focus:ring-primary-100 transition-all text-neutral-900 placeholder-neutral-400"
+                  className="w-full px-4 py-3 border-2 border-neutral-200 dark:border-neutral-600 rounded-xl resize-none focus:outline-none focus:border-primary-400 dark:focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 transition-all text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 bg-white dark:bg-neutral-700"
                   rows={2}
                   disabled={chatMutation.isLoading}
                 />
@@ -434,7 +434,7 @@ export default function AIAssistant() {
                   key={index}
                   onClick={() => handleSendMessage(suggestion)}
                   disabled={chatMutation.isLoading}
-                  className="px-3 py-1.5 bg-neutral-100 border border-neutral-200 rounded-lg text-xs font-medium text-neutral-700 hover:bg-neutral-200 hover:border-neutral-300 transition-all disabled:opacity-50"
+                  className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-lg text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 hover:border-neutral-300 dark:hover:border-neutral-500 transition-all disabled:opacity-50"
                   whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -458,8 +458,8 @@ export default function AIAssistant() {
               <Zap className="h-5 w-5 text-blue-600" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-bold text-blue-900 mb-1">Pro Tips for Best Results</h3>
-              <p className="text-sm text-blue-700 leading-relaxed">
+              <h3 className="text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">Pro Tips for Best Results</h3>
+              <p className="text-sm text-blue-700 dark:text-blue-400 leading-relaxed">
                 Be specific about your dietary preferences, allergies, and available ingredients.
                 I can provide personalized suggestions based on your pantry contents and shopping lists.
               </p>

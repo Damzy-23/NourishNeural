@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
-import { Mail, BrainCircuit, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
+import { Mail, AlertCircle, CheckCircle, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fadeUp, scaleIn, staggerContainer } from '../utils/motion'
 
@@ -109,8 +109,8 @@ export default function ForgotPassword() {
               variants={fadeUp}
               transition={{ duration: 0.6 }}
             >
-              <div className="w-16 h-16 bg-gradient-to-br from-primary-500 via-primary-500 to-accent-500 rounded-2xl flex items-center justify-center shadow-lg">
-                <BrainCircuit className="h-8 w-8 text-white" />
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
+                <img src="/favicon.svg" alt="Nourish Neural" className="h-16 w-16" />
               </div>
               <span className="text-4xl font-bold gradient-text">Nourish Neural</span>
             </motion.div>

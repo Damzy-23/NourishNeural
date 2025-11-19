@@ -9,6 +9,11 @@ interface User {
   lastName: string
   age?: number
   avatarUrl?: string
+  phone?: string
+  address?: string
+  city?: string
+  postalCode?: string
+  country?: string
   isVerified: boolean
   role: string
   createdAt: string
@@ -41,11 +46,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(localStorage.getItem('pantrypal_token'))
-  const [user, setUser] = useState<User | null>(() => {
-    // Load user data from localStorage on initialization
-    const storedUser = localStorage.getItem('pantrypal_user')
-    return storedUser ? JSON.parse(storedUser) : null
-  })
+  // Initialize user as null - we'll fetch fresh data from server
+  const [user, setUser] = useState<User | null>(null)
   const [preferences, setPreferences] = useState<UserPreferences | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   
@@ -60,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token])
 
-  // Fetch user data when token changes
+  // Fetch user data when token exists - always fetch fresh data from server
   const { isLoading: userLoading } = useQuery(
     ['user', token],
     async () => {
@@ -70,20 +72,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           'Content-Type': 'application/json'
         }
       })
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch user data')
       }
-      
+
       return response.json()
     },
     {
-      enabled: !!token && !user, // Only fetch if no user data is already loaded
+      enabled: !!token, // Always fetch when token exists to get fresh data
       retry: false,
+      staleTime: 0, // Always fetch fresh data
       onSuccess: (data: any) => {
         // Update user data from API
         setUser(data)
-        // Also update localStorage
+        // Also update localStorage for offline access
         localStorage.setItem('pantrypal_user', JSON.stringify(data))
       },
       onError: () => {

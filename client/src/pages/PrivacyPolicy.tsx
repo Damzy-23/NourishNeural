@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, BrainCircuit, Shield, Eye, Database, Lock, Users, Globe, Mail } from 'lucide-react'
+import { ArrowLeft, Shield, Eye, Database, Lock, Users, Globe, Mail } from 'lucide-react'
 
 export default function PrivacyPolicy() {
   const lastUpdated = "January 1, 2025"
@@ -12,22 +12,22 @@ export default function PrivacyPolicy() {
         <meta name="description" content="Privacy Policy for Nourish Neural - How we protect and use your data" />
       </Helmet>
 
-      <div className="min-h-screen bg-neutral-50">
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
         {/* Header */}
-        <header className="bg-white shadow-sm border-b border-neutral-200">
+        <header className="bg-white dark:bg-neutral-800 shadow-sm border-b border-neutral-200 dark:border-neutral-700">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-                  <div className="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
-                    <BrainCircuit className="h-5 w-5 text-white" />
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                    <img src="/favicon.svg" alt="Nourish Neural" className="h-8 w-8" />
                   </div>
-                  <span className="text-xl font-bold text-neutral-900">Nourish Neural</span>
+                  <span className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Nourish Neural</span>
                 </Link>
               </div>
               <Link
                 to="/"
-                className="flex items-center space-x-2 text-neutral-600 hover:text-neutral-900 transition-colors"
+                className="flex items-center space-x-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span>Back to Home</span>
@@ -38,7 +38,7 @@ export default function PrivacyPolicy() {
 
         {/* Content */}
         <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-white dark:bg-neutral-800 rounded-2xl shadow-lg overflow-hidden">
             {/* Page Header */}
             <div className="bg-gradient-to-r from-primary-600 via-primary-500 to-accent-600 px-8 py-12 text-white">
               <div className="flex items-center space-x-4 mb-4">
@@ -61,11 +61,11 @@ export default function PrivacyPolicy() {
                 
                 {/* Introduction */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Shield className="h-6 w-6 text-primary-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Shield className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
                     1. Introduction
                   </h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
                       Nourish Neural ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy 
                       explains how we collect, use, disclose, and safeguard your information when you use our AI-powered 
@@ -80,15 +80,15 @@ export default function PrivacyPolicy() {
 
                 {/* Information We Collect */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Database className="h-6 w-6 text-primary-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Database className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
                     2. Information We Collect
                   </h2>
-                  
+
                   <div className="space-y-8">
                     <div>
-                      <h3 className="text-xl font-semibold text-neutral-900 mb-4">2.1 Personal Information</h3>
-                      <div className="space-y-4 text-neutral-700 leading-relaxed">
+                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-4">2.1 Personal Information</h3>
+                      <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                         <p>We collect information you provide directly to us, including:</p>
                         <ul className="list-disc pl-6 space-y-2">
                           <li><strong>Account Information:</strong> Name, email address, password (encrypted)</li>
@@ -101,8 +101,8 @@ export default function PrivacyPolicy() {
                     </div>
 
                     <div>
-                      <h3 className="text-xl font-semibold text-neutral-900 mb-4">2.2 Automatically Collected Information</h3>
-                      <div className="space-y-4 text-neutral-700 leading-relaxed">
+                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-4">2.2 Automatically Collected Information</h3>
+                      <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                         <p>We automatically collect certain information when you use our Service:</p>
                         <ul className="list-disc pl-6 space-y-2">
                           <li><strong>Device Information:</strong> Device type, operating system, browser type</li>
@@ -117,11 +117,11 @@ export default function PrivacyPolicy() {
 
                 {/* How We Use Information */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Eye className="h-6 w-6 text-primary-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Eye className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
                     3. How We Use Your Information
                   </h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>We use your information for the following purposes:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li><strong>Service Delivery:</strong> Provide AI recommendations, manage your pantry, generate shopping lists</li>
@@ -136,8 +136,8 @@ export default function PrivacyPolicy() {
 
                 {/* Legal Basis for Processing */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6">4. Legal Basis for Processing (GDPR)</h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">4. Legal Basis for Processing (GDPR)</h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>Under GDPR, we process your personal data based on:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li><strong>Consent:</strong> When you opt-in to marketing communications or location tracking</li>
@@ -150,8 +150,8 @@ export default function PrivacyPolicy() {
 
                 {/* Information Sharing */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6">5. Information Sharing and Disclosure</h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">5. Information Sharing and Disclosure</h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>We do not sell your personal information. We may share your information in the following circumstances:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li><strong>Service Providers:</strong> Trusted third parties who assist in service delivery (hosting, analytics, payment processing)</li>
@@ -165,11 +165,11 @@ export default function PrivacyPolicy() {
 
                 {/* Data Security */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Lock className="h-6 w-6 text-primary-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Lock className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
                     6. Data Security
                   </h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>We implement appropriate technical and organizational measures to protect your information:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li><strong>Encryption:</strong> Data encrypted in transit and at rest using industry-standard protocols</li>
@@ -178,8 +178,8 @@ export default function PrivacyPolicy() {
                       <li><strong>Staff Training:</strong> Privacy and security training for all employees</li>
                       <li><strong>Incident Response:</strong> Procedures for handling security incidents</li>
                     </ul>
-                    <p className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
-                      <strong>Note:</strong> While we strive to protect your information, no method of transmission over the internet 
+                    <p className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4 dark:text-yellow-200">
+                      <strong>Note:</strong> While we strive to protect your information, no method of transmission over the internet
                       or electronic storage is 100% secure. We cannot guarantee absolute security.
                     </p>
                   </div>
@@ -187,8 +187,8 @@ export default function PrivacyPolicy() {
 
                 {/* Data Retention */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6">7. Data Retention</h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">7. Data Retention</h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>We retain your information for as long as necessary to:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Provide our services and maintain your account</li>
@@ -205,11 +205,11 @@ export default function PrivacyPolicy() {
 
                 {/* Your Rights */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Users className="h-6 w-6 text-primary-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Users className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
                     8. Your Privacy Rights
                   </h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>Depending on your location, you may have the following rights:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li><strong>Access:</strong> Request copies of your personal information</li>
@@ -229,11 +229,11 @@ export default function PrivacyPolicy() {
 
                 {/* International Transfers */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Globe className="h-6 w-6 text-primary-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Globe className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
                     9. International Data Transfers
                   </h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
                       Your information may be transferred to and processed in countries other than your country of residence. 
                       We ensure appropriate safeguards are in place, including:
@@ -249,8 +249,8 @@ export default function PrivacyPolicy() {
 
                 {/* Cookies and Tracking */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6">10. Cookies and Tracking Technologies</h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">10. Cookies and Tracking Technologies</h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>We use cookies and similar technologies to:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li>Remember your preferences and settings</li>
@@ -267,8 +267,8 @@ export default function PrivacyPolicy() {
 
                 {/* Children's Privacy */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6">11. Children's Privacy</h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">11. Children's Privacy</h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
                       Nourish Neural is not intended for children under 13 years of age. We do not knowingly collect 
                       personal information from children under 13. If we become aware that we have collected 
@@ -279,8 +279,8 @@ export default function PrivacyPolicy() {
 
                 {/* Third-Party Services */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6">12. Third-Party Services</h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">12. Third-Party Services</h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
                       Our Service may contain links to third-party websites or integrate with third-party services. 
                       This Privacy Policy does not apply to those third parties. We encourage you to review their 
@@ -298,8 +298,8 @@ export default function PrivacyPolicy() {
 
                 {/* Changes to Privacy Policy */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6">13. Changes to This Privacy Policy</h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">13. Changes to This Privacy Policy</h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
                       We may update this Privacy Policy from time to time. We will notify you of any material changes 
                       by posting the new Privacy Policy on this page and updating the "Last updated" date.
@@ -313,15 +313,15 @@ export default function PrivacyPolicy() {
 
                 {/* Contact Information */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 mb-6 flex items-center">
-                    <Mail className="h-6 w-6 text-primary-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Mail className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
                     14. Contact Us
                   </h2>
-                  <div className="space-y-4 text-neutral-700 leading-relaxed">
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
                       If you have any questions about this Privacy Policy or our data practices, please contact us:
                     </p>
-                    <div className="bg-green-50 rounded-lg p-6">
+                    <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 dark:text-green-200">
                       <p><strong>Data Protection Officer:</strong> privacy@pantrypal.com</p>
                       <p><strong>General Inquiries:</strong> support@pantrypal.com</p>
                       <p><strong>Address:</strong> Nourish Neural Privacy Team, 123 Innovation Street, Tech City, TC 12345</p>
@@ -338,16 +338,16 @@ export default function PrivacyPolicy() {
             </div>
 
             {/* Footer */}
-            <div className="bg-neutral-50 px-8 py-6 border-t border-neutral-200">
+            <div className="bg-neutral-50 dark:bg-neutral-900 px-8 py-6 border-t border-neutral-200 dark:border-neutral-700">
               <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-                <p className="text-neutral-600 text-sm">
+                <p className="text-neutral-600 dark:text-neutral-400 text-sm">
                   © 2025 Nourish Neural. All rights reserved.
                 </p>
                 <div className="flex space-x-6">
-                  <Link to="/terms" className="text-sm text-primary-600 hover:text-primary-700 transition-colors">
+                  <Link to="/terms" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
                     Terms of Service
                   </Link>
-                  <Link to="/" className="text-sm text-primary-600 hover:text-primary-700 transition-colors">
+                  <Link to="/" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
                     Home
                   </Link>
                 </div>

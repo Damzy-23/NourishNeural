@@ -10,8 +10,12 @@ import {
   Menu,
   X,
   Package,
+  Moon,
+  Sun,
+  Sparkles,
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../contexts/ThemeContext'
 import { cn } from '../utils/cn'
 
 const navigation = [
@@ -20,12 +24,14 @@ const navigation = [
   { name: 'Pantry', href: '/app/pantry', icon: Package },
   { name: 'Stores', href: '/app/stores', icon: Store },
   { name: 'Nurexa AI', href: '/app/ai-assistant', icon: Bot },
+  { name: 'Smart Features', href: '/app/smart-features', icon: Sparkles },
   { name: 'Profile', href: '/app/profile', icon: User },
 ]
 
 export default function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -39,14 +45,14 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
       {/* Mobile sidebar */}
       <div className={cn(
         'fixed inset-0 z-50 lg:hidden',
         sidebarOpen ? 'block' : 'hidden'
       )}>
-        <div className="fixed inset-0 bg-neutral-900/80" onClick={() => setSidebarOpen(false)} />
-        <div className="fixed inset-y-0 left-0 w-64 glass-card shadow-2xl border-r border-white/20">
+        <div className="fixed inset-0 bg-neutral-900/80 dark:bg-black/90" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-neutral-800 shadow-2xl border-r border-neutral-200 dark:border-neutral-700">
           <div className="flex h-full flex-col">
             {/* Logo */}
             <div className="flex h-16 items-center justify-between px-6">
@@ -56,11 +62,11 @@ export default function Layout() {
                   alt="Nourish Neural logo"
                   className="h-10 w-10 rounded-xl shadow-lg shadow-primary-500/30"
                 />
-                <span className="text-xl font-bold gradient-text">Nourish Neural</span>
+                <span className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Nourish Neural</span>
               </Link>
               <button
                 onClick={() => setSidebarOpen(false)}
-                className="text-neutral-500 hover:text-neutral-700"
+                className="text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
               >
                 <X className="h-6 w-6" />
               </button>
@@ -78,14 +84,14 @@ export default function Layout() {
                     className={cn(
                       'group flex items-center rounded-xl px-4 py-3 text-sm font-semibold transition-all duration-200',
                       isActive
-                        ? 'bg-gradient-to-r from-primary-100 to-primary-200 text-primary-700 shadow-md border-l-4 border-primary-500'
-                        : 'text-neutral-700 hover:bg-gradient-to-r hover:from-neutral-100 hover:to-neutral-200 hover:text-neutral-900 hover:shadow-sm'
+                        ? 'bg-gradient-to-r from-primary-100 to-primary-200 dark:from-primary-900 dark:to-primary-800 text-primary-700 dark:text-primary-300 shadow-md border-l-4 border-primary-500'
+                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-gradient-to-r hover:from-neutral-100 hover:to-neutral-200 dark:hover:from-neutral-700 dark:hover:to-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100 hover:shadow-sm'
                     )}
                   >
                     <item.icon
                       className={cn(
                         'mr-3 h-5 w-5 transition-colors',
-                        isActive ? 'text-primary-500' : 'text-neutral-400 group-hover:text-neutral-500'
+                        isActive ? 'text-primary-500' : 'text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-500 dark:group-hover:text-neutral-400'
                       )}
                     />
                     {item.name}
@@ -95,7 +101,7 @@ export default function Layout() {
             </nav>
 
             {/* User section */}
-            <div className="border-t border-neutral-200 p-4">
+            <div className="border-t border-neutral-200 dark:border-neutral-700 p-4">
               <div className="flex items-center space-x-3">
                 {user?.avatarUrl ? (
                   <img
@@ -111,15 +117,35 @@ export default function Layout() {
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-neutral-900 truncate">
+                  <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
                     {user?.firstName} {user?.lastName}
                   </p>
-                  <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{user?.email}</p>
                 </div>
               </div>
+
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={toggleTheme}
+                className="mt-3 flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="mr-3 h-4 w-4" />
+                    Light Mode
+                  </>
+                ) : (
+                  <>
+                    <Moon className="mr-3 h-4 w-4" />
+                    Dark Mode
+                  </>
+                )}
+              </button>
+
               <button
                 onClick={handleLogout}
-                className="mt-3 flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+                className="mt-2 flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
               >
                 <LogOut className="mr-3 h-4 w-4" />
                 Sign out
@@ -131,16 +157,16 @@ export default function Layout() {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex h-full flex-col bg-white shadow-xl">
+        <div className="flex h-full flex-col bg-white dark:bg-neutral-800 shadow-xl">
           {/* Logo */}
-          <div className="flex h-16 items-center px-6">
+          <div className="flex h-16 items-center px-6 border-b border-neutral-200 dark:border-neutral-700">
             <Link to="/app/dashboard" className="flex items-center space-x-2">
               <img
                 src="/favicon.svg"
                 alt="Nourish Neural logo"
                 className="h-8 w-8 rounded-lg shadow-lg shadow-primary-500/30"
               />
-              <span className="text-xl font-bold text-neutral-900">Nourish Neural</span>
+              <span className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Nourish Neural</span>
             </Link>
           </div>
 
@@ -155,14 +181,14 @@ export default function Layout() {
                   className={cn(
                     'group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-primary-50 text-primary-700 border-r-2 border-primary-500'
-                      : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
+                      ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-r-2 border-primary-500'
+                      : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100'
                   )}
                 >
                   <item.icon
                     className={cn(
                       'mr-3 h-5 w-5 transition-colors',
-                      isActive ? 'text-primary-500' : 'text-neutral-400 group-hover:text-neutral-500'
+                      isActive ? 'text-primary-500 dark:text-primary-400' : 'text-neutral-400 dark:text-neutral-500 group-hover:text-neutral-500 dark:group-hover:text-neutral-400'
                     )}
                   />
                   {item.name}
@@ -172,7 +198,7 @@ export default function Layout() {
           </nav>
 
           {/* User section */}
-          <div className="border-t border-neutral-200 p-4">
+          <div className="border-t border-neutral-200 dark:border-neutral-700 p-4">
             <div className="flex items-center space-x-3">
               {user?.avatarUrl ? (
                 <img
@@ -181,22 +207,42 @@ export default function Layout() {
                   className="h-8 w-8 rounded-full"
                 />
               ) : (
-                <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                  <span className="text-sm font-medium text-primary-700">
+                <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                  <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
                     {user?.firstName?.charAt(0)}
                   </span>
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-neutral-900 truncate">
+                <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
                   {user?.firstName} {user?.lastName}
                 </p>
-                <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{user?.email}</p>
               </div>
             </div>
+
+            {/* Dark Mode Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="mt-3 flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
+              title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {theme === 'dark' ? (
+                <>
+                  <Sun className="mr-3 h-4 w-4" />
+                  Light Mode
+                </>
+              ) : (
+                <>
+                  <Moon className="mr-3 h-4 w-4" />
+                  Dark Mode
+                </>
+              )}
+            </button>
+
             <button
               onClick={handleLogout}
-              className="mt-3 flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+              className="mt-2 flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 hover:text-neutral-900 dark:hover:text-neutral-100 transition-colors"
             >
               <LogOut className="mr-3 h-4 w-4" />
               Sign out
@@ -208,21 +254,34 @@ export default function Layout() {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Mobile header */}
-        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-neutral-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:hidden">
+        <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:hidden">
           <button
             type="button"
-            className="-m-2.5 p-2.5 text-neutral-700 lg:hidden"
+            className="-m-2.5 p-2.5 text-neutral-700 dark:text-neutral-300 lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <Menu className="h-6 w-6" />
           </button>
 
           {/* Separator */}
-          <div className="h-6 w-px bg-neutral-200 lg:hidden" />
+          <div className="h-6 w-px bg-neutral-200 dark:bg-neutral-700 lg:hidden" />
 
           <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
             <div className="flex flex-1"></div>
             <div className="flex items-center gap-x-4 lg:gap-x-6">
+              {/* Dark Mode Toggle for Mobile Header */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-100 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+                title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-5 w-5" />
+                ) : (
+                  <Moon className="h-5 w-5" />
+                )}
+              </button>
+
               {/* User menu for mobile */}
               <div className="flex items-center space-x-3">
                 {user?.avatarUrl ? (
@@ -232,13 +291,13 @@ export default function Layout() {
                     className="h-8 w-8 rounded-full"
                   />
                 ) : (
-                  <div className="h-8 w-8 rounded-full bg-primary-100 flex items-center justify-center">
-                    <span className="text-sm font-medium text-primary-700">
+                  <div className="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center">
+                    <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
                       {user?.firstName?.charAt(0)}
                     </span>
                   </div>
                 )}
-                <span className="text-sm font-medium text-neutral-900 lg:hidden">
+                <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100 lg:hidden">
                   {user?.firstName} {user?.lastName}
                 </span>
               </div>

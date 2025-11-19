@@ -1,0 +1,18 @@
+[
+  [
+    "john.doe@example.com",
+    {
+      "id": "user-1",
+      "firstName": "John",
+      "lastName": "Doe",
+      "email": "john.doe@example.com",
+      "password": "$2a$10$D007ztpYarGkD7g1pfiM.eDq0G6jH4V/BlBLZeWqZQslieOj5A/0W",
+      "avatar": "https://ui-avatars.com/api/?name=John+Doe&background=random",
+      "isVerified": true,
+      "role": "user",
+      "createdAt": "2024-01-01T00:00:00Z",
+      "updatedAt": "2024-01-01T00:00:00Z",
+      "lastLoginAt": "2025-11-18T18:57:29.583Z"
+    }
+  ]
+]

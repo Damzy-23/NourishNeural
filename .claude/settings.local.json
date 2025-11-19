@@ -10,7 +10,17 @@
       "Bash(npm run dev:*)",
       "Bash(timeout 5 bash:*)",
       "Bash(timeout 3 bash:*)",
-      "Bash(ping:*)"
+      "Bash(ping:*)",
+      "Bash(src/index.js)",
+      "Bash(.kill-ports.bat)",
+      "Bash(powershell -Command:*)",
+      "Bash(npm install:*)",
+      "Bash(cmd /c kill-ports.bat)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []

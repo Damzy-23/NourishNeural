@@ -86,6 +86,7 @@ NourishNeural/
 3. **Grocery Intelligence** – Price-optimised routing, substitution suggestions, budget alerts.
 4. **Store Atlas** – Location-aware store discovery with amenity, accessibility, and pricing overlays.
 5. **Nurexa AI** – Chat interface delivering recipes, nutrition, and sustainability coaching.
+6. **Smart Features Lab** – Barcode scanner with ZXing, recipe scaler with nutrition-aware serving adjustments, and shared contexts/services powering advanced experiments.
 
 ## 🔌 Integrations
 
@@ -107,6 +108,13 @@ NourishNeural/
 - **Logo**: New custom SVG logo and favicon featuring blue/white gradient neural network design
 - **Email Templates**: Enhanced Supabase email confirmation templates with inline logo
 - **UI/UX**: Updated navigation and landing page with new logo integration
+- **Smart Features**: Added barcode scanner modal, recipe scaler component, and shared contexts/services for future experiments
+
+## 📚 Research Artifacts
+
+- `DISSERTATION_PLAN.md` – end-to-end research methodology and timeline
+- `DISSERTATION_README.md` – dissertation-specific project overview
+- `LITERATURE_REVIEW.md` – 1,000-word literature review covering AI, behavioural science, and food waste mitigation
 
 ## 🤝 Contributing
 

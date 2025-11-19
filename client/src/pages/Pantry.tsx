@@ -11,9 +11,14 @@ import {
   DollarSign,
   AlertTriangle,
   Search,
-  Archive
+  Archive,
+  ArrowUpDown,
+  Filter,
+  ScanLine
 } from 'lucide-react'
 import SmartPantryItem from '../components/SmartPantryItem'
+import BarcodeScanner from '../components/BarcodeScanner'
+import { ProductInfo } from '../services/barcodeService'
 import { fadeUp, staggerContainer } from '../utils/motion'
 
 interface PantryItem {
@@ -51,10 +56,12 @@ interface PantryStats {
 
 export default function Pantry() {
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
   const [, setEditingItem] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [filterType, setFilterType] = useState('all') // all, expiring, expired, lowStock
+  const [sortBy, setSortBy] = useState<'name' | 'date' | 'expiry' | 'price'>('date')
   const [newItemForm, setNewItemForm] = useState<CreateItemForm>({
     name: '',
     quantity: 1,
@@ -64,6 +71,20 @@ export default function Pantry() {
     estimatedPrice: 0,
     notes: ''
   })
+
+  // Handle scanned product from barcode scanner
+  const handleScannedProduct = (product: ProductInfo & { estimatedPrice?: number }) => {
+    setNewItemForm({
+      name: product.name || '',
+      quantity: 1,
+      unit: 'pieces',
+      category: product.category || 'General',
+      expiryDate: '',
+      estimatedPrice: product.estimatedPrice || 0,
+      notes: product.brand ? `Brand: ${product.brand}` : ''
+    })
+    setShowCreateForm(true)
+  }
 
   // Mock pantry items data
   const mockPantryItems: PantryItem[] = [
@@ -207,21 +228,45 @@ export default function Pantry() {
     return 'fresh'
   }
 
-  const filteredItems = pantryItems.filter(item => {
-    // Apply filter type
-    if (filterType === 'expiring') {
-      const status = getExpiryStatus(item.expiryDate)
-      return status === 'expiring'
-    }
-    if (filterType === 'expired') {
-      const status = getExpiryStatus(item.expiryDate)
-      return status === 'expired'
-    }
-    if (filterType === 'lowStock') {
-      return item.quantity <= 1
-    }
-    return true
-  })
+  const filteredItems = pantryItems
+    .filter(item => {
+      // Search filter
+      const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase())
+
+      // Category filter
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory
+
+      // Apply filter type
+      let matchesFilter = true
+      if (filterType === 'expiring') {
+        const status = getExpiryStatus(item.expiryDate)
+        matchesFilter = status === 'expiring'
+      } else if (filterType === 'expired') {
+        const status = getExpiryStatus(item.expiryDate)
+        matchesFilter = status === 'expired'
+      } else if (filterType === 'lowStock') {
+        matchesFilter = item.quantity <= 1
+      }
+
+      return matchesSearch && matchesCategory && matchesFilter
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name)
+        case 'date':
+          return new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
+        case 'expiry':
+          if (!a.expiryDate && !b.expiryDate) return 0
+          if (!a.expiryDate) return 1
+          if (!b.expiryDate) return -1
+          return new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
+        case 'price':
+          return (b.estimatedPrice || 0) - (a.estimatedPrice || 0)
+        default:
+          return 0
+      }
+    })
 
   if (isLoading) {
     return (
@@ -240,6 +285,13 @@ export default function Pantry() {
       <Helmet>
         <title>Pantry - Nourish Neural</title>
       </Helmet>
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onProductFound={handleScannedProduct}
+      />
 
       <div className="relative space-y-8 pb-12">
         <motion.div
@@ -282,7 +334,7 @@ export default function Pantry() {
                     Neural Pantry
                   </motion.h1>
                   <motion.p
-                    className="mt-1 text-neutral-600 text-sm md:text-base"
+                    className="mt-1 text-neutral-600 dark:text-neutral-400 text-sm md:text-base"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
@@ -291,18 +343,32 @@ export default function Pantry() {
                   </motion.p>
                 </div>
               </div>
-              <motion.button
-                onClick={() => setShowCreateForm(true)}
-                className="btn btn-primary shadow-lg hover:shadow-xl"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.5 }}
-                whileHover={{ y: -2, boxShadow: '0 24px 45px -20px rgba(14,165,233,0.6)' }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Item
-              </motion.button>
+              <div className="flex space-x-3">
+                <motion.button
+                  onClick={() => setShowScanner(true)}
+                  className="btn btn-outline shadow-md hover:shadow-lg"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <ScanLine className="h-4 w-4 mr-2" />
+                  Scan
+                </motion.button>
+                <motion.button
+                  onClick={() => setShowCreateForm(true)}
+                  className="btn btn-primary shadow-lg hover:shadow-xl"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                  whileHover={{ y: -2, boxShadow: '0 24px 45px -20px rgba(14,165,233,0.6)' }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </motion.button>
+              </div>
             </div>
           </div>
         </motion.div>
@@ -363,9 +429,9 @@ export default function Pantry() {
               <div className="card-content">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-neutral-600">{title}</p>
-                    <p className={`text-2xl font-bold ${valueClass}`}>{value}</p>
-                    <p className="text-xs text-neutral-500">{subtitle}</p>
+                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">{title}</p>
+                    <p className={`text-2xl font-bold ${valueClass} dark:text-neutral-100`}>{value}</p>
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{subtitle}</p>
                   </div>
                   <Icon className={`h-8 w-8 ${iconColor}`} />
                 </div>
@@ -396,7 +462,7 @@ export default function Pantry() {
             <div className="card-content space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Item Name *
                   </label>
                   <input
@@ -409,7 +475,7 @@ export default function Pantry() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Category
                   </label>
                   <select
@@ -432,7 +498,7 @@ export default function Pantry() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Quantity *
                   </label>
                   <input
@@ -445,7 +511,7 @@ export default function Pantry() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Unit
                   </label>
                   <select
@@ -465,7 +531,7 @@ export default function Pantry() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Expiry Date
                   </label>
                   <input
@@ -477,7 +543,7 @@ export default function Pantry() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Estimated Price (£)
                   </label>
                   <input
@@ -492,7 +558,7 @@ export default function Pantry() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Notes
                 </label>
                 <textarea
@@ -536,9 +602,10 @@ export default function Pantry() {
           transition={{ duration: 0.45 }}
         >
           <div className="card-content">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <Search className="h-4 w-4 inline mr-1" />
                   Search Items
                 </label>
                 <div className="relative">
@@ -552,9 +619,10 @@ export default function Pantry() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <Package className="h-4 w-4 inline mr-1" />
                   Category
                 </label>
                 <select
@@ -568,9 +636,10 @@ export default function Pantry() {
                   ))}
                 </select>
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <Filter className="h-4 w-4 inline mr-1" />
                   Filter by Status
                 </label>
                 <select
@@ -584,13 +653,31 @@ export default function Pantry() {
                   <option value="lowStock">Low Stock</option>
                 </select>
               </div>
-              
+
+              <div>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <ArrowUpDown className="h-4 w-4 inline mr-1" />
+                  Sort By
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'expiry' | 'price')}
+                  className="input"
+                >
+                  <option value="date">Newest First</option>
+                  <option value="name">Name (A-Z)</option>
+                  <option value="expiry">Expiry Date</option>
+                  <option value="price">Highest Price</option>
+                </select>
+              </div>
+
               <div className="flex items-end">
                 <motion.button
                   onClick={() => {
                     setSearchTerm('')
                     setSelectedCategory('all')
                     setFilterType('all')
+                    setSortBy('date')
                   }}
                   className="btn btn-outline w-full"
                   whileHover={{ y: -2 }}
@@ -599,6 +686,14 @@ export default function Pantry() {
                   Clear Filters
                 </motion.button>
               </div>
+            </div>
+
+            {/* Results Count */}
+            <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                Showing <span className="font-semibold text-neutral-900 dark:text-neutral-100">{filteredItems.length}</span> of{' '}
+                <span className="font-semibold text-neutral-900 dark:text-neutral-100">{pantryItems.length}</span> items
+              </p>
             </div>
           </div>
         </motion.div>
@@ -614,11 +709,11 @@ export default function Pantry() {
             <div className="card-content">
               <div className="text-center py-12">
                 <Package className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-neutral-900 mb-2">
+                <h3 className="text-lg font-medium text-neutral-900 dark:text-neutral-100 mb-2">
                   No pantry items found
                 </h3>
-                <p className="text-neutral-600 mb-4">
-                  {pantryItems.length === 0 
+                <p className="text-neutral-600 dark:text-neutral-400 mb-4">
+                  {pantryItems.length === 0
                     ? "Start tracking your food inventory by adding your first item."
                     : "Try adjusting your search or filter criteria."
                   }

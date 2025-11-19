@@ -12,6 +12,7 @@ export default defineConfig({
   },
   server: {
     port: 3050,
+    strictPort: true, // Don't try the next available port if 3050 is taken
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

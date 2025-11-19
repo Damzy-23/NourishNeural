@@ -301,7 +301,7 @@ export default function Stores() {
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h3 className="card-title text-lg">{store.name}</h3>
-              <p className="text-sm text-neutral-600">{store.chain}</p>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">{store.chain}</p>
             </div>
             <div className="flex items-center space-x-2">
               {store.rating && (
@@ -325,8 +325,8 @@ export default function Stores() {
         <div className="card-content">
           {/* Address */}
           <div className="flex items-start space-x-2 mb-3">
-            <MapPin className="h-4 w-4 text-neutral-500 mt-0.5" />
-            <div className="text-sm text-neutral-600">
+            <MapPin className="h-4 w-4 text-neutral-500 dark:text-neutral-400 mt-0.5" />
+            <div className="text-sm text-neutral-600 dark:text-neutral-400">
               <p>{store.address.street}</p>
               <p>{store.address.city}, {store.address.postcode}</p>
             </div>
@@ -335,16 +335,16 @@ export default function Stores() {
           {/* Distance and Travel */}
           {store.distance && (
             <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-1 text-sm text-neutral-600">
+              <div className="flex items-center space-x-1 text-sm text-neutral-600 dark:text-neutral-400">
                 <Navigation className="h-4 w-4" />
                 <span>{store.distance.toFixed(1)} km away</span>
               </div>
               <div className="flex space-x-2">
-                <div className="flex items-center space-x-1 text-xs text-neutral-500">
+                <div className="flex items-center space-x-1 text-xs text-neutral-500 dark:text-neutral-400">
                   <Car className="h-3 w-3" />
                   <span>{Math.round(store.distance * 2)} min</span>
                 </div>
-                <div className="flex items-center space-x-1 text-xs text-neutral-500">
+                <div className="flex items-center space-x-1 text-xs text-neutral-500 dark:text-neutral-400">
                   <Bike className="h-3 w-3" />
                   <span>{Math.round(store.distance * 4)} min</span>
                 </div>
@@ -354,13 +354,13 @@ export default function Stores() {
           
           {/* Opening Hours */}
           <div className="flex items-center space-x-2 mb-3">
-            <Clock className="h-4 w-4 text-neutral-500" />
-            <span className="text-sm text-neutral-600">{openStatus.message}</span>
+            <Clock className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+            <span className="text-sm text-neutral-600 dark:text-neutral-400">{openStatus.message}</span>
           </div>
           
           {/* Services */}
           <div className="flex items-center space-x-2 mb-3">
-            <span className="text-sm text-neutral-600">Services:</span>
+            <span className="text-sm text-neutral-600 dark:text-neutral-400">Services:</span>
             <div className="flex space-x-2">
               {store.services.deliveryAvailable && (
                 <span className="badge badge-outline text-xs">Delivery</span>
@@ -393,7 +393,7 @@ export default function Stores() {
           )}
           
           {/* Actions */}
-          <div className="flex space-x-2 pt-3 border-t border-neutral-200">
+          <div className="flex space-x-2 pt-3 border-t border-neutral-200 dark:border-neutral-700">
             {store.contact.phone && (
               <button 
                 className="btn btn-outline btn-sm flex-1"
@@ -445,8 +445,8 @@ export default function Stores() {
             <div className="flex-1">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="font-semibold text-lg">{store.name}</h3>
-                  <p className="text-sm text-neutral-600">{store.chain}</p>
+                  <h3 className="font-semibold text-lg text-neutral-900 dark:text-neutral-100">{store.name}</h3>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{store.chain}</p>
                 </div>
                 <div className="flex items-center space-x-2">
                   {store.rating && (
@@ -469,24 +469,24 @@ export default function Stores() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
-                    <MapPin className="h-4 w-4 text-neutral-500" />
-                    <span className="text-neutral-600">{store.address.street}, {store.address.city}</span>
+                    <MapPin className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                    <span className="text-neutral-600 dark:text-neutral-400">{store.address.street}, {store.address.city}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Clock className="h-4 w-4 text-neutral-500" />
-                    <span className="text-neutral-600">{openStatus.message}</span>
+                    <Clock className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                    <span className="text-neutral-600 dark:text-neutral-400">{openStatus.message}</span>
                   </div>
                 </div>
-                
+
                 <div className="space-y-1">
                   {store.distance && (
                     <div className="flex items-center space-x-2">
-                      <Navigation className="h-4 w-4 text-neutral-500" />
-                      <span className="text-neutral-600">{store.distance.toFixed(1)} km away</span>
+                      <Navigation className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
+                      <span className="text-neutral-600 dark:text-neutral-400">{store.distance.toFixed(1)} km away</span>
                     </div>
                   )}
                   <div className="flex items-center space-x-2">
-                    <span className="text-neutral-600">Services:</span>
+                    <span className="text-neutral-600 dark:text-neutral-400">Services:</span>
                     <div className="flex space-x-1">
                       {store.services.deliveryAvailable && (
                         <span className="badge badge-outline text-xs">Delivery</span>
@@ -604,7 +604,7 @@ export default function Stores() {
                     Store Atlas
                   </motion.h1>
                   <motion.p
-                    className="mt-1 text-neutral-600 text-sm md:text-base"
+                    className="mt-1 text-neutral-600 dark:text-neutral-400 text-sm md:text-base"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
@@ -637,7 +637,7 @@ export default function Stores() {
                     className={`px-3 py-2 transition-all duration-200 ${
                       viewMode === 'grid'
                         ? 'bg-primary-500 text-white shadow-inner'
-                        : 'text-neutral-600 hover:bg-neutral-100'
+                        : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
                     }`}
                   >
                     <Grid className="h-4 w-4" />
@@ -647,7 +647,7 @@ export default function Stores() {
                     className={`px-3 py-2 transition-all duration-200 ${
                       viewMode === 'list'
                         ? 'bg-primary-500 text-white shadow-inner'
-                        : 'text-neutral-600 hover:bg-neutral-100'
+                        : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
                     }`}
                   >
                     <List className="h-4 w-4" />
@@ -743,7 +743,7 @@ export default function Stores() {
             <div className="card-content space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Store Chain
                   </label>
                   <select
@@ -758,7 +758,7 @@ export default function Stores() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Category
                   </label>
                   <select
@@ -771,9 +771,9 @@ export default function Stores() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Radius (km)
                   </label>
                   <select
@@ -787,9 +787,9 @@ export default function Stores() {
                     <option value={50}>50 km</option>
                   </select>
                 </div>
-                
+
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Sort By
                   </label>
                   <select
@@ -805,7 +805,7 @@ export default function Stores() {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Features
                 </label>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -815,9 +815,9 @@ export default function Stores() {
                         type="checkbox"
                         checked={filters.features.includes(feature)}
                         onChange={() => handleFeatureToggle(feature)}
-                        className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                        className="rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500"
                       />
-                      <span className="text-sm text-neutral-700">{feature}</span>
+                      <span className="text-sm text-neutral-700 dark:text-neutral-300">{feature}</span>
                     </label>
                   ))}
                 </div>
@@ -837,10 +837,10 @@ export default function Stores() {
             <div className="card-content">
               <div className="text-center py-12">
                 <MapPin className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-neutral-900 mb-2">
+                <h3 className="text-lg font-medium text-neutral-900 dark:text-neutral-100 mb-2">
                   No stores found
                 </h3>
-                <p className="text-neutral-600 mb-4">
+                <p className="text-neutral-600 dark:text-neutral-400 mb-4">
                   Try expanding your search radius or changing your location.
                 </p>
               </div>
@@ -854,7 +854,7 @@ export default function Stores() {
             animate="visible"
           >
             <motion.div className="flex items-center justify-between" variants={fadeUp}>
-              <p className="text-sm text-neutral-600">
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
                 Found {stores.length} store{stores.length !== 1 ? 's' : ''}
               </p>
             </motion.div>

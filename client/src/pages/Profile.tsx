@@ -2,16 +2,17 @@ import { useState, useEffect } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { motion } from 'framer-motion'
-import { 
-  User, 
-  Settings, 
-  Save, 
-  Edit, 
+import {
+  User,
+  Settings,
+  Save,
+  Edit,
   Camera,
   Bell,
   Shield,
   Heart,
-  DollarSign
+  DollarSign,
+  CheckCircle
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
@@ -103,6 +104,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false)
   const [profileForm, setProfileForm] = useState<Partial<UserProfile>>({})
   const [preferencesForm, setPreferencesForm] = useState<Partial<UserPreferences>>({})
+  const [saveSuccess, setSaveSuccess] = useState(false)
 
   // Fetch user profile
   const { data: profileResponse, refetch: refetchProfile } = useQuery(
@@ -199,8 +201,25 @@ export default function Profile() {
     {
       onSuccess: (data: any) => {
         queryClient.invalidateQueries(['user-profile'])
+        // Update the user in the auth context
         updateUser(data.user)
+        // Update the profile form with the returned data
+        setProfileForm({
+          ...profileForm,
+          firstName: data.user.firstName,
+          lastName: data.user.lastName,
+          email: data.user.email,
+          phone: data.user.phone,
+          age: data.user.age,
+          address: data.user.address,
+          city: data.user.city,
+          postalCode: data.user.postalCode,
+          country: data.user.country
+        })
         setIsEditing(false)
+        // Show success message
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
       },
     }
   )
@@ -216,7 +235,17 @@ export default function Profile() {
   )
 
   const handleProfileSave = () => {
-    updateProfileMutation.mutate(profileForm)
+    // Prepare the data to send - convert name to firstName/lastName if needed
+    const dataToSend = { ...profileForm }
+
+    // If we have a name field, split it into firstName and lastName
+    if (dataToSend.name) {
+      const nameParts = dataToSend.name.split(' ')
+      dataToSend.firstName = nameParts[0] || ''
+      dataToSend.lastName = nameParts.slice(1).join(' ') || ''
+    }
+
+    updateProfileMutation.mutate(dataToSend)
   }
 
   const handlePreferencesSave = () => {
@@ -302,7 +331,7 @@ export default function Profile() {
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-4xl font-bold gradient-text mb-2">Profile</h1>
-                <p className="text-lg text-neutral-600">
+                <p className="text-lg text-neutral-600 dark:text-neutral-400">
                   Manage your account settings and preferences
                 </p>
               </div>
@@ -334,10 +363,10 @@ export default function Profile() {
               <div className="card-content">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-neutral-600">{label}</p>
-                    <p className="text-2xl font-bold text-neutral-900">{value}</p>
+                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">{label}</p>
+                    <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{value}</p>
                   </div>
-                  <Icon className={`h-8 w-8 ${color}`} />
+                  <Icon className={`h-8 w-8 ${color} dark:opacity-80`} />
                 </div>
               </div>
             </motion.div>
@@ -365,8 +394,8 @@ export default function Profile() {
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                           activeTab === tab.id
-                            ? 'bg-primary-100 text-primary-700'
-                            : 'text-neutral-600 hover:bg-neutral-50'
+                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                            : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                         }`}
                         whileHover={{ x: 4 }}
                       >
@@ -409,24 +438,24 @@ export default function Profile() {
                   {/* Avatar */}
                   <div className="flex items-center space-x-4">
                     <div className="relative">
-                      <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center">
+                      <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
                         {user?.avatarUrl ? (
                           <img src={user.avatarUrl} alt="Avatar" className="w-20 h-20 rounded-full object-cover" />
                         ) : (
-                          <User className="h-8 w-8 text-primary-600" />
+                          <User className="h-8 w-8 text-primary-600 dark:text-primary-400" />
                         )}
                       </div>
                       {isEditing && (
-                        <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-white border border-neutral-300 rounded-full flex items-center justify-center shadow-sm">
-                          <Camera className="h-3 w-3 text-neutral-600" />
+                        <button className="absolute -bottom-1 -right-1 w-6 h-6 bg-white dark:bg-neutral-700 border border-neutral-300 dark:border-neutral-600 rounded-full flex items-center justify-center shadow-sm">
+                          <Camera className="h-3 w-3 text-neutral-600 dark:text-neutral-300" />
                         </button>
                       )}
                     </div>
                     <div>
-                      <h3 className="font-medium text-neutral-900">
+                      <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
                         {user ? `${user.firstName} ${user.lastName}` : 'User'}
                       </h3>
-                      <p className="text-sm text-neutral-600">
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
                         {user?.email || 'user@example.com'}
                       </p>
                     </div>
@@ -435,7 +464,7 @@ export default function Profile() {
                   {/* Form Fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Full Name
                       </label>
                       <input
@@ -448,7 +477,7 @@ export default function Profile() {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Email
                       </label>
                       <input
@@ -459,9 +488,9 @@ export default function Profile() {
                         className="input"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Phone
                       </label>
                       <input
@@ -472,9 +501,9 @@ export default function Profile() {
                         className="input"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Age
                       </label>
                       <input
@@ -487,9 +516,9 @@ export default function Profile() {
                         className="input"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Country
                       </label>
                       <input
@@ -500,9 +529,9 @@ export default function Profile() {
                         className="input"
                       />
                     </div>
-                    
+
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Address
                       </label>
                       <input
@@ -513,9 +542,9 @@ export default function Profile() {
                         className="input"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         City
                       </label>
                       <input
@@ -526,9 +555,9 @@ export default function Profile() {
                         className="input"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Postal Code
                       </label>
                       <input
@@ -563,6 +592,20 @@ export default function Profile() {
                       </motion.button>
                     </div>
                   )}
+
+                  {saveSuccess && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                    >
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <span className="text-green-700 dark:text-green-300 text-sm font-medium">
+                        Profile saved successfully!
+                      </span>
+                    </motion.div>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -581,7 +624,7 @@ export default function Profile() {
                 </div>
                 <div className="card-content space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                       Dietary Restrictions
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -591,16 +634,16 @@ export default function Profile() {
                             type="checkbox"
                             checked={(preferencesForm.dietaryRestrictions || []).includes(restriction)}
                             onChange={() => handleArrayToggle('dietaryRestrictions', restriction)}
-                            className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                            className="rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500"
                           />
-                          <span className="text-sm text-neutral-700">{restriction}</span>
+                          <span className="text-sm text-neutral-700 dark:text-neutral-300">{restriction}</span>
                         </label>
                       ))}
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                       Cuisine Preferences
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -610,9 +653,9 @@ export default function Profile() {
                             type="checkbox"
                             checked={(preferencesForm.cuisinePreferences || []).includes(cuisine)}
                             onChange={() => handleArrayToggle('cuisinePreferences', cuisine)}
-                            className="rounded border-neutral-300 text-primary-600 focus:ring-primary-500"
+                            className="rounded border-neutral-300 dark:border-neutral-600 text-primary-600 focus:ring-primary-500"
                           />
-                          <span className="text-sm text-neutral-700">{cuisine}</span>
+                          <span className="text-sm text-neutral-700 dark:text-neutral-300">{cuisine}</span>
                         </label>
                       ))}
                     </div>
@@ -620,7 +663,7 @@ export default function Profile() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Household Size
                       </label>
                       <input
@@ -632,9 +675,9 @@ export default function Profile() {
                         className="input"
                       />
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Shopping Frequency
                       </label>
                       <select
@@ -647,9 +690,9 @@ export default function Profile() {
                         ))}
                       </select>
                     </div>
-                    
+
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Budget Limit (£/month)
                       </label>
                       <input
@@ -700,10 +743,10 @@ export default function Profile() {
                     { key: 'shoppingReminders', label: 'Shopping Reminders', description: 'Reminders for your shopping schedule' },
                     { key: 'dealAlerts', label: 'Deal Alerts', description: 'Notifications about discounts and special offers' }
                   ].map(setting => (
-                    <div key={setting.key} className="flex items-center justify-between py-3 border-b border-neutral-200 last:border-b-0">
+                    <div key={setting.key} className="flex items-center justify-between py-3 border-b border-neutral-200 dark:border-neutral-700 last:border-b-0">
                       <div>
-                        <h3 className="font-medium text-neutral-900">{setting.label}</h3>
-                        <p className="text-sm text-neutral-600">{setting.description}</p>
+                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100">{setting.label}</h3>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">{setting.description}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -751,10 +794,10 @@ export default function Profile() {
                     { key: 'allowAnalytics', label: 'Analytics', description: 'Help us improve by sharing usage analytics' },
                     { key: 'publicProfile', label: 'Public Profile', description: 'Make your profile visible to other users' }
                   ].map(setting => (
-                    <div key={setting.key} className="flex items-center justify-between py-3 border-b border-neutral-200 last:border-b-0">
+                    <div key={setting.key} className="flex items-center justify-between py-3 border-b border-neutral-200 dark:border-neutral-700 last:border-b-0">
                       <div>
-                        <h3 className="font-medium text-neutral-900">{setting.label}</h3>
-                        <p className="text-sm text-neutral-600">{setting.description}</p>
+                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100">{setting.label}</h3>
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">{setting.description}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
