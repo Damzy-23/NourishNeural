@@ -1,9 +1,23 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios'
 import toast from 'react-hot-toast'
 
+// Determine API base URL
+const getApiBaseUrl = () => {
+  // Check for environment variable first
+  if ((import.meta as any).env?.VITE_API_URL) {
+    return (import.meta as any).env.VITE_API_URL
+  }
+  // In production, use relative URL for Vercel serverless functions
+  if ((import.meta as any).env?.PROD) {
+    return ''  // Will use relative paths like /api/...
+  }
+  // Default to localhost in development
+  return 'http://localhost:5000'
+}
+
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000',
+  baseURL: getApiBaseUrl(),
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -63,8 +77,17 @@ api.interceptors.response.use(
           toast.error('An unexpected error occurred')
       }
     } else if (error.request) {
-      // Network error
-      toast.error('Network error. Please check your connection.')
+      // Network error - only show once per session in production
+      const lastNetworkError = sessionStorage.getItem('lastNetworkError')
+      const now = Date.now()
+      if (!lastNetworkError || now - parseInt(lastNetworkError) > 10000) {
+        sessionStorage.setItem('lastNetworkError', now.toString())
+        if ((import.meta as any).env?.PROD && !getApiBaseUrl()) {
+          toast.error('Backend not configured. Some features are unavailable.')
+        } else {
+          toast.error('Network error. Please check your connection.')
+        }
+      }
     } else {
       // Other error
       toast.error('An error occurred')
