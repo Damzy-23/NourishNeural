@@ -94,12 +94,8 @@ export default function Login() {
         updatedAt: profile?.updated_at || authData.user.updated_at
       }
 
-      // Store token and user data
-      localStorage.setItem('pantrypal_token', authData.session.access_token)
-      localStorage.setItem('pantrypal_user', JSON.stringify(user))
-
-      // Login the user
-      login(authData.session.access_token)
+      // Login the user with token and user data to avoid race condition
+      login(authData.session.access_token, user as any)
 
       toast.success('Welcome back to Nourish Neural!')
       navigate(from, { replace: true })

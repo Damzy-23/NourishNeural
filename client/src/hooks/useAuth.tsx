@@ -36,7 +36,7 @@ interface AuthContextType {
   preferences: UserPreferences | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (token: string) => void
+  login: (token: string, userData?: User) => void
   logout: () => void
   updateUser: (userData: Partial<User>) => void
   updatePreferences: (prefs: Partial<UserPreferences>) => void
@@ -130,11 +130,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('Auth Context - LocalStorage User:', localStorage.getItem('pantrypal_user'))
   }, [token, user])
 
-  const login = (newToken: string) => {
+  const login = (newToken: string, userData?: User) => {
     setToken(newToken)
     localStorage.setItem('pantrypal_token', newToken)
-    // Clear any cached data
-    queryClient.clear()
+    // If user data is provided, set it immediately to avoid race condition
+    if (userData) {
+      setUser(userData)
+      localStorage.setItem('pantrypal_user', JSON.stringify(userData))
+    }
+    // Clear any cached data except user
+    queryClient.invalidateQueries(['preferences'])
   }
 
   const logout = async () => {

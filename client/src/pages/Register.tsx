@@ -169,12 +169,8 @@ export default function Register() {
         updatedAt: new Date().toISOString()
       }
 
-      // Store token and user data
-      localStorage.setItem('pantrypal_token', authData.session.access_token)
-      localStorage.setItem('pantrypal_user', JSON.stringify(user))
-
-      // Login the user
-      login(authData.session.access_token)
+      // Login the user with token and user data to avoid race condition
+      login(authData.session.access_token, user as any)
 
       toast.success('Welcome to Nourish Neural! Your account has been created successfully.')
       navigate('/app/dashboard', { replace: true })
