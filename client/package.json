@@ -1,6 +1,7 @@
 {
   "name": "nourish-neural-client",
   "version": "1.0.0",
+  "type": "module",
   "description": "Nourish Neural frontend React application",
   "private": true,
   "scripts": {
