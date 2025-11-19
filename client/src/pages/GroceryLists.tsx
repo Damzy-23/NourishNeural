@@ -196,7 +196,7 @@ export default function GroceryLists() {
     doc.setFontSize(10);
     let yPosition = 60;
 
-    list.items.forEach((item, index) => {
+    list.items.forEach((item) => {
       // Check if we need a new page
       if (yPosition > 270) {
         doc.addPage();

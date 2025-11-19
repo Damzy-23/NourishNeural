@@ -326,7 +326,7 @@ export default function AIAssistant() {
         >
           <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {AI_FEATURES.map((feature, index) => {
+            {AI_FEATURES.map((feature) => {
               const Icon = feature.icon
               return (
                 <motion.button

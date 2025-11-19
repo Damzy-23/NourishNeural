@@ -7,7 +7,7 @@ import toast from 'react-hot-toast'
 import { fadeUp, scaleIn, staggerContainer } from '../utils/motion'
 
 export default function ResetPassword() {
-  const [searchParams] = useSearchParams()
+  useSearchParams() // Required for URL handling
   const navigate = useNavigate()
 
   const [formData, setFormData] = useState({

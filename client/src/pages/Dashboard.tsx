@@ -69,15 +69,16 @@ interface QuickAction {
   link: string
 }
 
-interface Recommendation {
-  id: string
-  type: 'recipe' | 'shopping' | 'expiry' | 'budget'
-  title: string
-  description: string
-  action: string
-  link: string
-  priority: 'high' | 'medium' | 'low'
-}
+// Interface for future use
+// interface Recommendation {
+//   id: string
+//   type: 'recipe' | 'shopping' | 'expiry' | 'budget'
+//   title: string
+//   description: string
+//   action: string
+//   link: string
+//   priority: 'high' | 'medium' | 'low'
+// }
 
 const quickActions: QuickAction[] = [
   {
@@ -127,8 +128,8 @@ export default function Dashboard() {
     }
   )
 
-  // Fetch recommendations
-  const { data: recommendationsResponse } = useQuery(
+  // Fetch recommendations (available for future use)
+  useQuery(
     ['recommendations'],
     () => apiService.get('/api/dashboard/recommendations'),
     {
