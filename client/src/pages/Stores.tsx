@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { motion } from 'framer-motion'
 import { useQuery } from 'react-query'
-import { 
-  MapPin, 
-  Search, 
-  Star, 
-  Clock, 
-  Phone, 
+import {
+  MapPin,
+  Search,
+  Star,
+  Clock,
+  Phone,
   Navigation,
   Filter,
   Grid,
@@ -19,6 +19,7 @@ import {
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import { fadeUp, staggerContainer } from '../utils/motion'
+import DirectionsMap from '../components/DirectionsMap'
 
 interface Store {
   id: string
@@ -124,6 +125,8 @@ export default function Stores() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
+  const [showDirections, setShowDirections] = useState(false)
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null)
   const [filters, setFilters] = useState<StoreFilters>({
     chain: 'All Chains',
     category: 'All Categories',
@@ -216,19 +219,33 @@ export default function Stores() {
   }
 
   const handleGetDirections = (store: Store) => {
-    const { latitude, longitude } = store.coordinates
-    const address = `${store.address.street}, ${store.address.city}, ${store.address.postcode}`
-    
-    // Try to use device's default maps app
-    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-      // iOS - use Apple Maps
-      window.open(`maps://maps.google.com/maps?daddr=${latitude},${longitude}`, '_blank')
-    } else if (/Android/.test(navigator.userAgent)) {
-      // Android - use Google Maps
-      window.open(`geo:${latitude},${longitude}?q=${encodeURIComponent(address)}`, '_blank')
+    if (!userLocation) {
+      // If no user location, ask for permission or show error
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              lat: position.coords.latitude,
+              lng: position.coords.longitude
+            })
+            setSelectedStore(store)
+            setShowDirections(true)
+          },
+          () => {
+            // Fallback to external maps if location denied
+            const { latitude, longitude } = store.coordinates
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`, '_blank')
+          }
+        )
+      } else {
+        // Fallback for browsers without geolocation
+        const { latitude, longitude } = store.coordinates
+        window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`, '_blank')
+      }
     } else {
-      // Desktop/other - use Google Maps web
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`, '_blank')
+      // User location available, show in-app directions
+      setSelectedStore(store)
+      setShowDirections(true)
     }
   }
 
@@ -874,6 +891,25 @@ export default function Stores() {
           </motion.div>
         )}
       </div>
+
+      {/* Directions Map Modal */}
+      {userLocation && selectedStore && (
+        <DirectionsMap
+          isOpen={showDirections}
+          onClose={() => {
+            setShowDirections(false)
+            setSelectedStore(null)
+          }}
+          userLocation={userLocation}
+          destination={{
+            lat: selectedStore.coordinates.latitude,
+            lng: selectedStore.coordinates.longitude,
+            name: selectedStore.name,
+            address: `${selectedStore.address.street}, ${selectedStore.address.city}, ${selectedStore.address.postcode}`,
+            chain: selectedStore.chain
+          }}
+        />
+      )}
     </>
   )
 } 
