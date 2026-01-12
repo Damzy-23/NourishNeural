@@ -36,43 +36,68 @@ export default function SmartWasteDashboard({ pantryItems }: SmartWasteDashboard
     
     for (const item of pantryItems) {
       try {
-        // Predict waste probability using ML
-        const wastePrediction = await mlService.predictWaste([], {
-          category: item.category,
-          storage_type: 'fridge',
-          purchase_date: item.purchaseDate,
-          estimated_price: item.estimatedPrice || 3.00
-        });
+        // Support both snake_case (from API) and camelCase (legacy) field names
+        const purchaseDate = item.purchase_date || item.purchaseDate
+        const expiryDate = item.expiry_date || item.expiryDate
+        const estimatedPrice = item.estimated_price || item.estimatedPrice || 3.00
 
         // Calculate days until expiry
-        const daysUntilExpiry = item.expiryDate 
-          ? Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+        const daysUntilExpiry = expiryDate
+          ? Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
           : 7; // Default to 7 days if no expiry date
+
+        // Try to predict waste probability using ML, with fallback
+        let wasteProbability = 0.3; // Default moderate probability
+        try {
+          const wastePrediction = await mlService.predictWaste([], {
+            category: item.category,
+            storage_type: 'fridge',
+            purchase_date: purchaseDate,
+            estimated_price: estimatedPrice
+          });
+
+          // Safely extract waste probability with fallback
+          if (wastePrediction && typeof wastePrediction.waste_probability === 'number') {
+            wasteProbability = wastePrediction.waste_probability;
+          }
+        } catch (mlError) {
+          console.warn('ML prediction failed for item:', item.name, '- using fallback calculation');
+          // Fallback: calculate based on days until expiry
+          if (daysUntilExpiry <= 0) {
+            wasteProbability = 0.95;
+          } else if (daysUntilExpiry <= 2) {
+            wasteProbability = 0.7;
+          } else if (daysUntilExpiry <= 5) {
+            wasteProbability = 0.5;
+          } else {
+            wasteProbability = 0.2;
+          }
+        }
 
         // Determine risk level
         let riskLevel: 'low' | 'medium' | 'high' = 'low';
         let recommendedAction = '';
         let potentialSavings = 0;
 
-        if (wastePrediction.waste_probability > 0.6) {
+        if (wasteProbability > 0.6) {
           riskLevel = 'high';
           recommendedAction = 'Use immediately or freeze';
-          potentialSavings = (item.estimatedPrice || 3.00) * 0.8;
-        } else if (wastePrediction.waste_probability > 0.4) {
+          potentialSavings = estimatedPrice * 0.8;
+        } else if (wasteProbability > 0.4) {
           riskLevel = 'medium';
           recommendedAction = 'Plan to use within 2-3 days';
-          potentialSavings = (item.estimatedPrice || 3.00) * 0.5;
+          potentialSavings = estimatedPrice * 0.5;
         } else {
           riskLevel = 'low';
           recommendedAction = 'Monitor expiry date';
-          potentialSavings = (item.estimatedPrice || 3.00) * 0.1;
+          potentialSavings = estimatedPrice * 0.1;
         }
 
         predictions.push({
           itemName: item.name,
           category: item.category,
           currentStock: item.quantity,
-          predictedWasteProbability: wastePrediction.waste_probability,
+          predictedWasteProbability: wasteProbability,
           riskLevel,
           daysUntilExpiry,
           recommendedAction,

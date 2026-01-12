@@ -49,7 +49,8 @@ class MLService {
   async checkHealth(): Promise<MLHealthStatus> {
     try {
       const response = await apiService.get('/api/ml/health') as any;
-      return response.data.data;
+      // apiService already extracts response.data, so we just need .data from the API response structure
+      return response.data;
     } catch (error) {
       console.error('ML health check failed:', error);
       throw error;
@@ -64,7 +65,8 @@ class MLService {
       const response = await apiService.post('/api/ml/predict-expiry', {
         foodItem
       }) as any;
-      return response.data.data;
+      // apiService already extracts response.data, so we just need .data from the API response structure
+      return response.data;
     } catch (error) {
       console.error('Expiry prediction failed:', error);
       throw error;
@@ -80,7 +82,8 @@ class MLService {
         userHistory,
         foodItem
       }) as any;
-      return response.data.data;
+      // apiService already extracts response.data, so we just need .data from the API response structure
+      return response.data;
     } catch (error) {
       console.error('Waste prediction failed:', error);
       throw error;
@@ -95,7 +98,8 @@ class MLService {
       const response = await apiService.post('/api/ml/classify-food', {
         foodName
       }) as any;
-      return response.data.data;
+      // apiService already extracts response.data, so we just need .data from the API response structure
+      return response.data;
     } catch (error) {
       console.error('Food classification failed:', error);
       throw error;

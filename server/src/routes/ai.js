@@ -16,7 +16,9 @@ const openai = new OpenAI({
 router.post('/chat', async (req, res) => {
   try {
     const { message, context } = req.body;
-    
+
+    console.log('🤖 AI Chat request received:', message?.substring(0, 50));
+
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
     }
@@ -27,36 +29,80 @@ router.post('/chat', async (req, res) => {
 
     try {
       if (process.env.OPENAI_API_KEY) {
-        // Build system prompt for PantryPal AI
-        const systemPrompt = `You are PantryPal, an AI grocery assistant. You help users with:
-- Food and grocery-related questions
-- Recipe suggestions based on available ingredients
-- Nutritional information and dietary advice
-- Food substitutions and alternatives
-- Grocery shopping tips and meal planning
-- UK supermarket knowledge (Tesco, Sainsbury's, Asda, Morrisons, Aldi, Lidl, etc.)
+        console.log('🤖 Attempting OpenAI call...');
 
-Be helpful, friendly, and provide practical advice. If suggesting recipes, include ingredients, instructions, and cooking times. For nutrition info, provide per-serving details.`;
+        // Build system prompt for Nurexa AI - conversational and human-like
+        const systemPrompt = `You are Nurexa, a friendly AI food companion in the Nourish Neural app. You're like a knowledgeable friend who genuinely cares about helping people eat better.
+
+PERSONALITY:
+- Warm, approachable, and encouraging - never preachy or judgmental
+- Speak naturally like a real person, not a textbook or health pamphlet
+- Use casual language, contractions, and occasional humor when appropriate
+- Be empathetic - acknowledge that eating healthy can be challenging
+- Give honest, practical advice that works in real life
+
+COMMUNICATION STYLE:
+- Start with a direct, helpful response to their question
+- Keep responses concise but complete - don't overwhelm with bullet points
+- Use 2-3 key points max, not endless lists
+- Share tips like you're chatting with a friend over coffee
+- Ask follow-up questions to personalize advice when relevant
+- Use "you" and "I" to feel personal, not formal
+- Write in flowing paragraphs when possible, not step-by-step lists
+- For recipes, write conversationally like explaining to a friend, not numbered instructions
+
+FORMATTING RULES:
+- NEVER use markdown formatting like **bold**, *italics*, or ### headers
+- NEVER use numbered lists (1. 2. 3.) for instructions
+- Write naturally in paragraphs instead
+- If you must list things, use simple dashes (-) sparingly
+- Keep it clean and readable without special formatting
+
+AVOID:
+- Generic health disclaimers like "consult a healthcare professional"
+- Long numbered lists that feel like Wikipedia articles
+- Overly formal or clinical language
+- Repeating the same advice structure every time
+- Being preachy about "healthy eating" - meet people where they are
+- Any markdown syntax (**bold**, *italic*, ##headers, etc.)
+
+KNOWLEDGE:
+- UK-focused (supermarkets, products, measurements)
+- Practical cooking tips from real kitchen experience
+- Budget-conscious advice
+- Modern understanding of nutrition (not outdated food pyramid stuff)
+
+Remember: You're helping a friend, not writing a health textbook. Be real, be helpful, be human.`;
 
         const completion = await openai.chat.completions.create({
-          model: process.env.OPENAI_MODEL || 'gpt-4',
+          model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: message }
           ],
-          max_tokens: 500,
-          temperature: 0.7
+          max_tokens: 600,
+          temperature: 0.85
         });
 
         aiResponse = completion.choices[0].message.content;
+        console.log('🤖 OpenAI response received successfully');
       } else {
+        console.log('🤖 No OpenAI API key, using fallback');
         throw new Error('No OpenAI API key');
       }
     } catch (openaiError) {
-      console.log('Using fallback AI responses');
+      console.error('🤖 OpenAI API error:', openaiError.message);
+      console.log('🤖 Using fallback response...');
       // Enhanced fallback responses with context awareness
-      aiResponse = generateFallbackResponse(message, context);
-      responseType = getResponseType(message);
+      try {
+        aiResponse = generateFallbackResponse(message, context);
+        responseType = getResponseType(message);
+        console.log('🤖 Fallback response generated successfully');
+      } catch (fallbackError) {
+        console.error('🤖 Fallback also failed:', fallbackError.message);
+        aiResponse = `I'd be happy to help with that! For budget-friendly grocery shopping, my top tips are: shop at Aldi or Lidl for basics, plan your meals before shopping, buy seasonal produce, and don't shop when you're hungry. What specific aspect of budget shopping would you like more help with?`;
+        responseType = 'text';
+      }
     }
 
     // Parse response for structured data
@@ -77,10 +123,19 @@ Be helpful, friendly, and provide practical advice. If suggesting recipes, inclu
 
     res.json(response);
   } catch (error) {
-    console.error('AI Chat Error:', error);
-    res.status(500).json({ 
-      error: 'AI service temporarily unavailable',
-      message: 'I apologize, but I\'m having trouble responding right now. Please try again later.'
+    console.error('🤖 AI Chat Critical Error:', error.message);
+    console.error(error.stack);
+
+    // Even if everything fails, return a helpful response
+    res.json({
+      response: `Great question! I'd love to help with that. While I'm having a small technical hiccup, here's a quick tip: for budget shopping, Aldi and Lidl are your best friends for everyday items, and shopping in the evening often gets you reduced items. What specifically would you like to know more about?`,
+      message: `Great question! I'd love to help with that. While I'm having a small technical hiccup, here's a quick tip: for budget shopping, Aldi and Lidl are your best friends for everyday items, and shopping in the evening often gets you reduced items. What specifically would you like to know more about?`,
+      type: 'text',
+      suggestions: [],
+      recipes: [],
+      nutritionInfo: null,
+      substitutions: [],
+      data: { recipes: [], nutrition: null, substitutions: [] }
     });
   }
 });
@@ -593,36 +648,65 @@ Need specific advice about any particular food item?`;
 }
 
 function generateHealthResponse(message, context) {
-  return `Healthy eating doesn't have to be complicated! Here are some practical tips:
+  const lowerMessage = message.toLowerCase();
 
-**Building Healthy Habits:**
-• Start small - add one serving of vegetables per day
-• Drink water throughout the day
-• Eat regular meals to maintain energy
-• Include protein with each meal
-• Choose whole foods over processed when possible
+  // Weight loss specific
+  if (lowerMessage.includes('weight') || lowerMessage.includes('lose') || lowerMessage.includes('slim')) {
+    const responses = [
+      `Ah, the weight question - probably the most common one I get! Here's the honest truth: sustainable weight loss really comes down to being in a slight calorie deficit consistently, not any magic diet.
 
-**UK-Specific Healthy Eating:**
-• Follow the NHS Eatwell Guide
-• Aim for 5 portions of fruits and vegetables daily
-• Choose lean proteins and whole grains
-• Limit salt, sugar, and saturated fats
-• Stay active - aim for 150 minutes of moderate exercise weekly
+The approach that actually works for most people? Don't overhaul everything at once. Pick ONE thing to change this week - maybe swap your afternoon biscuits for some fruit, or start walking for 20 minutes after dinner.
 
-**Simple Swaps for Better Health:**
-• Swap white bread for wholemeal
-• Choose brown rice over white rice
-• Add vegetables to every meal
-• Use herbs and spices instead of salt
-• Choose water or herbal tea over sugary drinks
+The boring secret is that small changes you can stick with beat dramatic diets every time. What's your biggest challenge right now - is it snacking, portion sizes, or something else? I can give you more specific tips based on what you're actually dealing with.`,
 
-**Budget-Friendly Healthy Options:**
-• Frozen vegetables are just as nutritious as fresh
-• Buy seasonal produce
-• Use beans and lentils as protein sources
-• Oats are a cheap and healthy breakfast option
+      `Real talk - most diets fail because they're too restrictive. Your body is smarter than any fad diet, and it'll fight back if you cut too much too fast.
 
-What specific aspect of healthy eating would you like to know more about?`;
+What actually works is finding ways to eat that you genuinely enjoy AND that happen to be lower in calories. For me, that's things like:
+- Loading up on vegetables first (they fill you up for barely any calories)
+- Having protein with every meal (keeps you satisfied way longer)
+- Not keeping trigger foods in the house (out of sight, out of mind!)
+
+What kind of foods do you actually enjoy? I can help you figure out how to make them work for your goals rather than against them.`,
+
+      `I'll skip the generic advice and give you what actually matters: weight loss is about calories, but keeping the weight off is about habits.
+
+The trap most people fall into is going too hard too fast, then burning out. Instead, think about what you could realistically do for the next 6 months - not just the next 2 weeks.
+
+A few things that make a surprisingly big difference:
+- Eating slowly (sounds silly, but it works)
+- Getting enough sleep (lack of sleep messes with your hunger hormones)
+- Not drinking your calories (that daily latte or juice adds up fast)
+
+What does a typical day of eating look like for you? I can spot where the easy wins might be.`
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+  }
+
+  // General healthy eating
+  const responses = [
+    `Healthy eating honestly doesn't need to be complicated - the basics work: eat more vegetables, get enough protein, don't overdo the processed stuff.
+
+The game-changer for most people is actually cooking more at home. Even simple meals you make yourself are usually way better than takeaway or ready meals.
+
+What's your main goal - more energy, losing weight, building muscle, or just generally eating better? I can give you more targeted advice based on what you're actually going for.`,
+
+    `Here's my no-nonsense take on eating well: focus on adding good stuff rather than obsessing over cutting things out.
+
+Try to get some protein and vegetables at most meals, drink water, and don't stress too much about the occasional treat. Life's too short to be miserable about food!
+
+Is there something specific you're trying to improve? I can help with practical stuff like quick healthy meals, making vegetables actually taste good, or eating well on a budget.`,
+
+    `The honest truth about healthy eating? It's less about superfoods and more about consistency with the basics.
+
+Most people would see huge improvements just by:
+- Eating a bit more protein (keeps you full and maintains muscle)
+- Getting vegetables into at least two meals a day
+- Cooking at home more often
+
+What's your current situation like? I can help you figure out realistic changes that actually fit your life.`
+  ];
+
+  return responses[Math.floor(Math.random() * responses.length)];
 }
 
 function generateDefaultResponse(message, context) {

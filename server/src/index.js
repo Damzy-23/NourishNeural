@@ -3,10 +3,18 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
-require('dotenv').config();
+const path = require('path');
+
+// Load .env from server directory (handles different working directories)
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
+console.log('📁 Loading .env from:', path.resolve(__dirname, '../.env'));
 
 // Import mock database
 const mockDB = require('./mockDatabase');
+
+// Import Supabase client (used in profile endpoints)
+const { supabase } = require('./config/supabase');
 
 // Database and GraphQL setup (disabled for now - using Supabase)
 // const { connectDB } = require('./config/database');
@@ -26,6 +34,8 @@ const aiRoutes = require('./routes/ai');
 const pantryRoutes = require('./routes/pantry');
 const mlRoutes = require('./routes/ml');
 const smartFeaturesRoutes = require('./routes/smart-features');
+const barcodeRoutes = require('./routes/barcode');
+const loyaltyRoutes = require('./routes/loyalty');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -109,7 +119,10 @@ app.get('/api/dashboard/recommendations', (req, res) => {
   });
 });
 
-// Mock pantry endpoints
+// Mock pantry endpoints - DISABLED: Real routes are now handled by pantryRoutes
+// These mock routes were conflicting with the real Supabase-backed routes
+// The real routes are mounted at: app.use('/api/pantry', pantryRoutes);
+/*
 app.get('/api/pantry', (req, res) => {
   res.json({
     items: [
@@ -140,6 +153,7 @@ app.get('/api/pantry/categories', (req, res) => {
     categories: ['Dairy', 'Vegetables', 'Meat', 'Grains', 'Snacks', 'Beverages', 'Frozen', 'Condiments']
   });
 });
+*/
 
 // Mock grocery lists in-memory storage
 let mockGroceryLists = [
@@ -164,15 +178,6 @@ app.get('/api/groceries', (req, res) => {
   });
 });
 
-
-// Mock AI chat endpoint
-app.post('/api/ai/chat', (req, res) => {
-  const { message } = req.body;
-  res.json({
-    response: `I understand you're asking about "${message}". As your AI food assistant, I can help you with recipe suggestions, nutrition advice, and grocery shopping tips. How can I assist you further?`,
-    suggestions: ['Find recipes', 'Check nutrition', 'Shopping tips', 'Food substitutions']
-  });
-});
 
 // API routes - Use Supabase auth routes
 app.use('/api/auth', supabaseAuthRoutes);
@@ -679,6 +684,8 @@ app.use('/api/stores', storeRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/pantry', pantryRoutes);
 app.use('/api/ml', mlRoutes);
+app.use('/api/barcode', barcodeRoutes);
+app.use('/api/loyalty', loyaltyRoutes);
 
 // GraphQL setup (disabled - using Supabase)
 // setupGraphQL(app);
