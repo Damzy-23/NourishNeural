@@ -445,6 +445,7 @@ export default function AIAssistant() {
         </motion.div>
 
         {/* Info Banner */}
+
         <motion.div
           className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200/60 rounded-2xl p-5"
           variants={fadeUp}

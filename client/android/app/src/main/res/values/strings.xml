@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nourish Neural</string>
+    <string name="title_activity_main">Nourish Neural</string>
+    <string name="package_name">com.nourishneural.app</string>
+    <string name="custom_url_scheme">com.nourishneural.app</string>
+</resources>

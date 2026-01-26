@@ -12,7 +12,11 @@ import {
   Shield,
   Heart,
   DollarSign,
-  CheckCircle
+  CheckCircle,
+  CreditCard,
+  Plus,
+  Trash2,
+  X
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
@@ -100,11 +104,14 @@ const SHOPPING_FREQUENCIES = [
 export default function Profile() {
   const { user, updateUser } = useAuth()
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'notifications' | 'privacy'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'notifications' | 'privacy' | 'loyalty'>('profile')
   const [isEditing, setIsEditing] = useState(false)
   const [profileForm, setProfileForm] = useState<Partial<UserProfile>>({})
   const [preferencesForm, setPreferencesForm] = useState<Partial<UserPreferences>>({})
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [showAddLoyaltyModal, setShowAddLoyaltyModal] = useState(false)
+  const [selectedProgram, setSelectedProgram] = useState<string>('')
+  const [cardNumber, setCardNumber] = useState('')
 
   // Fetch user profile
   const { data: profileResponse, refetch: refetchProfile } = useQuery(
@@ -172,6 +179,56 @@ export default function Profile() {
     () => apiService.get('/api/users/stats'),
     {
       enabled: !!user,
+    }
+  )
+
+  // Fetch loyalty programs
+  const { data: loyaltyProgramsResponse } = useQuery(
+    ['loyalty-programs'],
+    () => apiService.get('/api/loyalty/programs'),
+    {
+      enabled: !!user,
+    }
+  )
+
+  // Fetch user's loyalty accounts
+  const { data: loyaltyAccountsResponse, refetch: refetchLoyaltyAccounts } = useQuery(
+    ['loyalty-accounts'],
+    () => apiService.get('/api/loyalty/accounts'),
+    {
+      enabled: !!user,
+    }
+  )
+
+  const loyaltyPrograms = (loyaltyProgramsResponse as any)?.data?.programs || []
+  const loyaltyAccounts = (loyaltyAccountsResponse as any)?.data?.accounts || []
+
+  // Add loyalty account mutation
+  const addLoyaltyMutation = useMutation(
+    async ({ programId, cardNumber }: { programId: string; cardNumber: string }) => {
+      return apiService.post('/api/loyalty/accounts', { programId, cardNumber })
+    },
+    {
+      onSuccess: () => {
+        refetchLoyaltyAccounts()
+        setShowAddLoyaltyModal(false)
+        setSelectedProgram('')
+        setCardNumber('')
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
+      },
+    }
+  )
+
+  // Remove loyalty account mutation
+  const removeLoyaltyMutation = useMutation(
+    async (accountId: string) => {
+      return apiService.delete(`/api/loyalty/accounts/${accountId}`)
+    },
+    {
+      onSuccess: () => {
+        refetchLoyaltyAccounts()
+      },
     }
   )
 
@@ -294,11 +351,39 @@ export default function Profile() {
     }))
   }
 
+  const handleAddLoyaltyCard = () => {
+    if (!selectedProgram || !cardNumber) return
+    addLoyaltyMutation.mutate({ programId: selectedProgram, cardNumber })
+  }
+
+  const handleRemoveLoyaltyCard = (accountId: string) => {
+    if (window.confirm('Are you sure you want to remove this loyalty card?')) {
+      removeLoyaltyMutation.mutate(accountId)
+    }
+  }
+
+  const getStoreColor = (color: string) => {
+    const colorMap: { [key: string]: string } = {
+      '#00539F': 'bg-[#00539F]',
+      '#7B2D8E': 'bg-[#7B2D8E]',
+      '#00A550': 'bg-[#00A550]',
+      '#5A5A5A': 'bg-[#5A5A5A]',
+      '#0050AA': 'bg-[#0050AA]',
+      '#00205B': 'bg-[#00205B]',
+      '#78BE20': 'bg-[#78BE20]',
+      '#00B1EB': 'bg-[#00B1EB]',
+      '#0F4C8A': 'bg-[#0F4C8A]',
+      '#EC1C24': 'bg-[#EC1C24]'
+    }
+    return colorMap[color] || 'bg-primary-600'
+  }
+
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'preferences', label: 'Preferences', icon: Heart },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'privacy', label: 'Privacy', icon: Shield }
+    { id: 'privacy', label: 'Privacy', icon: Shield },
+    { id: 'loyalty', label: 'Loyalty Cards', icon: CreditCard }
   ]
 
   return (
@@ -826,8 +911,220 @@ export default function Profile() {
                 </div>
               </motion.div>
             )}
+
+            {activeTab === 'loyalty' && (
+              <motion.div
+                className="card"
+                key="loyalty-tab"
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.45 }}
+              >
+                <div className="card-header">
+                  <div className="flex items-center justify-between">
+                    <h2 className="card-title">Loyalty Cards</h2>
+                    <motion.button
+                      onClick={() => setShowAddLoyaltyModal(true)}
+                      className="btn btn-primary btn-sm"
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Card
+                    </motion.button>
+                  </div>
+                </div>
+                <div className="card-content">
+                  {loyaltyAccounts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <CreditCard className="h-12 w-12 mx-auto text-neutral-400 mb-3" />
+                      <h3 className="text-lg font-medium text-neutral-900 dark:text-neutral-100 mb-1">
+                        No loyalty cards linked
+                      </h3>
+                      <p className="text-neutral-600 dark:text-neutral-400 mb-4">
+                        Link your supermarket loyalty cards to track rewards and get personalized offers.
+                      </p>
+                      <motion.button
+                        onClick={() => setShowAddLoyaltyModal(true)}
+                        className="btn btn-outline"
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.97 }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Your First Card
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {loyaltyAccounts.map((account: any) => (
+                        <motion.div
+                          key={account.id}
+                          className="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-800 rounded-xl"
+                          whileHover={{ scale: 1.01 }}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <div
+                              className={`w-12 h-12 rounded-lg flex items-center justify-center text-white ${getStoreColor(account.program?.color)}`}
+                            >
+                              <CreditCard className="h-6 w-6" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium text-neutral-900 dark:text-neutral-100">
+                                {account.program?.name || 'Loyalty Card'}
+                              </h3>
+                              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                                {account.program?.store} - {account.maskedCardNumber}
+                              </p>
+                              <p className="text-xs text-neutral-500 dark:text-neutral-500">
+                                Linked {new Date(account.linkedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <motion.button
+                            onClick={() => handleRemoveLoyaltyCard(account.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                            disabled={removeLoyaltyMutation.isLoading}
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </motion.button>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+
+                  {saveSuccess && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg mt-4"
+                    >
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                      <span className="text-green-700 dark:text-green-300 text-sm font-medium">
+                        Loyalty card added successfully!
+                      </span>
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+            )}
           </div>
         </div>
+
+        {/* Add Loyalty Card Modal */}
+        {showAddLoyaltyModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white dark:bg-neutral-800 rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
+                  Add Loyalty Card
+                </h2>
+                <button
+                  onClick={() => {
+                    setShowAddLoyaltyModal(false)
+                    setSelectedProgram('')
+                    setCardNumber('')
+                  }}
+                  className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    Select Loyalty Program
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                    {loyaltyPrograms.map((program: any) => (
+                      <motion.button
+                        key={program.id}
+                        onClick={() => setSelectedProgram(program.id)}
+                        className={`p-3 rounded-lg border-2 text-left transition-all ${
+                          selectedProgram === program.id
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                            : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
+                        }`}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className={`w-8 h-8 rounded-md flex items-center justify-center text-white ${getStoreColor(program.color)}`}
+                          >
+                            <CreditCard className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+                              {program.name}
+                            </p>
+                            <p className="text-xs text-neutral-500">{program.store}</p>
+                          </div>
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {selectedProgram && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      Card Number
+                    </label>
+                    <input
+                      type="text"
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(e.target.value)}
+                      placeholder={
+                        loyaltyPrograms.find((p: any) => p.id === selectedProgram)?.requirements ||
+                        'Enter card number'
+                      }
+                      className="input w-full"
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">
+                      {loyaltyPrograms.find((p: any) => p.id === selectedProgram)?.description}
+                    </p>
+                  </motion.div>
+                )}
+
+                <div className="flex space-x-3 pt-4">
+                  <motion.button
+                    onClick={handleAddLoyaltyCard}
+                    disabled={!selectedProgram || !cardNumber || addLoyaltyMutation.isLoading}
+                    className="btn btn-primary flex-1"
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    {addLoyaltyMutation.isLoading ? 'Adding...' : 'Add Card'}
+                  </motion.button>
+                  <motion.button
+                    onClick={() => {
+                      setShowAddLoyaltyModal(false)
+                      setSelectedProgram('')
+                      setCardNumber('')
+                    }}
+                    className="btn btn-outline"
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    Cancel
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </div>
     </>
   )

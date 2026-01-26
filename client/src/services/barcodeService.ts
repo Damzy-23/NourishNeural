@@ -1,4 +1,6 @@
-// Barcode lookup service using Open Food Facts API
+import { apiService } from './api'
+
+// Barcode lookup service using Open Food Facts API (with backend integration)
 export interface ProductInfo {
   barcode: string
   name: string
@@ -6,6 +8,10 @@ export interface ProductInfo {
   category?: string
   imageUrl?: string
   quantity?: string
+  ingredients?: string
+  allergens?: string[]
+  estimatedPrice?: number
+  estimatedExpiryDays?: number
   nutritionInfo?: {
     calories?: number
     protein?: number
@@ -14,7 +20,12 @@ export interface ProductInfo {
     fiber?: number
     sugar?: number
     sodium?: number
+    saturatedFat?: number
+    salt?: number
   }
+  nutriscore?: string
+  novaGroup?: number
+  ecoscore?: string
 }
 
 export interface BarcodeSearchResult {
@@ -23,10 +34,110 @@ export interface BarcodeSearchResult {
   error?: string
 }
 
-// Open Food Facts API base URL
+export interface BarcodeValidation {
+  valid: boolean
+  format: string
+  message?: string
+}
+
+export interface BarcodeScan {
+  id: string
+  barcode: string
+  productName: string
+  productData?: ProductInfo
+  scannedAt: string
+  addedToPantry: boolean
+}
+
+// Open Food Facts API base URL (fallback for direct client lookup)
 const OPEN_FOOD_FACTS_API = 'https://world.openfoodfacts.org/api/v0/product'
 
+/**
+ * Validate barcode format via backend
+ */
+export async function validateBarcode(barcode: string): Promise<BarcodeValidation> {
+  try {
+    const response = await apiService.post<{ success: boolean; data: BarcodeValidation }>(
+      '/api/barcode/validate',
+      { barcode }
+    )
+    return response.data
+  } catch (error) {
+    // Fallback to client-side validation
+    return validateBarcodeLocal(barcode)
+  }
+}
+
+/**
+ * Client-side barcode validation (fallback)
+ */
+function validateBarcodeLocal(barcode: string): BarcodeValidation {
+  const cleanBarcode = barcode.replace(/[\s-]/g, '')
+
+  if (!/^\d+$/.test(cleanBarcode)) {
+    return { valid: false, format: 'unknown', message: 'Barcode must contain only digits' }
+  }
+
+  if (cleanBarcode.length === 13) {
+    // EAN-13 validation
+    let sum = 0
+    for (let i = 0; i < 12; i++) {
+      sum += parseInt(cleanBarcode[i]) * (i % 2 === 0 ? 1 : 3)
+    }
+    const checkDigit = (10 - (sum % 10)) % 10
+    if (checkDigit === parseInt(cleanBarcode[12])) {
+      return { valid: true, format: 'EAN-13' }
+    }
+    return { valid: false, format: 'EAN-13', message: 'Invalid EAN-13 check digit' }
+  }
+
+  if (cleanBarcode.length === 12) {
+    // UPC-A validation
+    let sum = 0
+    for (let i = 0; i < 11; i++) {
+      sum += parseInt(cleanBarcode[i]) * (i % 2 === 0 ? 3 : 1)
+    }
+    const checkDigit = (10 - (sum % 10)) % 10
+    if (checkDigit === parseInt(cleanBarcode[11])) {
+      return { valid: true, format: 'UPC-A' }
+    }
+    return { valid: false, format: 'UPC-A', message: 'Invalid UPC-A check digit' }
+  }
+
+  if (cleanBarcode.length >= 6 && cleanBarcode.length <= 20) {
+    return { valid: true, format: 'OTHER' }
+  }
+
+  return { valid: false, format: 'unknown', message: `Unsupported barcode length: ${cleanBarcode.length}` }
+}
+
+/**
+ * Lookup barcode via backend (primary) or direct API (fallback)
+ */
 export async function lookupBarcode(barcode: string): Promise<BarcodeSearchResult> {
+  try {
+    // Try backend first
+    const response = await apiService.post<{ success: boolean; data: BarcodeSearchResult }>(
+      '/api/barcode/lookup',
+      { barcode, validateFirst: true }
+    )
+
+    if (response.success && response.data) {
+      return response.data
+    }
+
+    // Fallback to direct API call
+    return await lookupBarcodeDirectly(barcode)
+  } catch (error) {
+    console.error('Backend lookup failed, trying direct API:', error)
+    return await lookupBarcodeDirectly(barcode)
+  }
+}
+
+/**
+ * Direct lookup via Open Food Facts API (fallback)
+ */
+async function lookupBarcodeDirectly(barcode: string): Promise<BarcodeSearchResult> {
   try {
     const response = await fetch(`${OPEN_FOOD_FACTS_API}/${barcode}.json`)
     const data = await response.json()
@@ -69,6 +180,88 @@ export async function lookupBarcode(barcode: string): Promise<BarcodeSearchResul
       found: false,
       error: 'Failed to lookup barcode. Please check your internet connection.'
     }
+  }
+}
+
+/**
+ * Save barcode scan to history
+ */
+export async function saveScan(
+  barcode: string,
+  productName: string,
+  productData?: ProductInfo,
+  addedToPantry = false
+): Promise<{ scan: BarcodeScan; isDuplicate: boolean }> {
+  try {
+    const response = await apiService.post<{
+      success: boolean
+      data: { scan: BarcodeScan; isDuplicate: boolean; message?: string }
+    }>('/api/barcode/save', {
+      barcode,
+      productName,
+      productData,
+      addedToPantry
+    })
+    return response.data
+  } catch (error) {
+    console.error('Failed to save scan:', error)
+    // Return a local scan if backend fails
+    return {
+      scan: {
+        id: `local_${Date.now()}`,
+        barcode,
+        productName,
+        productData,
+        scannedAt: new Date().toISOString(),
+        addedToPantry
+      },
+      isDuplicate: false
+    }
+  }
+}
+
+/**
+ * Get scan history
+ */
+export async function getScanHistory(): Promise<BarcodeScan[]> {
+  try {
+    const response = await apiService.get<{
+      success: boolean
+      data: { scans: BarcodeScan[]; total: number }
+    }>('/api/barcode/history')
+    return response.data.scans
+  } catch (error) {
+    console.error('Failed to get scan history:', error)
+    return []
+  }
+}
+
+/**
+ * Delete scan from history
+ */
+export async function deleteScan(scanId: string): Promise<boolean> {
+  try {
+    await apiService.delete(`/api/barcode/history/${scanId}`)
+    return true
+  } catch (error) {
+    console.error('Failed to delete scan:', error)
+    return false
+  }
+}
+
+/**
+ * Check if barcode already exists in pantry
+ */
+export async function checkDuplicate(barcode: string): Promise<{ exists: boolean; existingItem?: BarcodeScan }> {
+  try {
+    const response = await apiService.post<{
+      success: boolean
+      data: { exists: boolean; existingItem?: BarcodeScan }
+    }>('/api/barcode/check-duplicate', { barcode })
+    return response.data
+  } catch (error) {
+    console.error('Failed to check duplicate:', error)
+    return { exists: false }
   }
 }
 
@@ -117,20 +310,20 @@ function extractCategory(categories: string | string[]): string {
 // Estimate price based on category (placeholder - could be enhanced with actual pricing APIs)
 export function estimatePrice(category: string): number {
   const priceEstimates: Record<string, number> = {
-    'Dairy': 2.50,
-    'Meat': 6.00,
-    'Seafood': 8.00,
-    'Vegetables': 1.50,
-    'Fruits': 2.00,
-    'Bakery': 2.00,
-    'Grains': 1.50,
-    'Beverages': 2.00,
-    'Snacks': 2.50,
-    'Condiments': 3.00,
-    'Spices': 2.50,
-    'Frozen': 4.00,
-    'Canned Goods': 1.50,
-    'Other': 3.00,
+    'Dairy': 1.45,
+    'Meat': 4.50,
+    'Seafood': 4.00,
+    'Vegetables': 1.00,
+    'Fruits': 1.50,
+    'Bakery': 1.20,
+    'Grains': 1.10,
+    'Beverages': 1.80,
+    'Snacks': 1.50,
+    'Condiments': 1.90,
+    'Spices': 0.80,
+    'Frozen': 2.50,
+    'Canned Goods': 1.30,
+    'Other': 2.00,
   }
 
   return priceEstimates[category] || 3.00

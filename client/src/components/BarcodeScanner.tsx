@@ -138,7 +138,8 @@ export default function BarcodeScanner({ isOpen, onClose, onProductFound }: Barc
 
   const handleConfirm = () => {
     if (productInfo) {
-      const price = estimatePrice(productInfo.category || 'Other')
+      // Use existing estimated price (from backend) or calculate local fallback
+      const price = productInfo.estimatedPrice || estimatePrice(productInfo.category || 'Other')
       onProductFound({
         ...productInfo,
         estimatedPrice: price

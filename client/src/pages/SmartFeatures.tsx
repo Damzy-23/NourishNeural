@@ -18,7 +18,10 @@ import {
   RefreshCw,
   Sparkles,
   Zap,
-  Search
+  Search,
+  X,
+  ShoppingBasket,
+  ChefHat as ChefIcon
 } from 'lucide-react'
 
 // Types
@@ -40,6 +43,8 @@ interface LeftoverRecipe {
   prepTime: number
   servings: number
   imageUrl?: string
+  extendedIngredients?: string[]
+  instructions?: string[]
 }
 
 interface Substitution {
@@ -107,6 +112,7 @@ export default function SmartFeatures() {
   const [selectedRecipeForCost, setSelectedRecipeForCost] = useState('')
   const [newGoal, setNewGoal] = useState({ nutrient: '', target: 0, unit: 'g' })
   const [newMealForVote, setNewMealForVote] = useState('')
+  const [selectedRecipe, setSelectedRecipe] = useState<LeftoverRecipe | null>(null)
 
   // Fetch expiring items for leftover matcher
   const { data: expiringItems } = useQuery<ExpiringItem[]>(
@@ -262,6 +268,35 @@ export default function SmartFeatures() {
     }
   )
 
+  const addToGroceryListMutation = useMutation(
+    async ({ name, quantity, unit, category }: { name: string; quantity: number; unit: string; category?: string }) => {
+      const token = localStorage.getItem('pantrypal_token')
+
+      // 1. Create a "Smart Restock" list if it doesn't exist (optional, or just add to most recent active list)
+      // For simplicity here, we'll create a new list for the day if not passed a list ID, but relying on backend to handle simple item add might be better.
+      // We will create a new list called "Smart Restock"
+
+      const res = await fetch('/api/groceries', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: `Smart Restock - ${new Date().toLocaleDateString()}`,
+          items: [{ name, quantity, unit, category: category || 'Pantry' }]
+        })
+      })
+      return res.json()
+    },
+    {
+      onSuccess: () => {
+        // Invalidate queries if needed, or show toast
+        queryClient.invalidateQueries(['grocery-lists'])
+      }
+    }
+  )
+
   const toggleAutoAddMutation = useMutation(
     async ({ itemName, autoAdd }: { itemName: string; autoAdd: boolean }) => {
       const token = localStorage.getItem('pantrypal_token')
@@ -338,11 +373,10 @@ export default function SmartFeatures() {
           <motion.button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`group relative flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 ${
-              activeTab === tab.id
-                ? 'text-white shadow-lg'
-                : 'bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm border border-white/40 dark:border-neutral-700/40 text-neutral-700 dark:text-neutral-300 hover:bg-white/80 dark:hover:bg-neutral-800/80 hover:shadow-md'
-            }`}
+            className={`group relative flex items-center gap-2 px-5 py-3 rounded-2xl text-sm font-semibold transition-all duration-300 ${activeTab === tab.id
+              ? 'text-white shadow-lg'
+              : 'bg-white/60 dark:bg-neutral-800/60 backdrop-blur-sm border border-white/40 dark:border-neutral-700/40 text-neutral-700 dark:text-neutral-300 hover:bg-white/80 dark:hover:bg-neutral-800/80 hover:shadow-md'
+              }`}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 * index }}
@@ -420,13 +454,12 @@ export default function SmartFeatures() {
                   {expiringItems.map(item => (
                     <motion.span
                       key={item.id}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-sm ${
-                        item.daysUntilExpiry <= 1
-                          ? 'bg-red-500/20 text-red-700 dark:text-red-300 border border-red-300/50'
-                          : item.daysUntilExpiry <= 3
+                      className={`px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-sm ${item.daysUntilExpiry <= 1
+                        ? 'bg-red-500/20 text-red-700 dark:text-red-300 border border-red-300/50'
+                        : item.daysUntilExpiry <= 3
                           ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-300/50'
                           : 'bg-yellow-500/20 text-yellow-700 dark:text-yellow-300 border border-yellow-300/50'
-                      }`}
+                        }`}
                       whileHover={{ scale: 1.05 }}
                     >
                       {item.name} ({item.daysUntilExpiry}d)
@@ -460,10 +493,9 @@ export default function SmartFeatures() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className={`text-2xl font-bold ${
-                          recipe.matchScore >= 80 ? 'text-emerald-500' :
+                        <div className={`text-2xl font-bold ${recipe.matchScore >= 80 ? 'text-emerald-500' :
                           recipe.matchScore >= 60 ? 'text-amber-500' : 'text-neutral-400'
-                        }`}>
+                          }`}>
                           {recipe.matchScore}%
                         </div>
                         <p className="text-xs text-neutral-500">match</p>
@@ -499,6 +531,7 @@ export default function SmartFeatures() {
                       className="w-full mt-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white rounded-xl text-sm font-semibold shadow-lg shadow-emerald-500/25 transition-all"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      onClick={() => setSelectedRecipe(recipe)}
                     >
                       View Recipe
                     </motion.button>
@@ -566,11 +599,10 @@ export default function SmartFeatures() {
                         <ArrowRightLeft className="w-4 h-4 text-blue-500" />
                         <span className="font-bold text-neutral-900 dark:text-neutral-100">{sub.substitute}</span>
                       </div>
-                      <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${
-                        sub.quality === 'excellent' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
+                      <span className={`px-3 py-1.5 rounded-xl text-xs font-bold ${sub.quality === 'excellent' ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' :
                         sub.quality === 'good' ? 'bg-blue-500/20 text-blue-600 dark:text-blue-400' :
-                        'bg-amber-500/20 text-amber-600 dark:text-amber-400'
-                      }`}>
+                          'bg-amber-500/20 text-amber-600 dark:text-amber-400'
+                        }`}>
                         {sub.quality.toUpperCase()}
                       </span>
                     </div>
@@ -665,7 +697,7 @@ export default function SmartFeatures() {
                             </span>
                           </td>
                           <td className="py-4 px-5 text-right font-bold text-neutral-900 dark:text-neutral-100">
-                            ${item.totalCost.toFixed(2)}
+                            £{item.totalCost.toFixed(2)}
                           </td>
                         </tr>
                       ))}
@@ -678,13 +710,13 @@ export default function SmartFeatures() {
                   <div className="flex justify-between items-center mb-3">
                     <span className="text-neutral-600 dark:text-neutral-400 font-medium">Total Cost</span>
                     <span className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                      ${costBreakdown.totalCost.toFixed(2)}
+                      £{costBreakdown.totalCost.toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-600 dark:text-neutral-400">Cost per Serving</span>
                     <span className="text-xl font-bold text-green-600 dark:text-green-400">
-                      ${costBreakdown.costPerServing.toFixed(2)}
+                      £{costBreakdown.costPerServing.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -775,11 +807,10 @@ export default function SmartFeatures() {
                     </div>
                     <div className="w-full bg-neutral-200/50 dark:bg-neutral-700/50 rounded-full h-4 overflow-hidden">
                       <motion.div
-                        className={`h-4 rounded-full ${
-                          progress >= 100 ? 'bg-gradient-to-r from-emerald-500 to-green-500' :
+                        className={`h-4 rounded-full ${progress >= 100 ? 'bg-gradient-to-r from-emerald-500 to-green-500' :
                           progress >= 75 ? 'bg-gradient-to-r from-blue-500 to-cyan-500' :
-                          progress >= 50 ? 'bg-gradient-to-r from-amber-500 to-yellow-500' : 'bg-gradient-to-r from-red-500 to-orange-500'
-                        }`}
+                            progress >= 50 ? 'bg-gradient-to-r from-amber-500 to-yellow-500' : 'bg-gradient-to-r from-red-500 to-orange-500'
+                          }`}
                         initial={{ width: 0 }}
                         animate={{ width: `${Math.min(progress, 100)}%` }}
                         transition={{ duration: 1, ease: "easeOut" }}
@@ -894,11 +925,10 @@ export default function SmartFeatures() {
                     {meal.votes.map(vote => (
                       <span
                         key={vote.memberId}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium ${
-                          vote.vote === 'yes' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium ${vote.vote === 'yes' ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' :
                           vote.vote === 'no' ? 'bg-red-500/20 text-red-700 dark:text-red-300' :
-                          'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                        }`}
+                            'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                          }`}
                       >
                         {vote.memberName}: {vote.vote}
                       </span>
@@ -945,10 +975,9 @@ export default function SmartFeatures() {
                         {item.currentQuantity} {item.unit} remaining
                       </p>
                     </div>
-                    <div className={`text-right ${
-                      item.predictedDaysUntilEmpty <= 3 ? 'text-red-500' :
+                    <div className={`text-right ${item.predictedDaysUntilEmpty <= 3 ? 'text-red-500' :
                       item.predictedDaysUntilEmpty <= 7 ? 'text-amber-500' : 'text-emerald-500'
-                    }`}>
+                      }`}>
                       <span className="text-3xl font-bold">{item.predictedDaysUntilEmpty}</span>
                       <p className="text-xs font-medium">days left</p>
                     </div>
@@ -969,23 +998,41 @@ export default function SmartFeatures() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Auto-add to grocery list</span>
-                    <motion.button
-                      onClick={() => toggleAutoAddMutation.mutate({ itemName: item.itemName, autoAdd: !item.autoAddToList })}
-                      className={`relative w-14 h-7 rounded-full transition-colors ${
-                        item.autoAddToList
+                  <div className="space-y-3 pt-3 border-t border-neutral-200/50 dark:border-neutral-700/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Add to grocery list now</span>
+                      <motion.button
+                        onClick={() => addToGroceryListMutation.mutate({
+                          name: item.itemName,
+                          quantity: Math.ceil(item.avgDailyUsage * 7),
+                          unit: item.unit
+                        })}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 rounded-lg transition-colors text-sm font-medium"
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <ShoppingBasket className="w-4 h-4" />
+                        Add
+                      </motion.button>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">Auto-add when empty</span>
+                      <motion.button
+                        onClick={() => toggleAutoAddMutation.mutate({ itemName: item.itemName, autoAdd: !item.autoAddToList })}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${item.autoAddToList
                           ? 'bg-gradient-to-r from-rose-500 to-orange-500'
                           : 'bg-neutral-300 dark:bg-neutral-600'
-                      }`}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <motion.span
-                        className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-md"
-                        animate={{ x: item.autoAddToList ? 30 : 4 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                      />
-                    </motion.button>
+                          }`}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <motion.span
+                          className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-md"
+                          animate={{ x: item.autoAddToList ? 22 : 4 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        />
+                      </motion.button>
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -993,6 +1040,97 @@ export default function SmartFeatures() {
           </motion.div>
         )}
       </motion.div>
-    </div>
+
+      {/* Recipe Modal */}
+      {
+        selectedRecipe && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-neutral-800 rounded-3xl shadow-2xl"
+            >
+              {/* Header */}
+              <div className="sticky top-0 z-10 flex items-center justify-between p-6 bg-white/80 dark:bg-neutral-800/80 backdrop-blur-md border-b border-neutral-200 dark:border-neutral-700">
+                <div>
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{selectedRecipe.name}</h2>
+                  <div className="flex items-center gap-4 mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                    <span className="flex items-center gap-1"><Clock className="w-4 h-4" /> {selectedRecipe.prepTime} min</span>
+                    <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {selectedRecipe.servings} servings</span>
+                    <span className={`font-semibold ${selectedRecipe.matchScore >= 80 ? 'text-emerald-500' :
+                      selectedRecipe.matchScore >= 60 ? 'text-amber-500' : 'text-neutral-400'
+                      }`}>{selectedRecipe.matchScore}% Match</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedRecipe(null)}
+                  className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-neutral-500" />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-6 space-y-8">
+                {/* Ingredients */}
+                <div>
+                  <h3 className="flex items-center gap-2 text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-4">
+                    <ShoppingBasket className="w-5 h-5 text-emerald-500" />
+                    Ingredients
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {selectedRecipe.extendedIngredients?.map((ingredient, idx) => (
+                      <div key={idx} className="flex items-start gap-3 p-3 bg-neutral-50 dark:bg-neutral-700/30 rounded-xl">
+                        <div className="mt-1 w-2 h-2 rounded-full bg-emerald-400" />
+                        <span className="text-neutral-700 dark:text-neutral-300">{ingredient}</span>
+                      </div>
+                    )) || (
+                        <div className="col-span-2 text-neutral-500 italic">No detailed ingredients available.</div>
+                      )}
+                  </div>
+                </div>
+
+                {/* Instructions */}
+                <div>
+                  <h3 className="flex items-center gap-2 text-lg font-bold text-neutral-900 dark:text-neutral-100 mb-4">
+                    <ChefIcon className="w-5 h-5 text-amber-500" />
+                    Instructions
+                  </h3>
+                  <div className="space-y-4">
+                    {selectedRecipe.instructions?.map((step, idx) => (
+                      <div key={idx} className="flex gap-4">
+                        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-sm">
+                          {idx + 1}
+                        </div>
+                        <p className="mt-1 text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                          {step}
+                        </p>
+                      </div>
+                    )) || (
+                        <div className="text-neutral-500 italic">No instructions available.</div>
+                      )}
+                  </div>
+                </div>
+
+                {/* Action */}
+                <div className="pt-6 border-t border-neutral-200 dark:border-neutral-700">
+                  <button
+                    onClick={() => {
+                      // Could implement "Cook This" functionality to deduct inventory
+                      // For now just close or show usage
+                      setSelectedRecipe(null)
+                    }}
+                    className="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl shadow-lg shadow-emerald-500/20 transition-all"
+                  >
+                    I'm Cooking This!
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )
+      }
+    </div >
   )
 }

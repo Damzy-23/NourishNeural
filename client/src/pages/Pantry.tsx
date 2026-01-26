@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Helmet } from 'react-helmet-async'
-import { useMutation } from 'react-query'
-import { motion } from 'framer-motion'
+import { useQuery, useMutation, useQueryClient } from 'react-query'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Package,
   Plus,
@@ -14,12 +14,25 @@ import {
   Archive,
   ArrowUpDown,
   Filter,
-  ScanLine
+  ScanLine,
+  Brain,
+  ChevronDown,
+  ChevronUp,
+  Utensils,
+  Clock,
+  Calendar,
+  Tag,
+  ShoppingBag,
+  Receipt
 } from 'lucide-react'
-import SmartPantryItem from '../components/SmartPantryItem'
+import SmartWasteDashboard from '../components/SmartWasteDashboard'
 import BarcodeScanner from '../components/BarcodeScanner'
+import ReceiptScanner from '../components/ReceiptScanner'
 import { ProductInfo } from '../services/barcodeService'
 import { fadeUp, staggerContainer } from '../utils/motion'
+import { apiService } from '../services/api'
+import { useAuth } from '../hooks/useAuth'
+import toast from 'react-hot-toast'
 
 interface PantryItem {
   id: string
@@ -27,11 +40,66 @@ interface PantryItem {
   quantity: number
   unit: string
   category: string
+  // Support both camelCase (from mock API) and snake_case (from real API)
+  expiry_date?: string
   expiryDate?: string
-  purchaseDate: string
+  purchase_date?: string
+  purchaseDate?: string
+  estimated_price?: number
   estimatedPrice?: number
   barcode?: string
   notes?: string
+  brand?: string
+  store_name?: string
+  image_url?: string
+  is_archived?: boolean
+  // Computed field
+  wasteRisk?: 'low' | 'medium' | 'high'
+}
+
+// Helper to get normalized field values (supports both camelCase and snake_case)
+const getExpiryDate = (item: PantryItem): string | undefined =>
+  item.expiry_date || item.expiryDate
+const getPurchaseDate = (item: PantryItem): string =>
+  item.purchase_date || item.purchaseDate || new Date().toISOString()
+const getEstimatedPrice = (item: PantryItem): number | undefined =>
+  item.estimated_price ?? item.estimatedPrice
+
+// Waste risk calculation based on category and days until expiry
+const calculateWasteRisk = (category: string, expiryDate?: string): 'low' | 'medium' | 'high' => {
+  // Base waste rates by category
+  const categoryRiskBase: { [key: string]: number } = {
+    'Herbs': 0.45,
+    'Fish': 0.35,
+    'Vegetables': 0.42,
+    'Fruits': 0.38,
+    'Meat': 0.28,
+    'Bakery': 0.22,
+    'Dairy': 0.18,
+    'Frozen': 0.12,
+    'Eggs': 0.10,
+    'Pantry': 0.08,
+    'Beverages': 0.06,
+    'General': 0.15
+  }
+
+  let riskScore = categoryRiskBase[category] || 0.15
+
+  // Adjust based on expiry
+  if (expiryDate) {
+    const daysUntilExpiry = Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    if (daysUntilExpiry <= 0) {
+      riskScore = 0.95
+    } else if (daysUntilExpiry <= 2) {
+      riskScore = Math.min(0.9, riskScore + 0.4)
+    } else if (daysUntilExpiry <= 5) {
+      riskScore = Math.min(0.7, riskScore + 0.2)
+    }
+  }
+
+  if (riskScore > 0.6) return 'high'
+  if (riskScore > 0.35) return 'medium'
+  return 'low'
 }
 
 interface CreateItemForm {
@@ -55,13 +123,19 @@ interface PantryStats {
 }
 
 export default function Pantry() {
+  const { user } = useAuth()
+  const queryClient = useQueryClient()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showScanner, setShowScanner] = useState(false)
-  const [, setEditingItem] = useState<string | null>(null)
+  const [showReceiptScanner, setShowReceiptScanner] = useState(false)
+  const [showWasteDashboard, setShowWasteDashboard] = useState(false)
+  const [showConsumeModal, setShowConsumeModal] = useState<string | null>(null)
+  const [consumeAmount, setConsumeAmount] = useState(1)
+  const [editingItem, setEditingItem] = useState<PantryItem | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [filterType, setFilterType] = useState('all') // all, expiring, expired, lowStock
-  const [sortBy, setSortBy] = useState<'name' | 'date' | 'expiry' | 'price'>('date')
+  const [filterType, setFilterType] = useState('all') // all, expiring, expired, lowStock, highRisk
+  const [sortBy, setSortBy] = useState<'name' | 'date' | 'expiry' | 'price' | 'wasteRisk'>('date')
   const [newItemForm, setNewItemForm] = useState<CreateItemForm>({
     name: '',
     quantity: 1,
@@ -71,6 +145,66 @@ export default function Pantry() {
     estimatedPrice: 0,
     notes: ''
   })
+
+  // Fetch pantry items from API
+  const { data: pantryData, isLoading: itemsLoading } = useQuery(
+    ['pantry-items'],
+    () => apiService.get<{ items: PantryItem[] }>('/api/pantry'),
+    {
+      enabled: !!user,
+      staleTime: 30000, // 30 seconds
+      refetchOnWindowFocus: true,
+    }
+  )
+
+  // Fetch pantry stats from API
+  const { data: statsData } = useQuery(
+    ['pantry-stats'],
+    () => apiService.get<PantryStats>('/api/pantry/stats'),
+    {
+      enabled: !!user,
+      staleTime: 30000,
+    }
+  )
+
+  // Fetch categories from API
+  const { data: categoriesData } = useQuery(
+    ['pantry-categories'],
+    () => apiService.get<{ categories: string[] }>('/api/pantry/categories'),
+    {
+      enabled: !!user,
+      staleTime: 60000, // 1 minute
+    }
+  )
+
+  // Use API data or fallback to empty arrays
+  const pantryItems: PantryItem[] = pantryData?.items || []
+  const stats: PantryStats = statsData || {
+    totalItems: 0,
+    totalValue: 0,
+    categoryBreakdown: {},
+    expiringSoon: 0,
+    expired: 0,
+    lowStock: 0,
+    averageItemValue: 0
+  }
+  const categories: string[] = categoriesData?.categories || ['Dairy', 'Meat', 'Fish', 'Vegetables', 'Fruits', 'Bakery', 'Pantry', 'Frozen', 'Beverages']
+  const isLoading = itemsLoading
+
+  // Handle scanned receipt items
+  const handleReceiptItems = (items: { name: string; price?: number }[]) => {
+    // Sequentially add items (could be optimized with a bulk API)
+    items.forEach(item => {
+      createItemMutation.mutate({
+        name: item.name,
+        quantity: 1,
+        unit: 'pieces',
+        category: 'General', // Could try to infer category from name in the future
+        estimatedPrice: item.price || 0
+      })
+    })
+    toast.success(`Processing ${items.length} items from receipt...`)
+  }
 
   // Handle scanned product from barcode scanner
   const handleScannedProduct = (product: ProductInfo & { estimatedPrice?: number }) => {
@@ -83,96 +217,27 @@ export default function Pantry() {
       estimatedPrice: product.estimatedPrice || 0,
       notes: product.brand ? `Brand: ${product.brand}` : ''
     })
+    setShowScanner(false)
     setShowCreateForm(true)
   }
 
-  // Mock pantry items data
-  const mockPantryItems: PantryItem[] = [
-    {
-      id: '1',
-      name: 'Whole Milk 1L',
-      quantity: 2,
-      unit: 'bottles',
-      category: 'Dairy',
-      expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-      purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      estimatedPrice: 2.50,
-      notes: 'Organic brand'
-    },
-    {
-      id: '2',
-      name: 'Chicken Breast 500g',
-      quantity: 1,
-      unit: 'pack',
-      category: 'Meat',
-      expiryDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000).toISOString(),
-      purchaseDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      estimatedPrice: 4.50,
-      notes: 'Free-range'
-    },
-    {
-      id: '3',
-      name: 'Fresh Tomatoes',
-      quantity: 6,
-      unit: 'pieces',
-      category: 'Vegetables',
-      expiryDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-      purchaseDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      estimatedPrice: 2.00,
-      notes: 'Vine tomatoes'
-    },
-    {
-      id: '4',
-      name: 'White Bread Loaf',
-      quantity: 1,
-      unit: 'loaf',
-      category: 'Bakery',
-      expiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
-      purchaseDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      estimatedPrice: 1.20,
-      notes: 'Fresh baked'
-    }
-  ];
-
-  // Use mock data instead of API calls
-  const isLoading = false;
-
-  // Mock pantry stats
-  const mockStats: PantryStats = {
-    totalItems: mockPantryItems.length,
-    totalValue: mockPantryItems.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0),
-    categoryBreakdown: {
-      'Dairy': 1,
-      'Meat': 1,
-      'Vegetables': 1,
-      'Bakery': 1
-    },
-    expiringSoon: mockPantryItems.filter(item => {
-      if (!item.expiryDate) return false;
-      const daysUntilExpiry = Math.ceil((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-      return daysUntilExpiry <= 3;
-    }).length,
-    expired: 0,
-    lowStock: mockPantryItems.filter(item => item.quantity <= 1).length,
-    averageItemValue: mockPantryItems.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0) / mockPantryItems.length
-  };
-
-  // Mock categories
-  const mockCategories = ['Dairy', 'Meat', 'Fish', 'Vegetables', 'Fruits', 'Bakery', 'Pantry', 'Frozen', 'Beverages'];
-
-  // Use mock data
-  const pantryItems: PantryItem[] = mockPantryItems;
-  const stats: PantryStats = mockStats;
-  const categories: string[] = mockCategories;
-
-  // Create pantry item mutation (mock implementation)
+  // Create pantry item mutation
   const createItemMutation = useMutation(
-    (itemData: CreateItemForm) => {
-      // Mock API call - just return success
-      return Promise.resolve({ data: { success: true, item: { ...itemData, id: Date.now().toString() } } });
-    },
+    (itemData: CreateItemForm) =>
+      apiService.post<{ item: PantryItem; message: string }>('/api/pantry', {
+        name: itemData.name,
+        quantity: itemData.quantity,
+        unit: itemData.unit,
+        category: itemData.category,
+        expiryDate: itemData.expiryDate || null,
+        estimatedPrice: itemData.estimatedPrice || null,
+        notes: itemData.notes || null,
+      }),
     {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries(['pantry-items'])
+        queryClient.invalidateQueries(['pantry-stats'])
+        queryClient.invalidateQueries(['pantry-categories'])
         setShowCreateForm(false)
         setNewItemForm({
           name: '',
@@ -183,23 +248,60 @@ export default function Pantry() {
           estimatedPrice: 0,
           notes: ''
         })
-        // Show success message
-        alert('Item added successfully! (Demo mode)')
+        toast.success(data.message || 'Item added successfully!')
       },
+      onError: () => {
+        toast.error('Failed to add item. Please try again.')
+      }
     }
   )
 
-  // Delete pantry item mutation (mock implementation)
-  const deleteItemMutation = useMutation(
-    (_itemId: string) => {
-      // Mock API call - just return success
-      return Promise.resolve({ data: { success: true } });
-    },
+  // Update pantry item mutation
+  const updateItemMutation = useMutation(
+    ({ id, data }: { id: string; data: Partial<CreateItemForm> }) =>
+      apiService.put<{ item: PantryItem; message: string }>(`/api/pantry/${id}`, data),
     {
-      onSuccess: () => {
-        // Show success message
-        alert('Item deleted successfully! (Demo mode)')
+      onSuccess: (data) => {
+        queryClient.invalidateQueries(['pantry-items'])
+        queryClient.invalidateQueries(['pantry-stats'])
+        setEditingItem(null)
+        toast.success(data.message || 'Item updated successfully!')
       },
+      onError: () => {
+        toast.error('Failed to update item. Please try again.')
+      }
+    }
+  )
+
+  // Delete pantry item mutation
+  const deleteItemMutation = useMutation(
+    (itemId: string) => apiService.delete<{ message: string }>(`/api/pantry/${itemId}`),
+    {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries(['pantry-items'])
+        queryClient.invalidateQueries(['pantry-stats'])
+        toast.success(data.message || 'Item removed successfully!')
+      },
+      onError: () => {
+        toast.error('Failed to remove item. Please try again.')
+      }
+    }
+  )
+
+  // Consume pantry item mutation
+  const consumeItemMutation = useMutation(
+    ({ id, amount }: { id: string; amount: number }) =>
+      apiService.post<{ item?: PantryItem; message: string; quantity: number }>(`/api/pantry/${id}/consume`, { amount }),
+    {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries(['pantry-items'])
+        queryClient.invalidateQueries(['pantry-stats'])
+        setShowConsumeModal(null)
+        toast.success(data.message || 'Consumption recorded!')
+      },
+      onError: () => {
+        toast.error('Failed to record consumption. Please try again.')
+      }
     }
   )
 
@@ -228,6 +330,46 @@ export default function Pantry() {
     return 'fresh'
   }
 
+  const getExpiryColor = (expiryDate?: string) => {
+    if (!expiryDate) return 'text-neutral-500'
+    const days = getDaysUntilExpiry(expiryDate)
+    if (days < 0) return 'text-red-600'
+    if (days <= 2) return 'text-red-500'
+    if (days <= 5) return 'text-orange-500'
+    if (days <= 7) return 'text-yellow-500'
+    return 'text-green-500'
+  }
+
+  const formatExpiryText = (expiryDate?: string) => {
+    if (!expiryDate) return 'No expiry set'
+    const days = getDaysUntilExpiry(expiryDate)
+    if (days < 0) return `Expired ${Math.abs(days)} day${Math.abs(days) !== 1 ? 's' : ''} ago`
+    if (days === 0) return 'Expires today'
+    if (days === 1) return 'Expires tomorrow'
+    if (days <= 7) return `Expires in ${days} days`
+    return new Date(expiryDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  }
+
+  const getCategoryIcon = (category: string) => {
+    const icons: { [key: string]: string } = {
+      'Dairy': '🥛',
+      'Meat': '🥩',
+      'Fish': '🐟',
+      'Vegetables': '🥬',
+      'Fruits': '🍎',
+      'Bakery': '🍞',
+      'Pantry': '🥫',
+      'Frozen': '🧊',
+      'Beverages': '🥤',
+      'Grains': '🌾',
+      'Canned Goods': '🥫',
+      'Condiments': '🧂',
+      'Snacks': '🍿',
+      'General': '📦'
+    }
+    return icons[category] || '📦'
+  }
+
   const filteredItems = pantryItems
     .filter(item => {
       // Search filter
@@ -239,13 +381,16 @@ export default function Pantry() {
       // Apply filter type
       let matchesFilter = true
       if (filterType === 'expiring') {
-        const status = getExpiryStatus(item.expiryDate)
+        const status = getExpiryStatus(getExpiryDate(item))
         matchesFilter = status === 'expiring'
       } else if (filterType === 'expired') {
-        const status = getExpiryStatus(item.expiryDate)
+        const status = getExpiryStatus(getExpiryDate(item))
         matchesFilter = status === 'expired'
       } else if (filterType === 'lowStock') {
         matchesFilter = item.quantity <= 1
+      } else if (filterType === 'highRisk') {
+        const wasteRisk = calculateWasteRisk(item.category, getExpiryDate(item))
+        matchesFilter = wasteRisk === 'high'
       }
 
       return matchesSearch && matchesCategory && matchesFilter
@@ -255,14 +400,21 @@ export default function Pantry() {
         case 'name':
           return a.name.localeCompare(b.name)
         case 'date':
-          return new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime()
+          return new Date(getPurchaseDate(b)).getTime() - new Date(getPurchaseDate(a)).getTime()
         case 'expiry':
-          if (!a.expiryDate && !b.expiryDate) return 0
-          if (!a.expiryDate) return 1
-          if (!b.expiryDate) return -1
-          return new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
+          const aExpiry = getExpiryDate(a)
+          const bExpiry = getExpiryDate(b)
+          if (!aExpiry && !bExpiry) return 0
+          if (!aExpiry) return 1
+          if (!bExpiry) return -1
+          return new Date(aExpiry).getTime() - new Date(bExpiry).getTime()
         case 'price':
-          return (b.estimatedPrice || 0) - (a.estimatedPrice || 0)
+          return (getEstimatedPrice(b) || 0) - (getEstimatedPrice(a) || 0)
+        case 'wasteRisk':
+          const riskOrder = { high: 3, medium: 2, low: 1 }
+          const aRisk = calculateWasteRisk(a.category, getExpiryDate(a))
+          const bRisk = calculateWasteRisk(b.category, getExpiryDate(b))
+          return riskOrder[bRisk] - riskOrder[aRisk]
         default:
           return 0
       }
@@ -292,6 +444,138 @@ export default function Pantry() {
         onClose={() => setShowScanner(false)}
         onProductFound={handleScannedProduct}
       />
+
+      {/* Receipt Scanner Modal */}
+      <ReceiptScanner
+        isOpen={showReceiptScanner}
+        onClose={() => setShowReceiptScanner(false)}
+        onItemsFound={handleReceiptItems}
+      />
+
+      {/* Consumption Tracking Modal */}
+      <AnimatePresence>
+        {showConsumeModal && (
+          <motion.div
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowConsumeModal(null)}
+          >
+            <motion.div
+              className="bg-white dark:bg-neutral-800 rounded-2xl p-6 w-full max-w-md mx-4 shadow-2xl"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-2">
+                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                    <Utensils className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+                      Record Consumption
+                    </h3>
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                      Track how much you used
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowConsumeModal(null)}
+                  className="btn btn-ghost btn-sm"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {(() => {
+                const item = pantryItems.find(i => i.id === showConsumeModal)
+                if (!item) return null
+
+                return (
+                  <div className="space-y-4">
+                    <div className="p-4 bg-neutral-100 dark:bg-neutral-700 rounded-xl">
+                      <p className="font-medium text-neutral-900 dark:text-neutral-100">
+                        {item.name}
+                      </p>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        Current stock: {item.quantity} {item.unit}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                        Amount to use
+                      </label>
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => setConsumeAmount(Math.max(1, consumeAmount - 1))}
+                          className="btn btn-outline btn-sm"
+                          disabled={consumeAmount <= 1}
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          value={consumeAmount}
+                          onChange={(e) => setConsumeAmount(Math.min(item.quantity, Math.max(1, parseInt(e.target.value) || 1)))}
+                          className="input text-center w-20"
+                          min="1"
+                          max={item.quantity}
+                        />
+                        <button
+                          onClick={() => setConsumeAmount(Math.min(item.quantity, consumeAmount + 1))}
+                          className="btn btn-outline btn-sm"
+                          disabled={consumeAmount >= item.quantity}
+                        >
+                          +
+                        </button>
+                        <span className="text-neutral-600 dark:text-neutral-400">
+                          {item.unit}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2 text-sm text-neutral-600 dark:text-neutral-400">
+                      <Brain className="h-4 w-4 text-purple-500" />
+                      <span>This helps improve waste predictions</span>
+                    </div>
+
+                    <div className="flex space-x-3 pt-2">
+                      <motion.button
+                        onClick={() => {
+                          consumeItemMutation.mutate({ id: item.id, amount: consumeAmount })
+                        }}
+                        className="btn btn-primary flex-1"
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                        disabled={consumeItemMutation.isLoading}
+                      >
+                        <Utensils className="h-4 w-4 mr-2" />
+                        {consumeItemMutation.isLoading ? 'Recording...' : 'Record Usage'}
+                      </motion.button>
+                      <motion.button
+                        onClick={() => {
+                          consumeItemMutation.mutate({ id: item.id, amount: item.quantity })
+                        }}
+                        className="btn btn-outline"
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                        disabled={consumeItemMutation.isLoading}
+                      >
+                        Use All
+                      </motion.button>
+                    </div>
+                  </div>
+                )
+              })()}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="relative space-y-8 pb-12">
         <motion.div
@@ -344,6 +628,18 @@ export default function Pantry() {
                 </div>
               </div>
               <div className="flex space-x-3">
+                <motion.button
+                  onClick={() => setShowReceiptScanner(true)}
+                  className="btn btn-outline shadow-md hover:shadow-lg hidden md:flex"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.5 }}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Receipt className="h-4 w-4 mr-2" />
+                  Scan Receipt
+                </motion.button>
                 <motion.button
                   onClick={() => setShowScanner(true)}
                   className="btn btn-outline shadow-md hover:shadow-lg"
@@ -440,8 +736,65 @@ export default function Pantry() {
           ))}
         </motion.section>
 
+        {/* AI Waste Prevention Dashboard Toggle */}
+        <motion.div
+          className="card cursor-pointer"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          onClick={() => setShowWasteDashboard(!showWasteDashboard)}
+          whileHover={{ y: -2 }}
+        >
+          <div className="card-content">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg">
+                  <Brain className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+                    AI Waste Prevention Dashboard
+                  </h3>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                    Analyze waste risk and get AI recommendations for your pantry items
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+                  SMART
+                </span>
+                {showWasteDashboard ? (
+                  <ChevronUp className="h-5 w-5 text-neutral-400" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-neutral-400" />
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Waste Dashboard Panel */}
+        <AnimatePresence>
+          {showWasteDashboard && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="card">
+                <div className="card-content">
+                  <SmartWasteDashboard pantryItems={pantryItems} />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Create Item Form */}
-         {showCreateForm && (
+        {showCreateForm && (
           <motion.div
             className="card"
             initial={{ opacity: 0, y: -20 }}
@@ -473,7 +826,7 @@ export default function Pantry() {
                     placeholder="e.g., Milk, Bread, Rice"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Category
@@ -496,7 +849,7 @@ export default function Pantry() {
                     <option value="Beverages">Beverages</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Quantity *
@@ -509,7 +862,7 @@ export default function Pantry() {
                     min="1"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Unit
@@ -529,7 +882,7 @@ export default function Pantry() {
                     <option value="packets">packets</option>
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Expiry Date
@@ -541,7 +894,7 @@ export default function Pantry() {
                     className="input"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Estimated Price (£)
@@ -556,7 +909,7 @@ export default function Pantry() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Notes
@@ -651,6 +1004,7 @@ export default function Pantry() {
                   <option value="expiring">Expiring Soon</option>
                   <option value="expired">Expired</option>
                   <option value="lowStock">Low Stock</option>
+                  <option value="highRisk">High Waste Risk</option>
                 </select>
               </div>
 
@@ -661,13 +1015,14 @@ export default function Pantry() {
                 </label>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'expiry' | 'price')}
+                  onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'expiry' | 'price' | 'wasteRisk')}
                   className="input"
                 >
                   <option value="date">Newest First</option>
                   <option value="name">Name (A-Z)</option>
                   <option value="expiry">Expiry Date</option>
                   <option value="price">Highest Price</option>
+                  <option value="wasteRisk">Highest Waste Risk</option>
                 </select>
               </div>
 
@@ -719,78 +1074,310 @@ export default function Pantry() {
                   }
                 </p>
                 {pantryItems.length === 0 && (
-                  <motion.button
-                    onClick={() => setShowCreateForm(true)}
-                    className="btn btn-primary"
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Your First Item
-                  </motion.button>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <motion.button
+                      onClick={() => setShowScanner(true)}
+                      className="btn btn-outline"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <ScanLine className="h-4 w-4 mr-2" />
+                      Scan Barcode
+                    </motion.button>
+                    <motion.button
+                      onClick={() => setShowCreateForm(true)}
+                      className="btn btn-primary"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Manually
+                    </motion.button>
+                  </div>
                 )}
               </div>
             </div>
           </motion.div>
         ) : (
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
           >
             {filteredItems.map((item) => {
-              // Convert to SmartPantryItem format
-              const smartItem = {
-                id: item.id,
-                name: item.name,
-                category: item.category,
-                purchaseDate: item.purchaseDate,
-                storageType: 'fridge', // Default storage type
-                quantity: item.quantity,
-                unit: item.unit
-              };
+              const itemExpiryDate = getExpiryDate(item)
+              const wasteRisk = calculateWasteRisk(item.category, itemExpiryDate)
+              const expiryStatus = getExpiryStatus(itemExpiryDate)
 
               return (
                 <motion.div
                   key={item.id}
-                  className="relative"
+                  className="group relative"
                   variants={fadeUp}
-                  transition={{ duration: 0.4 }}
+                  transition={{ duration: 0.3 }}
+                  whileHover={{ y: -4 }}
                 >
-                  {/* Action Buttons Overlay */}
-                  <div className="absolute top-2 right-2 z-10 flex space-x-1">
-                    <button
-                      onClick={() => setEditingItem(item.id)}
-                      className="btn btn-ghost btn-sm bg-white/95 hover:bg-white shadow-md border border-neutral-200/50"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to delete this item?')) {
-                          deleteItemMutation.mutate(item.id)
-                        }
-                      }}
-                      className="btn btn-ghost btn-sm text-red-500 hover:text-red-700 bg-white/95 hover:bg-white shadow-md border border-red-200/50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+                  <div className={`
+                    card overflow-hidden transition-all duration-300
+                    ${expiryStatus === 'expired' ? 'ring-2 ring-red-400 dark:ring-red-500' : ''}
+                    ${expiryStatus === 'expiring' ? 'ring-2 ring-orange-400 dark:ring-orange-500' : ''}
+                    ${wasteRisk === 'high' ? 'bg-gradient-to-br from-red-50 to-white dark:from-red-950/30 dark:to-neutral-800' : ''}
+                  `}>
+                    {/* Category Header with Icon */}
+                    <div className={`
+                      px-4 py-2 flex items-center justify-between border-b
+                      ${wasteRisk === 'high' ? 'bg-red-100/50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                        wasteRisk === 'medium' ? 'bg-yellow-100/50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' :
+                          'bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700'}
+                    `}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{getCategoryIcon(item.category)}</span>
+                        <span className="text-xs font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wide">
+                          {item.category}
+                        </span>
+                      </div>
+                      {wasteRisk !== 'low' && (
+                        <span className={`
+                          px-2 py-0.5 text-xs font-bold rounded-full
+                          ${wasteRisk === 'high' ? 'bg-red-500 text-white animate-pulse' : 'bg-yellow-500 text-white'}
+                        `}>
+                          {wasteRisk === 'high' ? 'HIGH RISK' : 'MEDIUM'}
+                        </span>
+                      )}
+                    </div>
 
-                  {/* Smart Pantry Item with AI Predictions */}
-                  <SmartPantryItem 
-                    item={smartItem}
-                    userHistory={[]} // TODO: Add user history from context
-                    onUpdate={(updatedItem) => {
-                      console.log('Item updated:', updatedItem);
-                    }}
-                  />
+                    {/* Main Content */}
+                    <div className="p-4">
+                      {/* Item Name & Brand */}
+                      <div className="mb-3">
+                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-base leading-tight line-clamp-2">
+                          {item.name}
+                        </h3>
+                        {item.brand && (
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">
+                            {item.brand}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Quantity & Price Row */}
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-1.5">
+                          <ShoppingBag className="h-4 w-4 text-primary-500" />
+                          <span className="font-medium text-neutral-900 dark:text-neutral-100">
+                            {item.quantity} {item.unit}
+                          </span>
+                        </div>
+                        {getEstimatedPrice(item) && (
+                          <div className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <DollarSign className="h-3.5 w-3.5" />
+                            <span className="font-medium text-sm">£{getEstimatedPrice(item)!.toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Expiry Info */}
+                      <div className={`
+                        flex items-center gap-2 p-2 rounded-lg mb-3
+                        ${expiryStatus === 'expired' ? 'bg-red-100 dark:bg-red-900/30' :
+                          expiryStatus === 'expiring' ? 'bg-orange-100 dark:bg-orange-900/30' :
+                            'bg-neutral-100 dark:bg-neutral-700/50'}
+                      `}>
+                        <Clock className={`h-4 w-4 ${getExpiryColor(itemExpiryDate)}`} />
+                        <span className={`text-sm font-medium ${getExpiryColor(itemExpiryDate)}`}>
+                          {formatExpiryText(itemExpiryDate)}
+                        </span>
+                      </div>
+
+                      {/* Purchase Date */}
+                      <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 mb-3">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span>Purchased: {new Date(getPurchaseDate(item)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                      </div>
+
+                      {/* Notes */}
+                      {item.notes && (
+                        <div className="flex items-start gap-2 text-xs text-neutral-600 dark:text-neutral-400 mb-3 p-2 bg-neutral-50 dark:bg-neutral-700/30 rounded-lg">
+                          <Tag className="h-3.5 w-3.5 mt-0.5 flex-shrink-0" />
+                          <span className="line-clamp-2">{item.notes}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action Buttons Footer */}
+                    <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800/30">
+                      <div className="flex items-center justify-between gap-2">
+                        <motion.button
+                          onClick={() => {
+                            setShowConsumeModal(item.id)
+                            setConsumeAmount(1)
+                          }}
+                          className="flex-1 btn btn-sm bg-green-500 hover:bg-green-600 text-white border-0"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Utensils className="h-3.5 w-3.5 mr-1" />
+                          Use
+                        </motion.button>
+                        <motion.button
+                          onClick={() => setEditingItem(item)}
+                          className="btn btn-sm btn-outline"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <Edit className="h-3.5 w-3.5" />
+                        </motion.button>
+                        <motion.button
+                          onClick={() => {
+                            if (confirm(`Remove "${item.name}" from your pantry?`)) {
+                              deleteItemMutation.mutate(item.id)
+                            }
+                          }}
+                          className="btn btn-sm btn-ghost text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </motion.button>
+                      </div>
+                    </div>
+                  </div>
                 </motion.div>
               );
             })}
           </motion.div>
         )}
+
+        {/* Edit Item Modal */}
+        <AnimatePresence>
+          {editingItem && (
+            <motion.div
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setEditingItem(null)}
+            >
+              <motion.div
+                className="bg-white dark:bg-neutral-800 rounded-2xl p-6 w-full max-w-lg shadow-2xl"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center">
+                      <Edit className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
+                        Edit Item
+                      </h3>
+                      <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                        Update item details
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setEditingItem(null)}
+                    className="btn btn-ghost btn-sm"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      Item Name
+                    </label>
+                    <input
+                      type="text"
+                      defaultValue={editingItem.name}
+                      className="input"
+                      id="edit-name"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                        Quantity
+                      </label>
+                      <input
+                        type="number"
+                        defaultValue={editingItem.quantity}
+                        className="input"
+                        min="0"
+                        step="0.1"
+                        id="edit-quantity"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                        Unit
+                      </label>
+                      <select defaultValue={editingItem.unit} className="input" id="edit-unit">
+                        <option value="pieces">pieces</option>
+                        <option value="kg">kg</option>
+                        <option value="grams">grams</option>
+                        <option value="litres">litres</option>
+                        <option value="ml">ml</option>
+                        <option value="cans">cans</option>
+                        <option value="bottles">bottles</option>
+                        <option value="packets">packets</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      Expiry Date
+                    </label>
+                    <input
+                      type="date"
+                      defaultValue={getExpiryDate(editingItem) ? getExpiryDate(editingItem)!.split('T')[0] : ''}
+                      className="input"
+                      id="edit-expiry"
+                    />
+                  </div>
+
+                  <div className="flex space-x-3 pt-4">
+                    <motion.button
+                      onClick={() => {
+                        const name = (document.getElementById('edit-name') as HTMLInputElement).value
+                        const quantity = parseFloat((document.getElementById('edit-quantity') as HTMLInputElement).value)
+                        const unit = (document.getElementById('edit-unit') as HTMLSelectElement).value
+                        const expiryDate = (document.getElementById('edit-expiry') as HTMLInputElement).value
+
+                        updateItemMutation.mutate({
+                          id: editingItem.id,
+                          data: { name, quantity, unit, expiryDate: expiryDate || undefined }
+                        })
+                      }}
+                      className="btn btn-primary flex-1"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                      disabled={updateItemMutation.isLoading}
+                    >
+                      {updateItemMutation.isLoading ? 'Saving...' : 'Save Changes'}
+                    </motion.button>
+                    <motion.button
+                      onClick={() => setEditingItem(null)}
+                      className="btn btn-outline"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      Cancel
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   )

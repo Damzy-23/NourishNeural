@@ -121,10 +121,10 @@ const substitutionDatabase = {
     },
     {
       original: 'Honey',
-      substitute: 'Molasses',
-      ratio: '1 cup honey = 1 cup molasses',
-      notes: 'Strong flavor, darker color. Reduce other sugars.',
-      quality: 'acceptable'
+      substitute: 'Golden Syrup',
+      ratio: '1:1 replacement',
+      notes: 'Common UK substitute. Thick and sweet.',
+      quality: 'excellent'
     }
   ],
   'sour cream': [
@@ -137,69 +137,111 @@ const substitutionDatabase = {
     },
     {
       original: 'Sour Cream',
-      substitute: 'Cottage Cheese + Lemon',
-      ratio: '1 cup blended cottage cheese + 2 tbsp lemon',
-      notes: 'Blend until smooth. Adds protein.',
+      substitute: 'Creme Fraiche',
+      ratio: '1:1 replacement',
+      notes: 'Higher fat content, less tangy. Good for heating.',
+      quality: 'excellent'
+    }
+  ],
+  'self-raising flour': [
+    {
+      original: 'Self-Raising Flour',
+      substitute: 'Plain Flour + Baking Powder',
+      ratio: '1 cup flour + 1.5 tsp baking powder + 1/4 tsp salt',
+      notes: 'Standard homemade substitute.',
+      quality: 'excellent'
+    }
+  ],
+  'breadcrumbs': [
+    {
+      original: 'Breadcrumbs',
+      substitute: 'Crushed Cornflakes',
+      ratio: '1:1 replacement',
+      notes: 'Crunchier texture. Great for frying.',
+      quality: 'excellent'
+    },
+    {
+      original: 'Breadcrumbs',
+      substitute: 'Oats',
+      ratio: '1:1 replacement',
+      notes: 'Pulse in blender for finer texture. Healthier option.',
+      quality: 'good'
+    }
+  ],
+  'cornstarch': [
+    {
+      original: 'Cornstarch',
+      substitute: 'Plain Flour',
+      ratio: '1 tbsp cornstarch = 2 tbsp flour',
+      notes: 'Need to cook longer to remove raw flour taste.',
       quality: 'good'
     },
     {
-      original: 'Sour Cream',
-      substitute: 'Cream Cheese + Milk',
-      ratio: '1 cup = 6 oz cream cheese + 2 tbsp milk',
-      notes: 'Blend until smooth. Richer taste.',
-      quality: 'good'
+      original: 'Cornstarch',
+      substitute: 'Arrowroot Powder',
+      ratio: '1:1 replacement',
+      notes: 'Clear gel, gluten-free. Freezes well.',
+      quality: 'excellent'
     }
   ]
 };
 
-// Mock recipe cost data
+// Mock recipe cost data (GBP & UK Stores)
 const recipeCosts = {
   'spaghetti-bolognese': {
     breakdown: [
-      { ingredient: 'Spaghetti', quantity: '500g', pricePerUnit: 2.50, totalCost: 2.50, store: 'Walmart' },
-      { ingredient: 'Ground Beef', quantity: '500g', pricePerUnit: 8.99, totalCost: 8.99, store: 'Costco' },
-      { ingredient: 'Tomato Sauce', quantity: '400ml', pricePerUnit: 1.99, totalCost: 1.99, store: 'Walmart' },
-      { ingredient: 'Onion', quantity: '1 medium', pricePerUnit: 0.50, totalCost: 0.50, store: 'Local Market' },
-      { ingredient: 'Garlic', quantity: '3 cloves', pricePerUnit: 0.30, totalCost: 0.30, store: 'Local Market' },
-      { ingredient: 'Olive Oil', quantity: '2 tbsp', pricePerUnit: 0.40, totalCost: 0.40, store: 'Walmart' },
-      { ingredient: 'Parmesan', quantity: '50g', pricePerUnit: 2.50, totalCost: 2.50, store: 'Trader Joes' }
+      { ingredient: 'Spaghetti', quantity: '500g', pricePerUnit: 0.95, totalCost: 0.95, store: 'Tesco' },
+      { ingredient: 'Beef Mince', quantity: '500g', pricePerUnit: 3.50, totalCost: 3.50, store: 'Aldi' },
+      { ingredient: 'Tomato Sauce', quantity: '500g', pricePerUnit: 0.85, totalCost: 0.85, store: 'Sainsbury\'s' },
+      { ingredient: 'Onion', quantity: '1 medium', pricePerUnit: 0.20, totalCost: 0.20, store: 'Tesco' },
+      { ingredient: 'Garlic', quantity: '1 bulb', pricePerUnit: 0.60, totalCost: 0.20, store: 'Tesco' },
+      { ingredient: 'Olive Oil', quantity: '2 tbsp', pricePerUnit: 3.50, totalCost: 0.30, store: 'Waitrose' },
+      { ingredient: 'Parmesan', quantity: '50g', pricePerUnit: 3.00, totalCost: 1.50, store: 'Waitrose' }
     ],
     servings: 4
   },
   'chicken-stir-fry': {
     breakdown: [
-      { ingredient: 'Chicken Breast', quantity: '400g', pricePerUnit: 6.99, totalCost: 6.99, store: 'Costco' },
-      { ingredient: 'Mixed Vegetables', quantity: '300g', pricePerUnit: 3.49, totalCost: 3.49, store: 'Walmart' },
-      { ingredient: 'Soy Sauce', quantity: '3 tbsp', pricePerUnit: 0.45, totalCost: 0.45, store: 'Walmart' },
-      { ingredient: 'Ginger', quantity: '1 inch', pricePerUnit: 0.35, totalCost: 0.35, store: 'Local Market' },
-      { ingredient: 'Garlic', quantity: '2 cloves', pricePerUnit: 0.20, totalCost: 0.20, store: 'Local Market' },
-      { ingredient: 'Sesame Oil', quantity: '1 tbsp', pricePerUnit: 0.50, totalCost: 0.50, store: 'Trader Joes' },
-      { ingredient: 'Rice', quantity: '200g', pricePerUnit: 0.80, totalCost: 0.80, store: 'Walmart' }
+      { ingredient: 'Chicken Breast', quantity: '400g', pricePerUnit: 4.50, totalCost: 4.50, store: 'Tesco' },
+      { ingredient: 'Stir Fry Veg Mix', quantity: '320g', pricePerUnit: 1.50, totalCost: 1.50, store: 'Aldi' },
+      { ingredient: 'Soy Sauce', quantity: '3 tbsp', pricePerUnit: 1.20, totalCost: 0.30, store: 'Tesco' },
+      { ingredient: 'Ginger', quantity: '1 piece', pricePerUnit: 0.40, totalCost: 0.20, store: 'Sainsbury\'s' },
+      { ingredient: 'Noodles', quantity: '300g', pricePerUnit: 1.10, totalCost: 1.10, store: 'Tesco' },
+      { ingredient: 'Sesame Oil', quantity: '1 tbsp', pricePerUnit: 2.00, totalCost: 0.40, store: 'Waitrose' }
     ],
     servings: 3
   },
   'vegetable-curry': {
     breakdown: [
-      { ingredient: 'Chickpeas', quantity: '400g can', pricePerUnit: 1.29, totalCost: 1.29, store: 'Walmart' },
-      { ingredient: 'Coconut Milk', quantity: '400ml', pricePerUnit: 2.49, totalCost: 2.49, store: 'Trader Joes' },
-      { ingredient: 'Curry Paste', quantity: '2 tbsp', pricePerUnit: 0.80, totalCost: 0.80, store: 'Walmart' },
-      { ingredient: 'Mixed Vegetables', quantity: '400g', pricePerUnit: 3.99, totalCost: 3.99, store: 'Costco' },
-      { ingredient: 'Onion', quantity: '1 large', pricePerUnit: 0.60, totalCost: 0.60, store: 'Local Market' },
-      { ingredient: 'Garlic', quantity: '3 cloves', pricePerUnit: 0.30, totalCost: 0.30, store: 'Local Market' },
-      { ingredient: 'Basmati Rice', quantity: '200g', pricePerUnit: 1.20, totalCost: 1.20, store: 'Trader Joes' }
+      { ingredient: 'Chickpeas', quantity: '400g tin', pricePerUnit: 0.49, totalCost: 0.49, store: 'Aldi' },
+      { ingredient: 'Coconut Milk', quantity: '400ml', pricePerUnit: 0.85, totalCost: 0.85, store: 'Tesco' },
+      { ingredient: 'Curry Paste', quantity: '2 tbsp', pricePerUnit: 1.80, totalCost: 0.60, store: 'Sainsbury\'s' },
+      { ingredient: 'Sweet Potato', quantity: '500g', pricePerUnit: 1.10, totalCost: 1.10, store: 'Tesco' },
+      { ingredient: 'Spinach', quantity: '200g', pricePerUnit: 1.50, totalCost: 1.50, store: 'Waitrose' },
+      { ingredient: 'Basmati Rice', quantity: '250g', pricePerUnit: 1.40, totalCost: 0.70, store: 'Aldi' }
     ],
     servings: 4
   },
   'grilled-salmon': {
     breakdown: [
-      { ingredient: 'Salmon Fillet', quantity: '400g', pricePerUnit: 12.99, totalCost: 12.99, store: 'Costco' },
-      { ingredient: 'Lemon', quantity: '1 whole', pricePerUnit: 0.50, totalCost: 0.50, store: 'Local Market' },
-      { ingredient: 'Asparagus', quantity: '200g', pricePerUnit: 3.99, totalCost: 3.99, store: 'Trader Joes' },
-      { ingredient: 'Olive Oil', quantity: '2 tbsp', pricePerUnit: 0.40, totalCost: 0.40, store: 'Walmart' },
-      { ingredient: 'Dill', quantity: '1 bunch', pricePerUnit: 1.99, totalCost: 1.99, store: 'Local Market' },
-      { ingredient: 'Garlic', quantity: '2 cloves', pricePerUnit: 0.20, totalCost: 0.20, store: 'Local Market' }
+      { ingredient: 'Salmon Fillet', quantity: '2x 150g', pricePerUnit: 4.50, totalCost: 9.00, store: 'Waitrose' },
+      { ingredient: 'Asparagus', quantity: '200g', pricePerUnit: 2.00, totalCost: 2.00, store: 'Sainsbury\'s' },
+      { ingredient: 'New Potatoes', quantity: '400g', pricePerUnit: 1.20, totalCost: 1.20, store: 'Tesco' },
+      { ingredient: 'Lemon', quantity: '1 whole', pricePerUnit: 0.35, totalCost: 0.35, store: 'Aldi' },
+      { ingredient: 'Dill', quantity: '10g', pricePerUnit: 0.70, totalCost: 0.70, store: 'Sainsbury\'s' }
     ],
     servings: 2
+  },
+  'sunday-roast': {
+    breakdown: [
+      { ingredient: 'Whole Chicken', quantity: '1.5kg', pricePerUnit: 4.50, totalCost: 4.50, store: 'Aldi' },
+      { ingredient: 'Roast Potatoes', quantity: '1kg', pricePerUnit: 1.29, totalCost: 1.29, store: 'Tesco' },
+      { ingredient: 'Carrots', quantity: '500g', pricePerUnit: 0.45, totalCost: 0.45, store: 'Tesco' },
+      { ingredient: 'Broccoli', quantity: '1 head', pricePerUnit: 0.69, totalCost: 0.69, store: 'Aldi' },
+      { ingredient: 'Yorkshire Puddings', quantity: '6 pack', pricePerUnit: 1.10, totalCost: 1.10, store: 'Waitrose' },
+      { ingredient: 'Gravy Granules', quantity: '4 tbsp', pricePerUnit: 1.50, totalCost: 0.20, store: 'Sainsbury\'s' }
+    ],
+    servings: 4
   }
 };
 
@@ -210,11 +252,14 @@ const recipeCosts = {
 // Get items nearing expiration
 router.get('/expiring-items', (req, res) => {
   const expiringItems = [
-    { id: '1', name: 'Chicken Breast', quantity: 2, unit: 'lbs', expiryDate: '2024-01-20', daysUntilExpiry: 1 },
-    { id: '2', name: 'Spinach', quantity: 1, unit: 'bag', expiryDate: '2024-01-21', daysUntilExpiry: 2 },
-    { id: '3', name: 'Greek Yogurt', quantity: 2, unit: 'cups', expiryDate: '2024-01-22', daysUntilExpiry: 3 },
-    { id: '4', name: 'Bell Peppers', quantity: 3, unit: 'pieces', expiryDate: '2024-01-23', daysUntilExpiry: 4 },
-    { id: '5', name: 'Mushrooms', quantity: 1, unit: 'pack', expiryDate: '2024-01-24', daysUntilExpiry: 5 }
+    { id: '1', name: 'Chicken Breast', quantity: 2, unit: 'pack', expiryDate: new Date(Date.now() + 1 * 86400000).toISOString().split('T')[0], daysUntilExpiry: 1 },
+    { id: '2', name: 'Spinach', quantity: 1, unit: 'bag', expiryDate: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0], daysUntilExpiry: 2 },
+    { id: '3', name: 'Greek Yogurt', quantity: 300, unit: 'g', expiryDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0], daysUntilExpiry: 3 },
+    { id: '4', name: 'Bell Peppers', quantity: 3, unit: 'pcs', expiryDate: new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0], daysUntilExpiry: 4 },
+    { id: '5', name: 'Mushrooms', quantity: 250, unit: 'g', expiryDate: new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0], daysUntilExpiry: 2 },
+    { id: '6', name: 'Double Cream', quantity: 150, unit: 'ml', expiryDate: new Date(Date.now() + 1 * 86400000).toISOString().split('T')[0], daysUntilExpiry: 1 },
+    { id: '7', name: 'Cheddar Cheese', quantity: 200, unit: 'g', expiryDate: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0], daysUntilExpiry: 5 },
+    { id: '8', name: 'Bread', quantity: 4, unit: 'slices', expiryDate: new Date(Date.now() + 1 * 86400000).toISOString().split('T')[0], daysUntilExpiry: 1 }
   ];
   res.json(expiringItems);
 });
@@ -224,43 +269,222 @@ router.get('/leftover-recipes', (req, res) => {
   const recipes = [
     {
       id: '1',
-      name: 'Chicken Spinach Stir Fry',
-      matchingIngredients: ['Chicken Breast', 'Spinach', 'Bell Peppers'],
-      missingIngredients: ['Soy Sauce', 'Garlic'],
-      matchScore: 85,
+      name: 'Creamy Mushroom & Spinach Chicken',
+      matchingIngredients: ['Chicken Breast', 'Spinach', 'Mushrooms', 'Double Cream'],
+      missingIngredients: ['Garlic', 'Onion'],
+      matchScore: 92,
       prepTime: 25,
       servings: 4,
-      imageUrl: null
+      imageUrl: null,
+      extendedIngredients: [
+        '500g Chicken Breast, diced',
+        '200g Fresh Spinach',
+        '250g Mushrooms, sliced',
+        '150ml Double Cream',
+        '2 cloves Garlic, minced',
+        '1 Onion, chopped',
+        '1 tbsp Olive Oil',
+        'Salt and Pepper to taste'
+      ],
+      instructions: [
+        'Heat olive oil in a large pan over medium heat.',
+        'Add diced chicken and cook until golden brown and cooked through.',
+        'Remove chicken and set aside.',
+        'In the same pan, sauté onion and garlic until fragrant.',
+        'Add mushrooms and cook until soft.',
+        'Pour in double cream and simmer for 5 minutes.',
+        'Stir in spinach and cook until wilted.',
+        'Return chicken to the pan, heat through, and season with salt and pepper.',
+        'Serve with rice or pasta.'
+      ]
     },
     {
       id: '2',
-      name: 'Greek Yogurt Chicken Bowl',
-      matchingIngredients: ['Chicken Breast', 'Greek Yogurt', 'Bell Peppers'],
-      missingIngredients: ['Cucumber', 'Feta Cheese'],
-      matchScore: 75,
-      prepTime: 30,
-      servings: 2,
-      imageUrl: null
+      name: 'Chicken & Pepper Stir Fry',
+      matchingIngredients: ['Chicken Breast', 'Bell Peppers', 'Mushrooms'],
+      missingIngredients: ['Soy Sauce', 'Ginger', 'Noodles'],
+      matchScore: 85,
+      prepTime: 20,
+      servings: 3,
+      imageUrl: null,
+      extendedIngredients: [
+        '400g Chicken Breast, strips',
+        '2 Bell Peppers, sliced',
+        '150g Mushrooms, sliced',
+        '3 tbsp Soy Sauce',
+        '1 inch Ginger, grated',
+        '300g Noodles',
+        '1 tbsp Vegetable Oil'
+      ],
+      instructions: [
+        'Cook noodles according to package instructions.',
+        'Heat oil in a wok or large frying pan.',
+        'Stir fry chicken strips until browned.',
+        'Add peppers and mushrooms, stir fry for 3-4 minutes.',
+        'Add ginger and soy sauce, toss to coat.',
+        'Add cooked noodles and toss everything together.',
+        'Serve hot immediately.'
+      ]
     },
     {
       id: '3',
-      name: 'Stuffed Bell Peppers',
-      matchingIngredients: ['Bell Peppers', 'Chicken Breast', 'Mushrooms'],
-      missingIngredients: ['Rice', 'Tomato Sauce', 'Cheese'],
-      matchScore: 65,
-      prepTime: 45,
-      servings: 4,
-      imageUrl: null
+      name: 'Cheesy Vegetable Omelette',
+      matchingIngredients: ['Spinach', 'Mushrooms', 'Bell Peppers', 'Cheddar Cheese'],
+      missingIngredients: ['Eggs'],
+      matchScore: 80,
+      prepTime: 15,
+      servings: 2,
+      imageUrl: null,
+      extendedIngredients: [
+        '4 Eggs, beaten',
+        '50g Cheddar Cheese, grated',
+        'Handful of Spinach',
+        '4-5 Mushrooms, sliced',
+        '1/2 Bell Pepper, diced',
+        '1 tsp Butter'
+      ],
+      instructions: [
+        'Melt butter in a non-stick frying pan.',
+        'Sauté mushrooms and peppers until soft.',
+        'Add spinach and cook until wilted.',
+        'Pour in eggs and swirl to cover the pan.',
+        'Sprinkle cheese over the top.',
+        'Cook until eggs are set and cheese is melted.',
+        'Fold over and serve.'
+      ]
     },
     {
       id: '4',
-      name: 'Spinach Mushroom Omelette',
-      matchingIngredients: ['Spinach', 'Mushrooms'],
-      missingIngredients: ['Eggs', 'Cheese'],
-      matchScore: 60,
-      prepTime: 15,
+      name: 'Greek Yogurt Chicken Marinade',
+      matchingIngredients: ['Chicken Breast', 'Greek Yogurt'],
+      missingIngredients: ['Lemon', 'Garlic', 'Oregano'],
+      matchScore: 70,
+      prepTime: 10,
+      servings: 4,
+      imageUrl: null,
+      extendedIngredients: [
+        '4 Chicken Breasts',
+        '1 cup Greek Yogurt',
+        '1 Lemon, juiced',
+        '3 cloves Garlic, minced',
+        '2 tbsp Oregano',
+        'Salt and Pepper'
+      ],
+      instructions: [
+        'Mix yogurt, lemon juice, garlic, oregano, salt, and pepper in a bowl.',
+        'Coat chicken breasts thoroughly with the marinade.',
+        'Marinate for at least 30 minutes, or overnight in the fridge.',
+        'Grill or bake chicken until cooked through.',
+        'Serve with salad or roasted vegetables.'
+      ]
+    },
+    {
+      id: '5',
+      name: 'Creamy Mushroom Pasta',
+      matchingIngredients: ['Mushrooms', 'Spinach', 'Double Cream', 'Cheddar Cheese'],
+      missingIngredients: ['Pasta', 'Garlic'],
+      matchScore: 88,
+      prepTime: 20,
       servings: 2,
-      imageUrl: null
+      imageUrl: null,
+      extendedIngredients: [
+        '250g Pasta (Penne or Fusilli)',
+        '250g Mushrooms, sliced',
+        '100g Spinach',
+        '150ml Double Cream',
+        '50g Cheddar Cheese',
+        '2 cloves Garlic, minced',
+        '1 tbsp Butter'
+      ],
+      instructions: [
+        'Boil pasta in salted water until al dente.',
+        'While pasta cooks, melt butter in a pan.',
+        'Sauté garlic and mushrooms until browned.',
+        'Add cream and cheese, stir until smooth.',
+        'Add spinach and cook until wilted.',
+        'Drain pasta and toss with the sauce.',
+        'Serve with extra cheese if desired.'
+      ]
+    },
+    {
+      id: '6',
+      name: 'Stuffed Peppers',
+      matchingIngredients: ['Bell Peppers', 'Spinach', 'Available Cheese'],
+      missingIngredients: ['Rice', 'Ground Beef', 'Onion'],
+      matchScore: 65,
+      prepTime: 45,
+      servings: 3,
+      imageUrl: null,
+      extendedIngredients: [
+        '3 Large Bell Peppers, halved',
+        '250g Ground Beef (or alternative)',
+        '1 cup Cooked Rice',
+        '1 Onion, diced',
+        'Handful of Spinach',
+        '100g Cheese, grated',
+        '1 can Tomatoes'
+      ],
+      instructions: [
+        'Preheat oven to 180°C (350°F).',
+        'Brown the beef and onion in a pan.',
+        'Stir in cooked rice, spinach, and tomatoes.',
+        'Fill pepper halves with the mixture.',
+        'Top with grated cheese.',
+        'Bake for 25-30 minutes until peppers are tender.',
+        'Serve hot.'
+      ]
+    },
+    {
+      id: '7',
+      name: 'Bread & Butter Pudding',
+      matchingIngredients: ['Bread', 'Double Cream'],
+      missingIngredients: ['Eggs', 'Milk', 'Sugar', 'Butter', 'Raisins'],
+      matchScore: 60,
+      prepTime: 50,
+      servings: 4,
+      imageUrl: null,
+      extendedIngredients: [
+        '8 slices Bread, buttered',
+        '50g Raisins',
+        '300ml Milk',
+        '100ml Double Cream',
+        '2 Eggs',
+        '25g Sugar',
+        'Nutmeg or Cinnamon'
+      ],
+      instructions: [
+        'Grease a baking dish.',
+        'Cut bread into triangles and layer in the dish with raisins.',
+        'Whisk milk, cream, eggs, sugar, and spices together.',
+        'Pour over the bread and let soak for 30 minutes.',
+        'Bake at 180°C (350°F) for 30-40 minutes until golden and set.',
+        'Serve warm.'
+      ]
+    },
+    {
+      id: '8',
+      name: 'Cheat\'s Pizza Toast',
+      matchingIngredients: ['Bread', 'Cheddar Cheese', 'Bell Peppers', 'Mushrooms'],
+      missingIngredients: ['Tomato Puree'],
+      matchScore: 95,
+      prepTime: 10,
+      servings: 1,
+      imageUrl: null,
+      extendedIngredients: [
+        '2 slices Bread',
+        '2 tbsp Tomato Puree (or Ketchup)',
+        'Handful Cheddar Cheese, grated',
+        'Peppers and Mushrooms, sliced',
+        'Dried Oregano'
+      ],
+      instructions: [
+        'Toast the bread lightly.',
+        'Spread with tomato puree.',
+        'Top with cheese, peppers, and mushrooms.',
+        'Sprinkle with oregano.',
+        'Grill (Broil) until cheese is bubbly and golden.',
+        'Allow to cool slightly before eating.'
+      ]
     }
   ];
   res.json(recipes);
@@ -277,10 +501,9 @@ router.get('/substitutions', (req, res) => {
     return res.json([]);
   }
 
-  // Search for substitutions
+  // Search for updated substitutions
   const substitutions = substitutionDatabase[ingredient] || [];
 
-  // If no exact match, search for partial matches
   if (substitutions.length === 0) {
     for (const key of Object.keys(substitutionDatabase)) {
       if (key.includes(ingredient) || ingredient.includes(key)) {
