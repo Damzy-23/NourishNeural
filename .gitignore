@@ -128,7 +128,7 @@ client/.env
 
 # ML Models (large files)
 ml-models/models/*.pth
-ml-models/trained_models/*.pkl
+
 
 # Node modules in subdirectories
 **/node_modules/

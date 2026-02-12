@@ -43,7 +43,7 @@ function App() {
         <title>Nourish Neural - AI Culinary Intelligence</title>
         <meta name="description" content="Your smart grocery companion – find, plan, and shop smarter." />
       </Helmet>
-      
+
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
@@ -54,7 +54,7 @@ function App() {
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
-        
+
         {/* Protected routes */}
         <Route path="/app" element={
           <ProtectedRoute>
@@ -70,7 +70,7 @@ function App() {
           <Route path="smart-features" element={<SmartFeatures />} />
           <Route path="profile" element={<Profile />} />
         </Route>
-        
+
         {/* Catch all route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

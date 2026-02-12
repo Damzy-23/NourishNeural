@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from 'react-query'
+import toast from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import { useAuth } from '../hooks/useAuth'
+import { apiService } from '../services/api'
 import {
   Recycle,
   ArrowRightLeft,
   Calculator,
   Target,
   Users,
+  Brain,
   TrendingDown,
   ChefHat,
   AlertTriangle,
@@ -21,7 +24,11 @@ import {
   Search,
   X,
   ShoppingBasket,
-  ChefHat as ChefIcon
+  ChefHat as ChefIcon,
+  Calendar,
+  ShoppingBag,
+  CheckCircle,
+  Trash2
 } from 'lucide-react'
 
 // Types
@@ -89,6 +96,37 @@ interface DepletionPrediction {
   autoAddToList: boolean
 }
 
+interface WasteStats {
+  summary: {
+    totalItems: number
+    totalLoss: number
+    mostWastedCategory: string | null
+    mostCommonReason: string | null
+  }
+  categories: { name: string; count: number; value: number }[]
+  reasons: Record<string, number>
+  logs: any[]
+}
+
+interface Meal {
+  id: string
+  name: string
+  ingredients: string[]
+  tags: string[]
+}
+
+interface WeeklyPlan {
+  [day: string]: {
+    [type: string]: Meal
+  }
+}
+
+interface ShoppingListItem {
+  name: string
+  quantity: number
+  checked: boolean
+}
+
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 }
@@ -105,7 +143,39 @@ const staggerContainer = {
 export default function SmartFeatures() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<'leftover' | 'substitution' | 'cost' | 'nutrition' | 'voting' | 'depletion'>('leftover')
+  const [activeTab, setActiveTab] = useState<'leftover' | 'substitution' | 'cost' | 'nutrition' | 'voting' | 'depletion' | 'meal-planner' | 'waste'>('meal-planner')
+
+  // State for Meal Planner
+  const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlan | null>(null)
+  const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([])
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false)
+
+  // State for Waste Prediction
+  const [predictCategory, setPredictCategory] = useState('Dairy')
+  const [predictStorage, setPredictStorage] = useState('fridge')
+  const [predictPrice, setPredictPrice] = useState('2.50')
+  const [predictionResult, setPredictionResult] = useState<any>(null)
+  const [isPredicting, setIsPredicting] = useState(false)
+
+  const handlePredictWaste = async () => {
+    setIsPredicting(true)
+    try {
+      const res = await apiService.post('/api/waste/predict', {
+        food_item: {
+          category: predictCategory,
+          storage_type: predictStorage,
+          estimated_price: parseFloat(predictPrice) || 0,
+          purchase_date: new Date().toISOString()
+        },
+        user_history: []
+      })
+      setPredictionResult(res)
+    } catch (err) {
+      toast.error('Prediction failed')
+    } finally {
+      setIsPredicting(false)
+    }
+  }
 
   // State for each feature
   const [substitutionQuery, setSubstitutionQuery] = useState('')
@@ -126,6 +196,16 @@ export default function SmartFeatures() {
     },
     { enabled: !!user }
   )
+
+  // Fetch pantry items for meal planner
+  const { data: pantryItems } = useQuery('pantryItems', async () => {
+    const token = localStorage.getItem('pantrypal_token')
+    const res = await fetch('/api/pantry', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    const data = await res.json()
+    return data.items || []
+  }, { enabled: !!user })
 
   // Fetch leftover recipes
   const { data: leftoverRecipes, refetch: refetchLeftoverRecipes } = useQuery<LeftoverRecipe[]>(
@@ -268,6 +348,12 @@ export default function SmartFeatures() {
     }
   )
 
+  const { data: wasteStats, refetch: refetchWasteStats } = useQuery<WasteStats>(
+    'waste-stats',
+    () => apiService.get('/api/waste/stats'),
+    { enabled: activeTab === 'waste' }
+  )
+
   const addToGroceryListMutation = useMutation(
     async ({ name, quantity, unit, category }: { name: string; quantity: number; unit: string; category?: string }) => {
       const token = localStorage.getItem('pantrypal_token')
@@ -315,12 +401,71 @@ export default function SmartFeatures() {
     }
   )
 
+  const generatePlanMutation = useMutation(
+    async () => {
+      const token = localStorage.getItem('pantrypal_token')
+      const res = await fetch('/api/meal-planner/generate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          pantryItems: pantryItems || [],
+          preferences: { diet: 'Standard' }
+        })
+      })
+      return res.json()
+    },
+    {
+      onSuccess: (data) => {
+        setWeeklyPlan(data.plan)
+        setIsGeneratingPlan(false)
+        // Auto-generate shopping list
+        generateListMutation.mutate(data.plan)
+      },
+      onError: () => {
+        setIsGeneratingPlan(false)
+      }
+    }
+  )
+
+  const generateListMutation = useMutation(
+    async (plan: WeeklyPlan) => {
+      const token = localStorage.getItem('pantrypal_token')
+      const res = await fetch('/api/meal-planner/shopping-list', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          plan,
+          pantryItems: pantryItems || []
+        })
+      })
+      return res.json()
+    },
+    {
+      onSuccess: (data) => {
+        setShoppingList(data.shoppingList)
+      }
+    }
+  )
+
+  const handleGeneratePlan = () => {
+    setIsGeneratingPlan(true)
+    generatePlanMutation.mutate()
+  }
+
   const tabs = [
     { id: 'leftover', label: 'Leftover Matcher', icon: Recycle, gradient: 'from-emerald-500 to-teal-500' },
     { id: 'substitution', label: 'Substitutions', icon: ArrowRightLeft, gradient: 'from-blue-500 to-cyan-500' },
     { id: 'cost', label: 'Cost Calculator', icon: Calculator, gradient: 'from-green-500 to-emerald-500' },
     { id: 'nutrition', label: 'Nutrition Goals', icon: Target, gradient: 'from-purple-500 to-pink-500' },
     { id: 'voting', label: 'Meal Voting', icon: Users, gradient: 'from-indigo-500 to-purple-500' },
+    { id: 'meal-planner', label: 'Meal Planner', icon: Calendar, gradient: 'from-violet-500 to-indigo-500' },
+    { id: 'waste', label: 'Waste Analytics', icon: Trash2, gradient: 'from-red-500 to-rose-500' },
     { id: 'depletion', label: 'Depletion Predictor', icon: TrendingDown, gradient: 'from-rose-500 to-orange-500' },
   ]
 
@@ -941,6 +1086,227 @@ export default function SmartFeatures() {
         )}
 
         {/* 6. Pantry Depletion Predictor */}
+        {activeTab === 'waste' && (
+          <motion.div
+            className="space-y-6 relative z-10"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div className="flex items-center justify-between" variants={fadeUp}>
+              <div>
+                <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-red-500 to-rose-500 rounded-xl">
+                    <Trash2 className="w-5 h-5 text-white" />
+                  </div>
+                  Smart Waste Analytics
+                </h2>
+                <p className="text-neutral-600 dark:text-neutral-400 mt-1">
+                  Track food waste impact and save money
+                </p>
+              </div>
+              <motion.button
+                onClick={() => refetchWasteStats()}
+                className="p-3 bg-neutral-100/80 dark:bg-neutral-700/80 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-xl transition-colors"
+                whileHover={{ rotate: 180 }}
+                transition={{ duration: 0.3 }}
+              >
+                <RefreshCw className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
+              </motion.button>
+            </motion.div>
+
+            {/* Stats Summary */}
+            <motion.div className="grid grid-cols-2 md:grid-cols-4 gap-4" variants={staggerContainer}>
+              <motion.div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-red-200/50 dark:border-red-900/50 rounded-2xl p-5" variants={fadeUp}>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">Total Loss</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">£{wasteStats?.summary.totalLoss.toFixed(2) || '0.00'}</p>
+              </motion.div>
+              <motion.div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 rounded-2xl p-5" variants={fadeUp}>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">Items Wasted</p>
+                <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{wasteStats?.summary.totalItems || 0}</p>
+              </motion.div>
+              <motion.div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 rounded-2xl p-5" variants={fadeUp}>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">Most Wasted</p>
+                <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate">{wasteStats?.summary.mostWastedCategory || '-'}</p>
+              </motion.div>
+              <motion.div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-neutral-200/50 dark:border-neutral-700/50 rounded-2xl p-5" variants={fadeUp}>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 mb-1">Common Reason</p>
+                <p className="text-lg font-bold text-neutral-900 dark:text-neutral-100 truncate capitalize">{wasteStats?.summary.mostCommonReason?.replace(/_/g, ' ') || '-'}</p>
+              </motion.div>
+            </motion.div>
+
+            {/* Category Breakdown (Simple Bar Chart Visualization) */}
+            {wasteStats?.categories && wasteStats.categories.length > 0 && (
+              <motion.div
+                className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-white/60 dark:border-neutral-700/60 rounded-2xl p-6"
+                variants={fadeUp}
+              >
+                <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-4">Loss by Category</h3>
+                <div className="space-y-3">
+                  {wasteStats.categories.map((cat, idx) => (
+                    <div key={idx} className="space-y-1">
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium text-neutral-700 dark:text-neutral-300">{cat.name}</span>
+                        <span className="text-neutral-500">£{cat.value.toFixed(2)}</span>
+                      </div>
+                      <div className="h-2 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-red-500 to-rose-500"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(cat.value / (wasteStats.summary.totalLoss || 1)) * 100}%` }}
+                          transition={{ duration: 1, delay: idx * 0.1 }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Recent Logs Table */}
+            {wasteStats?.logs && wasteStats.logs.length > 0 && (
+              <motion.div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-white/60 dark:border-neutral-700/60 rounded-2xl overflow-hidden" variants={fadeUp}>
+                <table className="w-full text-sm">
+                  <thead className="bg-neutral-50 dark:bg-neutral-900/50 text-neutral-500">
+                    <tr>
+                      <th className="px-4 py-3 text-left font-medium">Item</th>
+                      <th className="px-4 py-3 text-left font-medium">Date</th>
+                      <th className="px-4 py-3 text-left font-medium">Reason</th>
+                      <th className="px-4 py-3 text-right font-medium">Loss</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-neutral-200/50 dark:divide-neutral-700/50">
+                    {wasteStats.logs.slice(0, 5).map((log: any) => (
+                      <tr key={log.id}>
+                        <td className="px-4 py-3 font-medium text-neutral-900 dark:text-neutral-100">{log.item_name}</td>
+                        <td className="px-4 py-3 text-neutral-500">{new Date(log.wasted_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-neutral-500 capitalize">{log.waste_reason?.replace(/_/g, ' ')}</td>
+                        <td className="px-4 py-3 text-right text-red-600 dark:text-red-400 font-medium">£{log.total_loss.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </motion.div>
+            )}
+
+            {/* AI Waste Predictor */}
+            <motion.div className="mt-8 bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-violet-200/50 dark:border-violet-900/50 rounded-2xl p-6" variants={fadeUp}>
+              <div className="flex items-start gap-4 mb-6">
+                <div className="p-3 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
+                  <Brain className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">AI Waste Predictor</h3>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                    Test your food items against our machine learning model to see waste risk.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-8">
+                {/* Input Form */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Category</label>
+                    <select
+                      value={predictCategory}
+                      onChange={(e) => setPredictCategory(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+                    >
+                      {['Dairy', 'Meat', 'Fish', 'Vegetables', 'Fruits', 'Bakery', 'Pantry', 'Frozen'].map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Storage</label>
+                    <select
+                      value={predictStorage}
+                      onChange={(e) => setPredictStorage(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+                    >
+                      <option value="fridge">Fridge</option>
+                      <option value="freezer">Freezer</option>
+                      <option value="pantry">Pantry</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">Price (£)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={predictPrice}
+                      onChange={(e) => setPredictPrice(e.target.value)}
+                      className="w-full p-3 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 focus:ring-2 focus:ring-violet-500 outline-none transition-all"
+                    />
+                  </div>
+                  <motion.button
+                    onClick={handlePredictWaste}
+                    disabled={isPredicting}
+                    className="w-full py-3 bg-violet-500 hover:bg-violet-600 text-white font-semibold rounded-xl shadow-lg shadow-violet-500/20 transition-all flex items-center justify-center gap-2"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isPredicting ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Sparkles className="w-5 h-5" />}
+                    Analyze Risk
+                  </motion.button>
+                </div>
+
+                {/* Result Display */}
+                <div className="bg-neutral-50 dark:bg-neutral-900/50 rounded-xl p-6 flex flex-col items-center justify-center text-center border dashed border-neutral-200 dark:border-neutral-800">
+                  {!predictionResult ? (
+                    <div className="text-neutral-400">
+                      <Brain className="w-16 h-16 mx-auto mb-4 opacity-20" />
+                      <p className="font-medium">Enter details and click Analyze</p>
+                      <p className="text-xs mt-1">Our ML model will predict waste probability</p>
+                    </div>
+                  ) : (
+                    <motion.div
+                      key="result"
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="w-full space-y-4"
+                    >
+                      <div className="relative">
+                        <div className={`absolute inset-0 blur-xl opacity-20 ${predictionResult.risk_level === 'High' ? 'bg-red-500' :
+                          predictionResult.risk_level === 'Medium' ? 'bg-amber-500' : 'bg-emerald-500'
+                          }`} />
+                        <p className="text-xs text-neutral-500 uppercase tracking-widest font-bold">Risk Level</p>
+                        <p className={`text-4xl font-extrabold mt-1 ${predictionResult.risk_level === 'High' ? 'text-red-500' :
+                          predictionResult.risk_level === 'Medium' ? 'text-amber-500' : 'text-emerald-500'
+                          }`}>
+                          {predictionResult.risk_level}
+                        </p>
+                        <p className="text-sm font-medium text-neutral-500 mt-1 bg-white/50 dark:bg-black/20 inline-block px-3 py-1 rounded-full">
+                          Probability: {(predictionResult.waste_probability * 100).toFixed(1)}%
+                        </p>
+                      </div>
+
+                      {predictionResult.recommendations && (
+                        <div className="text-left bg-white dark:bg-neutral-800 p-4 rounded-xl border border-neutral-100 dark:border-neutral-700 shadow-sm">
+                          <p className="font-semibold text-neutral-900 dark:text-neutral-100 mb-2 flex items-center gap-2 text-sm">
+                            <TrendingDown className="w-4 h-4 text-violet-500" /> AI Recommendations
+                          </p>
+                          <ul className="space-y-2">
+                            {predictionResult.recommendations.map((rec: string, i: number) => (
+                              <li key={i} className="flex items-start gap-2 text-sm text-neutral-600 dark:text-neutral-400">
+                                <div className="mt-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 flex-shrink-0" />
+                                {rec}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+
+          </motion.div>
+        )}
+
+        {/* 7. Pantry Depletion Predictor */}
         {activeTab === 'depletion' && (
           <motion.div
             className="space-y-6 relative z-10"
@@ -1037,6 +1403,109 @@ export default function SmartFeatures() {
                 </motion.div>
               ))}
             </motion.div>
+          </motion.div>
+        )}
+
+        {/* 7. Meal Planner Tab */}
+        {activeTab === 'meal-planner' && (
+          <motion.div
+            className="space-y-6 relative z-10"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div variants={fadeUp} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-3">
+                  <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-500 rounded-xl">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  AI Meal Planner
+                </h2>
+                <p className="text-neutral-600 dark:text-neutral-400 mt-1">
+                  Weekly plans optimized for your pantry inventory
+                </p>
+              </div>
+              <button
+                onClick={handleGeneratePlan}
+                disabled={isGeneratingPlan}
+                className={`flex items-center px-4 py-2 rounded-xl text-white font-medium transition-all shadow-lg hover:shadow-primary-500/25 ${isGeneratingPlan
+                  ? 'bg-neutral-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-violet-500 to-indigo-500 hover:scale-105'
+                  }`}
+              >
+                {isGeneratingPlan ? (
+                  <RefreshCw className="w-5 h-5 mr-2 animate-spin" />
+                ) : (
+                  <Sparkles className="w-5 h-5 mr-2" />
+                )}
+                {weeklyPlan ? 'Regenerate Plan' : 'Generate Plan'}
+              </button>
+            </motion.div>
+
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-4">
+                {!weeklyPlan ? (
+                  <div className="text-center py-12 bg-white/50 dark:bg-neutral-800/50 rounded-2xl border-2 border-dashed border-neutral-200 dark:border-neutral-700">
+                    <Calendar className="w-12 h-12 text-neutral-300 mx-auto mb-4" />
+                    <p className="text-neutral-500">No plan generated yet. click 'Generate Plan' to start.</p>
+                  </div>
+                ) : (
+                  Object.keys(weeklyPlan).map((day) => (
+                    <motion.div
+                      key={day}
+                      variants={fadeUp}
+                      className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-white/60 dark:border-neutral-700/60 rounded-xl p-4"
+                    >
+                      <h3 className="font-bold text-neutral-900 dark:text-neutral-100 mb-3">{day}</h3>
+                      <div className="grid md:grid-cols-3 gap-3">
+                        {['Breakfast', 'Lunch', 'Dinner'].map((type) => {
+                          const meal = weeklyPlan[day]?.[type]
+                          return (
+                            <div key={type} className="bg-white dark:bg-neutral-700/30 rounded-lg p-3 border border-neutral-100 dark:border-neutral-700">
+                              <p className="text-xs font-semibold text-neutral-400 uppercase mb-1">{type}</p>
+                              <p className="font-medium text-sm text-neutral-900 dark:text-neutral-100">{meal?.name || 'Free'}</p>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
+
+              {/* Shopping List */}
+              <div className="bg-white/50 dark:bg-neutral-800/50 backdrop-blur-sm border border-white/60 dark:border-neutral-700/60 rounded-2xl p-5 h-fit">
+                <h3 className="font-bold text-neutral-900 dark:text-neutral-100 mb-4 flex items-center">
+                  <ShoppingBag className="w-5 h-5 mr-2 text-violet-500" />
+                  Shopping List
+                </h3>
+                <div className="space-y-2 max-h-[500px] overflow-y-auto pr-2">
+                  {shoppingList.length === 0 ? (
+                    <p className="text-sm text-neutral-500 text-center py-4">No missing items!</p>
+                  ) : (
+                    shoppingList.map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-3 p-2 hover:bg-white/50 dark:hover:bg-neutral-700/30 rounded-lg">
+                        <button
+                          onClick={() => {
+                            const newList = [...shoppingList];
+                            newList[idx].checked = !newList[idx].checked;
+                            setShoppingList(newList);
+                          }}
+                          className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${item.checked ? 'bg-green-500 border-green-500' : 'border-neutral-300'
+                            }`}
+                        >
+                          {item.checked && <CheckCircle className="w-3 h-3 text-white" />}
+                        </button>
+                        <span className={`text-sm ${item.checked ? 'line-through text-neutral-400' : 'text-neutral-700 dark:text-neutral-200'}`}>
+                          {item.name} ({item.quantity})
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           </motion.div>
         )}
       </motion.div>

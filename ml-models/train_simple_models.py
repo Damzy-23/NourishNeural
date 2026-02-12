@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 sys.path.append('src')
 
 from src.models.simple_models import SimpleExpiryPredictor, SimpleWastePredictor, SimpleFoodClassifier
-from data_collection.datasets import DatasetManager
+# from data_collection.datasets import DatasetManager
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,7 +28,7 @@ class SimpleModelTrainer:
     def __init__(self, data_dir: str = "data", model_dir: str = "trained_models"):
         self.data_dir = data_dir
         self.model_dir = model_dir
-        self.dataset_manager = DatasetManager(data_dir)
+        # self.dataset_manager = DatasetManager(data_dir)
         
         # Create model directory
         os.makedirs(model_dir, exist_ok=True)

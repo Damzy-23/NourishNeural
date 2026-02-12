@@ -12,7 +12,7 @@ import {
   Package,
   Moon,
   Sun,
-  Sparkles,
+  Sparkles
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'

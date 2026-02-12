@@ -5,11 +5,8 @@ import {
     X,
     Upload,
     Camera,
-    Loader2,
     CheckCircle,
-    AlertCircle,
     FileText,
-    Plus,
     Trash2,
     Receipt
 } from 'lucide-react'
@@ -64,7 +61,7 @@ export default function ReceiptScanner({ isOpen, onClose, onItemsFound }: Receip
         setStatusText('Loading OCR engine...')
 
         try {
-            const worker = await createWorker({
+            const worker = await createWorker('eng', 1, {
                 logger: m => {
                     if (m.status === 'recognizing text') {
                         setProgress(Math.round(m.progress * 100))
@@ -74,8 +71,6 @@ export default function ReceiptScanner({ isOpen, onClose, onItemsFound }: Receip
             })
 
             setStatusText('Recognizing text...')
-            await worker.loadLanguage('eng')
-            await worker.initialize('eng')
 
             const { data: { text } } = await worker.recognize(imageFile)
 
@@ -142,12 +137,6 @@ export default function ReceiptScanner({ isOpen, onClose, onItemsFound }: Receip
 
     const removeItem = (index: number) => {
         setScannedItems(items => items.filter((_, i) => i !== index))
-    }
-
-    const addItemManual = () => {
-        // Just add a placeholder for user to edit
-        // In a real app we'd have a mini form here
-        // For now we rely on the main form after confirmation
     }
 
     const handleConfirm = () => {

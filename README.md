@@ -70,6 +70,82 @@ NourishNeural/
 └── uk-stores-dataset/      # Aggregated supermarket dataset & collectors
 ```
 
+### System Architecture (text diagram)
+```
+┌────────────────────────┐        ┌─────────────────────────────┐
+│   Vite/React Frontend  │        │        API & Services       │
+│ ┌────────────────────┐ │        │ ┌─────────────────────────┐ │
+│ │ Pages & Components │◀┼────────┼▶│  Express/Node Routes    │ │
+│ └────────────────────┘ │  HTTP   │ └─────────────────────────┘ │
+│ ┌────────────────────┐ │        │ ┌─────────────────────────┐ │
+│ │   Hooks (Auth/Data)│─┼────────┼▶│ Smart Features (AI/Rules)│ │
+│ └────────────────────┘ │        │ └─────────────────────────┘ │
+│ ┌────────────────────┐ │        └─────────────┬──────────────┘
+│ │   API Services     │─┼──────────────────────┘
+│ └────────────────────┘ │
+└────────────────────────┘
+          │  HTTP / RPC
+          ▼
+┌────────────────────────────┐      ┌──────────────────────────┐
+│       Supabase Auth        │      │       Supabase DB        │
+└────────────────────────────┘      └──────────────────────────┘
+          │ JWT / SQL                         ▲
+          ▼                                   │
+┌────────────────────────────┐      ┌──────────────────────────┐
+│  Conversational AI (LLM)   │◀─────┤  Predictive Models       │
+│  Recipes, nutrition, chat  │      │  Expiry/waste, pricing   │
+└────────────────────────────┘      └──────────────────────────┘
+```
+
+### Pantry Item Lifecycle (state-style sketch)
+```
+[Add Item] → [Tracked in Pantry] → [Risk Scoring]
+     │             │                    │
+     │             ├─► [Use-Soon Alert] │
+     │             │                    │
+     │             └─► [In Grocery List] (if low/needed)
+     │                                  │
+     └─► [Consumed/Removed] ◄───────────┘
+                 │
+                 └─► [Wasted/Expired] (if not acted on)
+```
+
+### 3-Tier Architecture Diagram (Implementation Artefacts - Vertical Compact Version)
+```
+┌─────────────────────────────────────────────┐
+│         TIER 1: PRESENTATION LAYER           │
+│            (React Frontend)                  │
+├─────────────────────────────────────────────┤
+│  • React Components & Pages                  │
+│  • Hooks & State Management                  │
+│  • API Services                              │
+└──────────────────┬──────────────────────────┘
+                   │ HTTP/REST API
+                   ▼
+┌─────────────────────────────────────────────┐
+│        TIER 2: APPLICATION LAYER            │
+│         (Express Backend)                    │
+├─────────────────────────────────────────────┤
+│  • Express Routes                            │
+│  • Business Logic & Validation               │
+│  • Smart Features (Barcode, Recipe Scale)   │
+│  • AI Services (Nurexa AI)                  │
+└──────────────────┬──────────────────────────┘
+                   │ SQL/API Calls
+                   ▼
+┌─────────────────────────────────────────────┐
+│           TIER 3: DATA LAYER                 │
+│            (Supabase)                        │
+├─────────────────────────────────────────────┤
+│  • Supabase Auth                            │
+│  • PostgreSQL Database                      │
+│  • File Storage                             │
+│  • Security & Encryption                    │
+└─────────────────────────────────────────────┘
+
+Data Flow: User → Frontend → Backend → Database → Response
+```
+
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 18, TypeScript, TailwindCSS, React Query, Framer Motion

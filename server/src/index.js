@@ -36,6 +36,8 @@ const mlRoutes = require('./routes/ml');
 const smartFeaturesRoutes = require('./routes/smart-features');
 const barcodeRoutes = require('./routes/barcode');
 const loyaltyRoutes = require('./routes/loyalty');
+const mealPlannerRoutes = require('./routes/meal-planner');
+const wasteRoutes = require('./routes/waste');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -100,10 +102,12 @@ app.get('/api/dashboard', (req, res) => {
       groceryLists: { total: 5, active: 2, completed: 3, itemsCount: 24 },
       pantry: { totalItems: 45, totalValue: 125.50, expiringSoon: 8, lowStock: 3, categories: { 'Dairy': 8, 'Vegetables': 12, 'Meat': 6, 'Grains': 10, 'Snacks': 9 } },
       spending: { thisMonth: 180.75, lastMonth: 195.30, saved: 14.55, budget: 200, trend: 'down' },
-      activity: { recentLists: [
-        { id: 1, name: 'Weekly Shopping', items: 12, progress: 75, status: 'active', updatedAt: new Date().toISOString() },
-        { id: 2, name: 'Dinner Party', items: 8, progress: 100, status: 'completed', updatedAt: new Date().toISOString() }
-      ], recentPantryItems: [], completedTasks: 5 }
+      activity: {
+        recentLists: [
+          { id: 1, name: 'Weekly Shopping', items: 12, progress: 75, status: 'active', updatedAt: new Date().toISOString() },
+          { id: 2, name: 'Dinner Party', items: 8, progress: 100, status: 'completed', updatedAt: new Date().toISOString() }
+        ], recentPantryItems: [], completedTasks: 5
+      }
     }
   });
 });
@@ -157,15 +161,19 @@ app.get('/api/pantry/categories', (req, res) => {
 
 // Mock grocery lists in-memory storage
 let mockGroceryLists = [
-  { id: '1', name: 'Weekly Shopping', status: 'active', items: [
-    { id: '1', name: 'Milk', quantity: 2, unit: 'litres', category: 'Dairy', isChecked: false, estimatedPrice: 2.40 },
-    { id: '2', name: 'Bread', quantity: 1, unit: 'loaf', category: 'Grains', isChecked: true, estimatedPrice: 1.50 },
-    { id: '3', name: 'Apples', quantity: 6, unit: 'pieces', category: 'Fruits', isChecked: false, estimatedPrice: 3.00 }
-  ], totalEstimatedCost: 6.90, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-  { id: '2', name: 'Dinner Party', status: 'completed', items: [
-    { id: '4', name: 'Wine', quantity: 2, unit: 'bottles', category: 'Beverages', isChecked: true, estimatedPrice: 12.00 },
-    { id: '5', name: 'Cheese', quantity: 200, unit: 'grams', category: 'Dairy', isChecked: true, estimatedPrice: 4.00 }
-  ], totalEstimatedCost: 16.00, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+  {
+    id: '1', name: 'Weekly Shopping', status: 'active', items: [
+      { id: '1', name: 'Milk', quantity: 2, unit: 'litres', category: 'Dairy', isChecked: false, estimatedPrice: 2.40 },
+      { id: '2', name: 'Bread', quantity: 1, unit: 'loaf', category: 'Grains', isChecked: true, estimatedPrice: 1.50 },
+      { id: '3', name: 'Apples', quantity: 6, unit: 'pieces', category: 'Fruits', isChecked: false, estimatedPrice: 3.00 }
+    ], totalEstimatedCost: 6.90, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+  },
+  {
+    id: '2', name: 'Dinner Party', status: 'completed', items: [
+      { id: '4', name: 'Wine', quantity: 2, unit: 'bottles', category: 'Beverages', isChecked: true, estimatedPrice: 12.00 },
+      { id: '5', name: 'Cheese', quantity: 200, unit: 'grams', category: 'Dairy', isChecked: true, estimatedPrice: 4.00 }
+    ], totalEstimatedCost: 16.00, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+  }
 ];
 
 let nextListId = 3;
@@ -198,7 +206,7 @@ app.get('/api/users/profile', (req, res) => {
 
     const token = authHeader.substring(7);
     const session = mockDB.getSession(token);
-    
+
     if (!session) {
       return res.status(401).json({
         error: 'Invalid token',
@@ -686,6 +694,8 @@ app.use('/api/pantry', pantryRoutes);
 app.use('/api/ml', mlRoutes);
 app.use('/api/barcode', barcodeRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
+app.use('/api/meal-planner', mealPlannerRoutes);
+app.use('/api/waste', wasteRoutes);
 
 // GraphQL setup (disabled - using Supabase)
 // setupGraphQL(app);
@@ -693,21 +703,21 @@ app.use('/api/loyalty', loyaltyRoutes);
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  
+
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       error: 'Validation Error',
       details: err.message
     });
   }
-  
+
   if (err.name === 'UnauthorizedError') {
     return res.status(401).json({
       error: 'Unauthorized',
       message: 'Invalid or missing authentication token'
     });
   }
-  
+
   res.status(500).json({
     error: 'Internal Server Error',
     message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
@@ -728,7 +738,7 @@ async function startServer() {
     // Connect to database - temporarily disabled
     // await connectDB();
     // console.log('✅ Database connected successfully');
-    
+
     // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Nourish Neural server running on port ${PORT}`);
