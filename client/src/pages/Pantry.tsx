@@ -23,7 +23,9 @@ import {
   Calendar,
   Tag,
   ShoppingBag,
-  Receipt
+  Receipt,
+  Home,
+  Users
 } from 'lucide-react'
 import SmartWasteDashboard from '../components/SmartWasteDashboard'
 import BarcodeScanner from '../components/BarcodeScanner'
@@ -32,6 +34,7 @@ import { ProductInfo } from '../services/barcodeService'
 import { fadeUp, staggerContainer } from '../utils/motion'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import { useHousehold } from '../hooks/useHousehold'
 import toast from 'react-hot-toast'
 
 interface PantryItem {
@@ -53,8 +56,9 @@ interface PantryItem {
   store_name?: string
   image_url?: string
   is_archived?: boolean
+  household_id?: string | null
   // Computed field
-  wasteRisk?: 'low' | 'medium' | 'high'
+  wasteRisk?: 'low' | 'medium' | 'high' | 'very-high'
 }
 
 // Helper to get normalized field values (supports both camelCase and snake_case)
@@ -66,16 +70,16 @@ const getEstimatedPrice = (item: PantryItem): number | undefined =>
   item.estimated_price ?? item.estimatedPrice
 
 // Waste risk calculation based on category and days until expiry
-const calculateWasteRisk = (category: string, expiryDate?: string): 'low' | 'medium' | 'high' => {
+const calculateWasteRisk = (category: string, expiryDate?: string): 'low' | 'medium' | 'high' | 'very-high' => {
   // Base waste rates by category
   const categoryRiskBase: { [key: string]: number } = {
-    'Herbs': 0.45,
-    'Fish': 0.35,
+    'Herbs': 0.55,
+    'Fish': 0.45,
     'Vegetables': 0.42,
     'Fruits': 0.38,
-    'Meat': 0.28,
+    'Meat': 0.35,
     'Bakery': 0.22,
-    'Dairy': 0.18,
+    'Dairy': 0.20,
     'Frozen': 0.12,
     'Eggs': 0.10,
     'Pantry': 0.08,
@@ -89,17 +93,36 @@ const calculateWasteRisk = (category: string, expiryDate?: string): 'low' | 'med
   if (expiryDate) {
     const daysUntilExpiry = Math.ceil((new Date(expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     if (daysUntilExpiry <= 0) {
-      riskScore = 0.95
-    } else if (daysUntilExpiry <= 2) {
-      riskScore = Math.min(0.9, riskScore + 0.4)
-    } else if (daysUntilExpiry <= 5) {
-      riskScore = Math.min(0.7, riskScore + 0.2)
+      riskScore = 0.99
+    } else if (daysUntilExpiry <= 1) {
+      riskScore = Math.min(0.95, riskScore + 0.55)
+    } else if (daysUntilExpiry <= 3) {
+      riskScore = Math.min(0.85, riskScore + 0.40)
+    } else if (daysUntilExpiry <= 7) {
+      riskScore = Math.min(0.65, riskScore + 0.20)
     }
   }
 
-  if (riskScore > 0.6) return 'high'
-  if (riskScore > 0.35) return 'medium'
+  if (riskScore >= 0.75) return 'very-high'
+  if (riskScore >= 0.50) return 'high'
+  if (riskScore >= 0.30) return 'medium'
   return 'low'
+}
+
+// Helpers used when calling the ML predict endpoint for a new item
+const inferStorageType = (category: string): string => {
+  if (['Dairy', 'Meat', 'Fish', 'Fruits', 'Vegetables', 'Eggs'].includes(category)) return 'fridge'
+  if (category === 'Frozen') return 'freezer'
+  return 'pantry'
+}
+
+const inferPerishability = (category: string): number => {
+  const scores: Record<string, number> = {
+    'Fish': 0.95, 'Meat': 0.85, 'Vegetables': 0.75, 'Fruits': 0.70,
+    'Dairy': 0.65, 'Bakery': 0.55, 'Eggs': 0.45, 'Frozen': 0.25,
+    'Beverages': 0.15, 'Pantry': 0.10, 'Snacks': 0.20, 'General': 0.40
+  }
+  return scores[category] ?? 0.40
 }
 
 interface CreateItemForm {
@@ -124,7 +147,9 @@ interface PantryStats {
 
 export default function Pantry() {
   const { user } = useAuth()
+  const { household, isMember } = useHousehold()
   const queryClient = useQueryClient()
+  const [scope, setScope] = useState<'personal' | 'household'>('personal')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [showScanner, setShowScanner] = useState(false)
   const [showReceiptScanner, setShowReceiptScanner] = useState(false)
@@ -145,11 +170,17 @@ export default function Pantry() {
     estimatedPrice: 0,
     notes: ''
   })
+  const [itemRiskPreview, setItemRiskPreview] = useState<{
+    risk_level: string
+    waste_probability: number
+    recommendations: string[]
+  } | null>(null)
+  const [checkingItemRisk, setCheckingItemRisk] = useState(false)
 
   // Fetch pantry items from API
   const { data: pantryData, isLoading: itemsLoading } = useQuery(
-    ['pantry-items'],
-    () => apiService.get<{ items: PantryItem[] }>('/api/pantry'),
+    ['pantry-items', scope],
+    () => apiService.get<{ items: PantryItem[] }>(`/api/pantry?scope=${scope}`),
     {
       enabled: !!user,
       staleTime: 30000, // 30 seconds
@@ -159,8 +190,8 @@ export default function Pantry() {
 
   // Fetch pantry stats from API
   const { data: statsData } = useQuery(
-    ['pantry-stats'],
-    () => apiService.get<PantryStats>('/api/pantry/stats'),
+    ['pantry-stats', scope],
+    () => apiService.get<PantryStats>(`/api/pantry/stats?scope=${scope}`),
     {
       enabled: !!user,
       staleTime: 30000,
@@ -232,6 +263,7 @@ export default function Pantry() {
         expiryDate: itemData.expiryDate || null,
         estimatedPrice: itemData.estimatedPrice || null,
         notes: itemData.notes || null,
+        householdId: scope === 'household' && household ? household.id : null,
       }),
     {
       onSuccess: (data) => {
@@ -239,6 +271,7 @@ export default function Pantry() {
         queryClient.invalidateQueries(['pantry-stats'])
         queryClient.invalidateQueries(['pantry-categories'])
         setShowCreateForm(false)
+        setItemRiskPreview(null)
         setNewItemForm({
           name: '',
           quantity: 1,
@@ -305,11 +338,67 @@ export default function Pantry() {
     }
   )
 
+  // Move item between personal and household scope
+  const moveItemMutation = useMutation(
+    ({ itemId, target }: { itemId: string; target: 'personal' | 'household' }) =>
+      apiService.patch<{ message: string }>(`/api/households/items/${itemId}/move`, {
+        target,
+        householdId: target === 'household' ? household?.id : undefined
+      }),
+    {
+      onSuccess: (data) => {
+        queryClient.invalidateQueries(['pantry-items'])
+        queryClient.invalidateQueries(['pantry-stats'])
+        toast.success(data.message || 'Item moved successfully!')
+      },
+      onError: () => {
+        toast.error('Failed to move item. Please try again.')
+      }
+    }
+  )
+
   // Note: updateQuantityMutation removed as SmartPantryItem handles quantity updates
 
-  const handleCreateItem = () => {
-    if (newItemForm.name.trim()) {
+  const handleCreateItem = async () => {
+    if (!newItemForm.name.trim()) return
+
+    // Already warned — user accepted the risk, save directly
+    if (itemRiskPreview !== null) {
       createItemMutation.mutate(newItemForm)
+      return
+    }
+
+    setCheckingItemRisk(true)
+    try {
+      const prediction = await apiService.post<{
+        risk_level: string
+        waste_probability: number
+        recommendations: string[]
+      }>('/api/waste/predict', {
+        food_item: {
+          category: newItemForm.category,
+          purchase_date: new Date().toISOString().split('T')[0],
+          storage_type: inferStorageType(newItemForm.category),
+          perishability_score: inferPerishability(newItemForm.category),
+          package_quality: 0.85,
+          estimated_price: newItemForm.estimatedPrice || 1.0,
+          household_size: 2,
+        },
+        user_history: []
+      })
+
+      if (prediction.risk_level === 'High' || prediction.risk_level === 'Very High') {
+        // Show inline warning — don't save yet
+        setItemRiskPreview(prediction)
+      } else {
+        // Low / Medium risk — save directly
+        createItemMutation.mutate(newItemForm)
+      }
+    } catch {
+      // If predict fails for any reason, just save normally
+      createItemMutation.mutate(newItemForm)
+    } finally {
+      setCheckingItemRisk(false)
     }
   }
 
@@ -390,7 +479,7 @@ export default function Pantry() {
         matchesFilter = item.quantity <= 1
       } else if (filterType === 'highRisk') {
         const wasteRisk = calculateWasteRisk(item.category, getExpiryDate(item))
-        matchesFilter = wasteRisk === 'high'
+        matchesFilter = wasteRisk === 'high' || wasteRisk === 'very-high'
       }
 
       return matchesSearch && matchesCategory && matchesFilter
@@ -411,10 +500,10 @@ export default function Pantry() {
         case 'price':
           return (getEstimatedPrice(b) || 0) - (getEstimatedPrice(a) || 0)
         case 'wasteRisk':
-          const riskOrder = { high: 3, medium: 2, low: 1 }
+          const riskOrder: Record<string, number> = { 'very-high': 4, high: 3, medium: 2, low: 1 }
           const aRisk = calculateWasteRisk(a.category, getExpiryDate(a))
           const bRisk = calculateWasteRisk(b.category, getExpiryDate(b))
-          return riskOrder[bRisk] - riskOrder[aRisk]
+          return (riskOrder[bRisk] ?? 0) - (riskOrder[aRisk] ?? 0)
         default:
           return 0
       }
@@ -627,6 +716,33 @@ export default function Pantry() {
                   </motion.p>
                 </div>
               </div>
+              <div className="flex items-center space-x-3">
+                {/* Scope Toggle */}
+                {isMember && (
+                  <div className="flex bg-neutral-100 dark:bg-neutral-700 rounded-lg p-1">
+                    <button
+                      onClick={() => setScope('personal')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        scope === 'personal'
+                          ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                          : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
+                      }`}
+                    >
+                      Personal
+                    </button>
+                    <button
+                      onClick={() => setScope('household')}
+                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
+                        scope === 'household'
+                          ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
+                          : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
+                      }`}
+                    >
+                      Household
+                    </button>
+                  </div>
+                )}
+              </div>
               <div className="flex space-x-3">
                 <motion.button
                   onClick={() => setShowReceiptScanner(true)}
@@ -805,7 +921,7 @@ export default function Pantry() {
               <div className="flex items-center justify-between">
                 <h2 className="card-title">Add New Pantry Item</h2>
                 <button
-                  onClick={() => setShowCreateForm(false)}
+                  onClick={() => { setShowCreateForm(false); setItemRiskPreview(null) }}
                   className="btn btn-ghost btn-sm"
                 >
                   <X className="h-4 w-4" />
@@ -833,7 +949,7 @@ export default function Pantry() {
                   </label>
                   <select
                     value={newItemForm.category}
-                    onChange={(e) => setNewItemForm({ ...newItemForm, category: e.target.value })}
+                    onChange={(e) => { setNewItemForm({ ...newItemForm, category: e.target.value }); setItemRiskPreview(null) }}
                     className="input"
                   >
                     <option value="General">General</option>
@@ -923,24 +1039,78 @@ export default function Pantry() {
                 />
               </div>
 
+              {/* ML Risk Warning — shown when predict returns High / Very High */}
+              {itemRiskPreview && (
+                <div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-red-700 dark:text-red-400">
+                        {itemRiskPreview.risk_level} Waste Risk Detected
+                      </p>
+                      <p className="text-sm text-red-600 dark:text-red-400 mt-0.5">
+                        {Math.round(itemRiskPreview.waste_probability * 100)}% probability this item will be wasted based on its category and your history.
+                      </p>
+                      {itemRiskPreview.recommendations?.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {itemRiskPreview.recommendations.slice(0, 2).map((rec, i) => (
+                            <li key={i} className="text-xs text-red-600 dark:text-red-400 flex items-start gap-1.5">
+                              <span className="mt-0.5 flex-shrink-0">•</span>
+                              <span>{rec}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <p className="text-xs text-red-500 dark:text-red-400 mt-2 font-medium">
+                        Click "Add Anyway" to save, or adjust the item details above.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex space-x-2">
-                <motion.button
-                  onClick={handleCreateItem}
-                  disabled={!newItemForm.name.trim() || createItemMutation.isLoading}
-                  className="btn btn-primary"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  {createItemMutation.isLoading ? 'Adding...' : 'Add Item'}
-                </motion.button>
-                <motion.button
-                  onClick={() => setShowCreateForm(false)}
-                  className="btn btn-outline"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  Cancel
-                </motion.button>
+                {itemRiskPreview ? (
+                  <>
+                    <motion.button
+                      onClick={() => createItemMutation.mutate(newItemForm)}
+                      disabled={!newItemForm.name.trim() || createItemMutation.isLoading}
+                      className="btn border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      {createItemMutation.isLoading ? 'Adding...' : 'Add Anyway'}
+                    </motion.button>
+                    <motion.button
+                      onClick={() => setItemRiskPreview(null)}
+                      className="btn btn-outline"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      Go Back
+                    </motion.button>
+                  </>
+                ) : (
+                  <>
+                    <motion.button
+                      onClick={handleCreateItem}
+                      disabled={!newItemForm.name.trim() || createItemMutation.isLoading || checkingItemRisk}
+                      className="btn btn-primary"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      {checkingItemRisk ? 'Checking risk...' : createItemMutation.isLoading ? 'Adding...' : 'Add Item'}
+                    </motion.button>
+                    <motion.button
+                      onClick={() => { setShowCreateForm(false); setItemRiskPreview(null) }}
+                      className="btn btn-outline"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      Cancel
+                    </motion.button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
@@ -1122,12 +1292,14 @@ export default function Pantry() {
                     card overflow-hidden transition-all duration-300
                     ${expiryStatus === 'expired' ? 'ring-2 ring-red-400 dark:ring-red-500' : ''}
                     ${expiryStatus === 'expiring' ? 'ring-2 ring-orange-400 dark:ring-orange-500' : ''}
-                    ${wasteRisk === 'high' ? 'bg-gradient-to-br from-red-50 to-white dark:from-red-950/30 dark:to-neutral-800' : ''}
+                    ${wasteRisk === 'very-high' ? 'bg-gradient-to-br from-red-100 to-white dark:from-red-950/50 dark:to-neutral-800' :
+                      wasteRisk === 'high' ? 'bg-gradient-to-br from-red-50 to-white dark:from-red-950/30 dark:to-neutral-800' : ''}
                   `}>
                     {/* Category Header with Icon */}
                     <div className={`
                       px-4 py-2 flex items-center justify-between border-b
-                      ${wasteRisk === 'high' ? 'bg-red-100/50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
+                      ${wasteRisk === 'very-high' ? 'bg-red-200/60 dark:bg-red-900/30 border-red-300 dark:border-red-700' :
+                        wasteRisk === 'high' ? 'bg-red-100/50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
                         wasteRisk === 'medium' ? 'bg-yellow-100/50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' :
                           'bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700'}
                     `}>
@@ -1137,14 +1309,17 @@ export default function Pantry() {
                           {item.category}
                         </span>
                       </div>
-                      {wasteRisk !== 'low' && (
-                        <span className={`
-                          px-2 py-0.5 text-xs font-bold rounded-full
-                          ${wasteRisk === 'high' ? 'bg-red-500 text-white animate-pulse' : 'bg-yellow-500 text-white'}
-                        `}>
-                          {wasteRisk === 'high' ? 'HIGH RISK' : 'MEDIUM'}
-                        </span>
-                      )}
+                      <span className={`
+                        px-2 py-0.5 text-xs font-bold rounded-full
+                        ${wasteRisk === 'very-high' ? 'bg-red-600 text-white animate-pulse' :
+                          wasteRisk === 'high' ? 'bg-orange-500 text-white' :
+                          wasteRisk === 'medium' ? 'bg-yellow-500 text-white' :
+                          'bg-green-500 text-white'}
+                      `}>
+                        {wasteRisk === 'very-high' ? 'VERY HIGH' :
+                         wasteRisk === 'high' ? 'HIGH RISK' :
+                         wasteRisk === 'medium' ? 'MEDIUM' : 'LOW RISK'}
+                      </span>
                     </div>
 
                     {/* Main Content */}
@@ -1228,6 +1403,21 @@ export default function Pantry() {
                         >
                           <Edit className="h-3.5 w-3.5" />
                         </motion.button>
+                        {isMember && (
+                          <motion.button
+                            onClick={() => moveItemMutation.mutate({
+                              itemId: item.id,
+                              target: item.household_id ? 'personal' : 'household'
+                            })}
+                            className="btn btn-sm btn-outline"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            title={item.household_id ? 'Move to Personal' : 'Share with Household'}
+                            disabled={moveItemMutation.isLoading}
+                          >
+                            {item.household_id ? <Home className="h-3.5 w-3.5" /> : <Users className="h-3.5 w-3.5" />}
+                          </motion.button>
+                        )}
                         <motion.button
                           onClick={() => {
                             if (confirm(`Remove "${item.name}" from your pantry?`)) {

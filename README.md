@@ -1,216 +1,233 @@
-# 🍽️ Nourish Neural – AI Culinary Intelligence
+# Nourish Neural - AI Culinary Intelligence
 
 > Predictive kitchen orchestration blending machine learning, behavioural insights, and premium UI craft.
 
-## 🌟 Overview
+## Overview
 
-Nourish Neural is an AI-first household food management platform. EfficientNet vision models, LSTM expiry forecasting, and ensemble waste prediction power an interface that automates pantry tracking, predicts shortages, maps supermarket pricing, and nudges sustainable habits. The redesigned experience draws on Framer marketplace aesthetics—glassmorphism layers, gradient accents, and cinematic typography—to make food intelligence approachable and aspirational.
+Nourish Neural is an AI-first household food management platform. Ensemble ML models (GradientBoosting + Neural Networks) power expiry forecasting and waste prediction, while a local LLM (Ollama) drives a ReAct agent that can query your pantry, predict waste, and suggest recipes in real-time. The platform automates pantry tracking, predicts shortages, maps UK supermarket pricing, and nudges sustainable habits through a clean, focused interface.
 
-## ✨ Core Capabilities
+## Core Capabilities
 
-- **🧠 Neural Pantry Graph** – Real-time freshness scoring, stock forecasting, and AI-driven alerts.
-- **🛒 Intelligent Grocery Routes** – Auto-ranked shopping lists with live UK price movements across 15+ chains.
-- **🤖 Nurexa AI** – Contextual recipe, nutrition, and substitution guidance tuned to household goals.
-- **📊 Waste & Spend Analytics** – Behavioural dashboards highlighting savings, waste reduction, and meal cadence.
-- **🛰️ Store Atlas** – Deep store metadata, opening hours, amenity tags, and navigation handoffs.
-- **🌱 Behavioural Nudges** – Psychological prompts aligned with sustainability and nutrition outcomes.
+- **Predictive Pantry** - Real-time freshness scoring, expiry forecasting, and depletion alerts powered by trained ML models.
+- **Nurexa AI (ReAct Agent)** - Data-aware AI assistant that queries your actual pantry, checks expiring items, predicts waste risk, and suggests recipes using a Thought/Action/Observation reasoning loop.
+- **Waste Analytics & Forecasting** - LLM-powered waste trend forecasting from historical data, with actionable insights and reduction tips on the Dashboard.
+- **Smart Meal Planning** - LLM-generated weekly meal plans that prioritise expiring pantry items to prevent waste, with recipe database fallback.
+- **Waste Prediction Explanations** - ML predictions augmented with natural-language explanations from the LLM, telling users *why* an item is at risk and what to do.
+- **Grocery Lists** - Shopping list management with item tracking, progress, and export.
+- **Store Atlas** - UK store discovery with distance, hours, directions, and chain filtering across 15+ retailers.
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+ and npm 9+
-- PostgreSQL database
-- OpenAI API key
-- Google OAuth credentials
+- Supabase account (database + auth)
+- Ollama installed locally (or OpenAI API key)
+- Python 3.8+ (for ML prediction models)
 
 ### Installation
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd PantryPal
+   cd NourishNeural
    ```
 
 2. **Install dependencies**
    ```bash
-   npm run install:all
+   cd client && npm install && cd ../server && npm install && cd ..
    ```
 
 3. **Environment setup**
    ```bash
    cp server/.env.example server/.env
    cp client/.env.example client/.env
-   # Populate values for database, OpenAI, OAuth, maps, etc.
    ```
 
-4. **Start development servers**
+   Key server `.env` variables:
+   ```
+   SUPABASE_URL=your-supabase-url
+   SUPABASE_SERVICE_KEY=your-service-key
+   USE_OLLAMA=true
+   OLLAMA_BASE_URL=http://localhost:11434/v1
+   OLLAMA_MODEL=llama3.2:1b
+   OLLAMA_AGENT_MODEL=llama3.2:3b   # Optional: larger model for ReAct agent
+   OPENAI_API_KEY=ollama             # Set to 'ollama' when using local models
+   ```
+
+4. **Start Ollama** (if using local AI)
    ```bash
-   npm run dev
+   ollama serve
+   ollama pull llama3.2:1b
    ```
 
-5. **Access the suite**
+5. **Start development servers**
+   ```bash
+   # Terminal 1: Backend
+   cd server && npm run dev
+
+   # Terminal 2: Frontend
+   cd client && npm run dev
+   ```
+
+6. **Access the app**
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:5000
+   - Health check: http://localhost:5000/health
 
-## 🏗️ Architecture
+See `QUICK_START_SUPABASE.md` for detailed Supabase setup.
+
+## Architecture
 
 ```
 NourishNeural/
-├── client/                 # React + Tailwind front of house
-│   ├── src/components/     # Shared UI primitives & layouts
-│   ├── src/pages/          # Experience-driven screens (Landing, Dashboard, Pantry, Stores, etc.)
+├── client/                 # React + Tailwind frontend
+│   ├── src/pages/          # Dashboard, Pantry, Stores, AIAssistant, MealPlan, GroceryLists
+│   ├── src/components/     # Shared UI components
 │   ├── src/hooks/          # Auth, data, and UI logic hooks
-│   ├── src/services/       # API abstraction layer
-│   └── src/utils/          # Helpers and design tokens
-├── server/                 # Node/Express API + data services
-│   ├── src/routes/         # REST endpoints (auth, pantry, stores, analytics)
-│   ├── src/services/       # Business logic and integrations
-│   ├── src/models/         # Data persistence and validation
-│   └── src/utils/          # Shared infra helpers
-└── uk-stores-dataset/      # Aggregated supermarket dataset & collectors
+│   └── src/services/       # API abstraction layer
+├── server/                 # Node/Express backend
+│   └── src/routes/         # REST endpoints
+│       ├── ai.js           # Chat + ReAct agent with tool-calling
+│       ├── waste.js        # Waste logging, prediction, explanation, forecasting
+│       ├── meal-planner.js # LLM-powered meal planning
+│       ├── pantry.js       # Pantry CRUD with Supabase
+│       └── stores.js       # UK store discovery
+├── ml-models/              # Python ML pipeline
+│   ├── src/models/         # ExpiryPrediction, WastePrediction, FoodRecognition
+│   ├── predict.py          # Inference endpoint called by Node.js
+│   └── training/           # Model training scripts
+└── uk-stores-dataset/      # Aggregated UK supermarket dataset
 ```
 
-### System Architecture (text diagram)
+### System Architecture
+
 ```
-┌────────────────────────┐        ┌─────────────────────────────┐
-│   Vite/React Frontend  │        │        API & Services       │
-│ ┌────────────────────┐ │        │ ┌─────────────────────────┐ │
-│ │ Pages & Components │◀┼────────┼▶│  Express/Node Routes    │ │
-│ └────────────────────┘ │  HTTP   │ └─────────────────────────┘ │
-│ ┌────────────────────┐ │        │ ┌─────────────────────────┐ │
-│ │   Hooks (Auth/Data)│─┼────────┼▶│ Smart Features (AI/Rules)│ │
-│ └────────────────────┘ │        │ └─────────────────────────┘ │
-│ ┌────────────────────┐ │        └─────────────┬──────────────┘
-│ │   API Services     │─┼──────────────────────┘
-│ └────────────────────┘ │
-└────────────────────────┘
-          │  HTTP / RPC
-          ▼
-┌────────────────────────────┐      ┌──────────────────────────┐
-│       Supabase Auth        │      │       Supabase DB        │
-└────────────────────────────┘      └──────────────────────────┘
-          │ JWT / SQL                         ▲
-          ▼                                   │
-┌────────────────────────────┐      ┌──────────────────────────┐
-│  Conversational AI (LLM)   │◀─────┤  Predictive Models       │
-│  Recipes, nutrition, chat  │      │  Expiry/waste, pricing   │
-└────────────────────────────┘      └──────────────────────────┘
+┌────────────────────────┐        ┌──────────────────────────────┐
+│   Vite/React Frontend  │        │       Express Backend        │
+│                        │        │                              │
+│  Dashboard             │  HTTP  │  /api/ai/chat     (Chat)    │
+│  Pantry                │◄──────►│  /api/ai/agent    (ReAct)   │
+│  Meal Plan             │        │  /api/waste/*     (Waste)   │
+│  Grocery Lists         │        │  /api/meal-planner (Meals)  │
+│  AI Assistant (Nurexa) │        │  /api/pantry      (CRUD)   │
+│  Stores                │        │  /api/stores      (Search)  │
+└────────┬───────────────┘        └──────────┬───────────────────┘
+         │                                   │
+         ▼                                   ▼
+┌────────────────────┐    ┌──────────────────────────────────────┐
+│   Supabase Auth    │    │           Supabase DB                │
+│   (JWT + OAuth)    │    │  pantry_items, waste_logs,           │
+└────────────────────┘    │  meal_plans, user_profiles           │
+                          └──────────────────┬───────────────────┘
+                                             │
+                          ┌──────────────────┴───────────────────┐
+                          │                                      │
+                    ┌─────┴──────┐                    ┌──────────┴──────┐
+                    │  Ollama    │                    │  Python ML      │
+                    │  (Local    │                    │  Models         │
+                    │  LLM)     │                    │  (Expiry/Waste  │
+                    │           │                    │   Prediction)   │
+                    └────────────┘                    └─────────────────┘
 ```
 
-### Pantry Item Lifecycle (state-style sketch)
+### ReAct Agent Flow
 ```
-[Add Item] → [Tracked in Pantry] → [Risk Scoring]
-     │             │                    │
-     │             ├─► [Use-Soon Alert] │
-     │             │                    │
-     │             └─► [In Grocery List] (if low/needed)
-     │                                  │
-     └─► [Consumed/Removed] ◄───────────┘
-                 │
-                 └─► [Wasted/Expired] (if not acted on)
-```
-
-### 3-Tier Architecture Diagram (Implementation Artefacts - Vertical Compact Version)
-```
-┌─────────────────────────────────────────────┐
-│         TIER 1: PRESENTATION LAYER           │
-│            (React Frontend)                  │
-├─────────────────────────────────────────────┤
-│  • React Components & Pages                  │
-│  • Hooks & State Management                  │
-│  • API Services                              │
-└──────────────────┬──────────────────────────┘
-                   │ HTTP/REST API
-                   ▼
-┌─────────────────────────────────────────────┐
-│        TIER 2: APPLICATION LAYER            │
-│         (Express Backend)                    │
-├─────────────────────────────────────────────┤
-│  • Express Routes                            │
-│  • Business Logic & Validation               │
-│  • Smart Features (Barcode, Recipe Scale)   │
-│  • AI Services (Nurexa AI)                  │
-└──────────────────┬──────────────────────────┘
-                   │ SQL/API Calls
-                   ▼
-┌─────────────────────────────────────────────┐
-│           TIER 3: DATA LAYER                 │
-│            (Supabase)                        │
-├─────────────────────────────────────────────┤
-│  • Supabase Auth                            │
-│  • PostgreSQL Database                      │
-│  • File Storage                             │
-│  • Security & Encryption                    │
-└─────────────────────────────────────────────┘
-
-Data Flow: User → Frontend → Backend → Database → Response
+User: "What should I cook tonight?"
+  │
+  ▼
+Thought: I need to check what's expiring soon.
+Action: get_expiring_items(days: 2)
+Observation: [milk (1 day), spinach (2 days), chicken (3 days)]
+  │
+  ▼
+Thought: I should find recipes using these ingredients.
+Action: suggest_recipes(ingredients: ["milk", "spinach", "chicken"])
+Observation: [Creamy Chicken & Spinach - 3/5 match, ...]
+  │
+  ▼
+Thought: I have enough info.
+Final Answer: "Your milk and spinach expire soon! Try Creamy Chicken &
+              Spinach tonight - it uses all three expiring items..."
 ```
 
-## 🛠️ Tech Stack
+## API Endpoints
+
+### AI & Agent
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/ai/chat` | General chat with Nurexa AI |
+| POST | `/api/ai/agent` | ReAct agent (data-aware, tool-calling) |
+| POST | `/api/ai/recipes` | Recipe suggestions from ingredients |
+| POST | `/api/ai/nutrition` | Nutrition analysis for foods |
+| POST | `/api/ai/substitutions` | Ingredient substitution suggestions |
+
+### Waste Management
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/waste/stats` | Waste statistics by time range |
+| POST | `/api/waste` | Log a wasted item |
+| POST | `/api/waste/predict` | ML waste probability prediction |
+| POST | `/api/waste/predict/explain` | ML prediction + LLM explanation |
+| POST | `/api/waste/forecast` | LLM-based waste trend forecasting |
+
+### Meal Planning
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/meal-planner` | List user's meal plans |
+| POST | `/api/meal-planner` | Create a meal plan |
+| POST | `/api/meal-planner/generate` | LLM-powered plan (prioritises expiring items) |
+| POST | `/api/meal-planner/shopping-list` | Generate shopping list from plan |
+
+### Pantry & Stores
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET/POST | `/api/pantry` | Pantry CRUD operations |
+| GET | `/api/stores/search` | UK store discovery with filters |
+
+## Tech Stack
 
 - **Frontend**: React 18, TypeScript, TailwindCSS, React Query, Framer Motion
-- **Backend**: Node.js, Express, PostgreSQL (Supabase-compatible)
-- **ML Layer**: EfficientNet (classification), LSTM (expiry), ensemble forecasting (waste)
-- **Auth**: Supabase Auth (Google OAuth 2.0 + email/password)
+- **Backend**: Node.js, Express
+- **Database**: Supabase (PostgreSQL + Auth + Storage)
+- **AI/LLM**: Ollama (local) or OpenAI API, with ReAct agent pattern
+- **ML Models**: GradientBoosting + Neural Network ensemble (Python, scikit-learn, PyTorch)
 - **Tooling**: Vite, ESLint, React Helmet Async, Lucide icons
-- **Branding**: Custom SVG logo and favicon with blue/white gradient design
 
-## 📱 Experience Highlights
+## App Pages
 
-1. **Neural Onboarding** – OAuth sign-in, dietary profile, household cadence calibration.
-2. **Predictive Pantry** – Vision-assisted intake, expiry forecasts, automated reordering tasks.
-3. **Grocery Intelligence** – Price-optimised routing, substitution suggestions, budget alerts.
-4. **Store Atlas** – Location-aware store discovery with amenity, accessibility, and pricing overlays.
-5. **Nurexa AI** – Chat interface delivering recipes, nutrition, and sustainability coaching.
-6. **Smart Features Lab** – Barcode scanner with ZXing, recipe scaler with nutrition-aware serving adjustments, and shared contexts/services powering advanced experiments.
+| Page | Purpose |
+|------|---------|
+| **Dashboard** | Overview metrics, quick actions, waste analytics with AI forecasting |
+| **Grocery Lists** | Create and manage shopping lists with item tracking |
+| **Pantry** | Food inventory with expiry tracking and waste logging |
+| **Stores** | UK store finder with distance, hours, and directions |
+| **Nurexa AI** | Chat with ReAct agent (queries pantry, predicts waste, suggests recipes) |
+| **Meal Plan** | Weekly meal calendar with LLM-powered generation |
+| **Profile** | User settings and preferences |
 
-## 🔌 Integrations
+## Roadmap
 
-- **UK Retailers**: Tesco, Sainsbury’s, Asda, Morrisons, Aldi, Lidl, Co-op, Waitrose, M&S, Iceland, and more.
-- **Price Feeds**: Store-specific pricing, promotions, and loyalty adjustments.
-- **Logistics**: Click & Collect, delivery partner roadmap (Deliveroo, Uber Eats, etc.).
-- **Payments**: Ready for Google Pay, Apple Pay, Stripe (future phases).
+- **Phase 1**: Done - Core auth, pantry, Nurexa AI chat, store integration, branding
+- **Phase 2**: Done - Waste analytics, ReAct agent, LLM meal planning, waste forecasting
+- **Phase 3**: Hyper-personalised nutrition, meal kits, sustainability scoring
+- **Phase 4**: AR inventory, smart appliance integrations, federated learning
 
-## 🎯 Roadmap
+## Research Artifacts
 
-- **Phase 1**: ✅ Core auth (Supabase), pantry intelligence, Nurexa AI chat, store dataset integration, branding updates
-- **Phase 2**: Barcode scanning, loyalty sync, advanced waste forecasting
-- **Phase 3**: Hyper-personalised nutrition engine, meal kits, sustainability scoring
-- **Phase 4**: AR inventory capture, smart appliance integrations, local market expansion
+- `DISSERTATION_PLAN.md` - Research methodology and timeline
+- `DISSERTATION_README.md` - Dissertation-specific project overview
+- `LITERATURE_REVIEW.md` - Literature review on AI, behavioural science, and food waste
+- `RESEARCH_PROPOSAL_REVISED.md` - Research proposal and objectives
+- `OLLAMA_TRANSITION.md` - Technical log of cloud-to-local LLM transition
 
-## 🎨 Recent Updates
+## Contributing
 
-- **Branding**: Rebranded AI assistant to "Nurexa AI" with updated messaging across the platform
-- **Logo**: New custom SVG logo and favicon featuring blue/white gradient neural network design
-- **Email Templates**: Enhanced Supabase email confirmation templates with inline logo
-- **UI/UX**: Updated navigation and landing page with new logo integration
-- **Smart Features**: Added barcode scanner modal, recipe scaler component, and shared contexts/services for future experiments
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/neural-upgrade`)
+3. Commit (`git commit -m "feat: add neural pantry animation"`)
+4. Push (`git push origin feature/neural-upgrade`)
+5. Open a Pull Request
 
-## 📚 Research Artifacts
+## License
 
-- `DISSERTATION_PLAN.md` – end-to-end research methodology and timeline
-- `DISSERTATION_README.md` – dissertation-specific project overview
-- `LITERATURE_REVIEW.md` – 1,000-word literature review covering AI, behavioural science, and food waste mitigation
-
-## 🤝 Contributing
-
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/neural-upgrade`).
-3. Commit (`git commit -m "feat: add neural pantry animation"`).
-4. Push (`git push origin feature/neural-upgrade`).
-5. Open a Pull Request describing impact, testing, and screenshots/GIFs.
-
-## 📄 License
-
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file.
-
-## 🆘 Support & Links
-
-- **Docs**: Coming soon at `docs.nourishneural.app`
-- **Issues**: [GitHub Issues](https://github.com/nourishneural/nourishneural/issues)
-- **Community**: Discord channel opening during beta
-
----
-
-Designed with empathy and intelligence by the Nourish Neural team.
-
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file.

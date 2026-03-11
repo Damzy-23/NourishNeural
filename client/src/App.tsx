@@ -15,7 +15,7 @@ import Pantry from './pages/Pantry'
 import Stores from './pages/Stores'
 import AIAssistant from './pages/AIAssistant'
 import Profile from './pages/Profile'
-import SmartFeatures from './pages/SmartFeatures'
+import MealPlanCalendar from './pages/MealPlanCalendar'
 import AuthCallback from './pages/AuthCallback'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -67,7 +67,7 @@ function App() {
           <Route path="pantry" element={<Pantry />} />
           <Route path="stores" element={<Stores />} />
           <Route path="ai-assistant" element={<AIAssistant />} />
-          <Route path="smart-features" element={<SmartFeatures />} />
+          <Route path="meal-plan" element={<MealPlanCalendar />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 

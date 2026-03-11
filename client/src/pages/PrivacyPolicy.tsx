@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, Shield, Eye, Database, Lock, Users, Globe, Mail } from 'lucide-react'
 
 export default function PrivacyPolicy() {
-  const lastUpdated = "January 1, 2025"
+  const lastUpdated = "March 6, 2026"
 
   return (
     <>
@@ -72,8 +72,8 @@ export default function PrivacyPolicy() {
                       culinary intelligence platform.
                     </p>
                     <p>
-                      We comply with applicable data protection laws, including the General Data Protection Regulation (GDPR) 
-                      and the California Consumer Privacy Act (CCPA).
+                      We comply with applicable data protection laws, including the UK General Data Protection Regulation (UK GDPR)
+                      and the Data Protection Act 2018.
                     </p>
                   </div>
                 </section>
@@ -136,9 +136,9 @@ export default function PrivacyPolicy() {
 
                 {/* Legal Basis for Processing */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">4. Legal Basis for Processing (GDPR)</h2>
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">4. Legal Basis for Processing (UK GDPR)</h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    <p>Under GDPR, we process your personal data based on:</p>
+                    <p>Under UK GDPR, we process your personal data based on:</p>
                     <ul className="list-disc pl-6 space-y-2">
                       <li><strong>Consent:</strong> When you opt-in to marketing communications or location tracking</li>
                       <li><strong>Contract Performance:</strong> To provide the services you've requested</li>
@@ -221,7 +221,7 @@ export default function PrivacyPolicy() {
                       <li><strong>Withdraw Consent:</strong> Withdraw consent for consent-based processing</li>
                     </ul>
                     <p>
-                      To exercise these rights, please contact us at <strong>privacy@pantrypal.com</strong>. 
+                      To exercise these rights, please contact us at <strong>privacy@nourishneural.co.uk</strong>.
                       We will respond within 30 days.
                     </p>
                   </div>
@@ -270,9 +270,10 @@ export default function PrivacyPolicy() {
                   <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">11. Children's Privacy</h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
-                      Nourish Neural is not intended for children under 13 years of age. We do not knowingly collect 
-                      personal information from children under 13. If we become aware that we have collected 
-                      personal information from a child under 13, we will take steps to delete such information.
+                      Nourish Neural is not intended for children under 16 years of age, in accordance with UK GDPR
+                      requirements. We do not knowingly collect personal information from children under 16. If we
+                      become aware that we have collected personal information from a child under 16, we will take
+                      steps to delete such information promptly.
                     </p>
                   </div>
                 </section>
@@ -286,12 +287,11 @@ export default function PrivacyPolicy() {
                       This Privacy Policy does not apply to those third parties. We encourage you to review their 
                       privacy policies.
                     </p>
-                    <p>We may integrate with:</p>
+                    <p>We integrate with the following services:</p>
                     <ul className="list-disc pl-6 space-y-2">
-                      <li>Payment processors (Stripe, PayPal)</li>
-                      <li>Analytics services (Google Analytics)</li>
-                      <li>Email services (SendGrid, Mailchimp)</li>
-                      <li>Cloud storage providers (AWS, Google Cloud)</li>
+                      <li>Supabase (authentication, database, and cloud storage)</li>
+                      <li>Ollama (local AI language model processing)</li>
+                      <li>Google Maps Platform (store location services)</li>
                     </ul>
                   </div>
                 </section>
@@ -322,14 +322,14 @@ export default function PrivacyPolicy() {
                       If you have any questions about this Privacy Policy or our data practices, please contact us:
                     </p>
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 dark:text-green-200">
-                      <p><strong>Data Protection Officer:</strong> privacy@pantrypal.com</p>
-                      <p><strong>General Inquiries:</strong> support@pantrypal.com</p>
-                      <p><strong>Address:</strong> Nourish Neural Privacy Team, 123 Innovation Street, Tech City, TC 12345</p>
-                      <p><strong>Phone:</strong> +1 (555) 123-PALM</p>
+                      <p><strong>Data Protection Officer:</strong> privacy@nourishneural.co.uk</p>
+                      <p><strong>General Inquiries:</strong> support@nourishneural.co.uk</p>
+                      <p><strong>Address:</strong> Nourish Neural Privacy Team, London, United Kingdom</p>
                     </div>
                     <p>
-                      You also have the right to lodge a complaint with your local data protection authority 
-                      if you believe we have not handled your personal information in accordance with applicable law.
+                      You also have the right to lodge a complaint with the Information Commissioner's Office (ICO)
+                      at <strong>ico.org.uk</strong> if you believe we have not handled your personal information
+                      in accordance with applicable law.
                     </p>
                   </div>
                 </section>
@@ -341,7 +341,7 @@ export default function PrivacyPolicy() {
             <div className="bg-neutral-50 dark:bg-neutral-900 px-8 py-6 border-t border-neutral-200 dark:border-neutral-700">
               <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                 <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-                  © 2025 Nourish Neural. All rights reserved.
+                  © 2026 Nourish Neural. All rights reserved.
                 </p>
                 <div className="flex space-x-6">
                   <Link to="/terms" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">

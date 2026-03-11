@@ -18,7 +18,7 @@ const getApiBaseUrl = () => {
 // Create axios instance
 const api: AxiosInstance = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -27,7 +27,7 @@ const api: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('pantrypal_token')
+    const token = localStorage.getItem('nourish_neural_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -46,11 +46,11 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     if (error.response) {
       const { status, data } = error.response
-      
+
       switch (status) {
         case 401:
           // Unauthorized - clear token and redirect to login
-          localStorage.removeItem('pantrypal_token')
+          localStorage.removeItem('nourish_neural_token')
           window.location.href = '/'
           break
         case 403:
@@ -92,21 +92,21 @@ api.interceptors.response.use(
       // Other error
       toast.error('An error occurred')
     }
-    
+
     return Promise.reject(error)
   }
 )
 
-// Add auth token management methods to the api instance
-;(api as any).setAuthToken = (token: string) => {
-  localStorage.setItem('pantrypal_token', token)
-  api.defaults.headers.common['Authorization'] = `Bearer ${token}`
-}
+  // Add auth token management methods to the api instance
+  ; (api as any).setAuthToken = (token: string) => {
+    localStorage.setItem('nourish_neural_token', token)
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+  }
 
-;(api as any).removeAuthToken = () => {
-  localStorage.removeItem('pantrypal_token')
-  delete api.defaults.headers.common['Authorization']
-}
+  ; (api as any).removeAuthToken = () => {
+    localStorage.removeItem('nourish_neural_token')
+    delete api.defaults.headers.common['Authorization']
+  }
 
 // API methods
 export const apiService = {
@@ -144,7 +144,7 @@ export const apiService = {
   upload: async <T>(url: string, file: File, onProgress?: (progress: number) => void): Promise<T> => {
     const formData = new FormData()
     formData.append('file', file)
-    
+
     const response = await api.post(url, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -156,19 +156,19 @@ export const apiService = {
         }
       },
     })
-    
+
     return response.data
   },
 }
 
 // Auth token management (standalone functions for backward compatibility)
 export const setAuthToken = (token: string) => {
-  localStorage.setItem('pantrypal_token', token)
+  localStorage.setItem('nourish_neural_token', token)
   api.defaults.headers.common['Authorization'] = `Bearer ${token}`
 }
 
 export const removeAuthToken = () => {
-  localStorage.removeItem('pantrypal_token')
+  localStorage.removeItem('nourish_neural_token')
   delete api.defaults.headers.common['Authorization']
 }
 

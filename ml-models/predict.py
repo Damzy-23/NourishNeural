@@ -1,61 +1,88 @@
 import sys
 import json
-import pickle
 import os
-import sys
+import numpy as np
 
-# Add the current directory to path so we can import src
+# Add the ml-models directory to path
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-from src.models.simple_models import SimpleWastePredictor
+class NumpyEncoder(json.JSONEncoder):
+    """JSON encoder that handles numpy types."""
+    def default(self, obj):
+        if isinstance(obj, (np.integer,)):
+            return int(obj)
+        if isinstance(obj, (np.floating,)):
+            return float(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
-def load_model(model_path):
-    """Load the trained predictor."""
-    predictor = SimpleWastePredictor()
+from src.models.waste_prediction import WastePredictionModel
+
+MODEL_PATH = os.path.join(current_dir, 'models', 'waste_predictor')
+
+# Category-based shelf life estimates (days)
+SHELF_LIFE = {
+    'Dairy': 7, 'Meat': 3, 'Fish': 2, 'Vegetables': 5, 'Fruits': 5,
+    'Bakery': 4, 'Pantry': 180, 'Frozen': 90, 'Beverages': 30, 'Snacks': 60
+}
+
+def rule_based_prediction(food_item):
+    """Simple heuristic when ML models are unavailable."""
+    category = food_item.get('category', 'General')
+    days_since = food_item.get('days_since_purchase', 0)
+    shelf_life = SHELF_LIFE.get(category, 7)
+    days_left = max(0, shelf_life - days_since)
+    ratio = days_since / shelf_life if shelf_life > 0 else 1.0
+
+    if ratio >= 1.0:
+        prob, risk = 0.9, 'Very High'
+    elif ratio >= 0.7:
+        prob, risk = 0.65, 'High'
+    elif ratio >= 0.4:
+        prob, risk = 0.35, 'Medium'
+    else:
+        prob, risk = 0.1, 'Low'
+
+    return {
+        'waste_probability': round(prob, 3),
+        'risk_level': risk,
+        'predicted_days': days_left,
+        'confidence': 0.5,
+        'note': 'Rule-based estimate (ML model unavailable)'
+    }
+
+def load_model():
+    """Load the trained ensemble waste predictor."""
+    model = WastePredictionModel()
     try:
-        predictor.load_model(model_path)
+        model.load_models(MODEL_PATH)
+        return model, True
     except Exception as e:
-        # Fallback to rule-based if load fails
-        sys.stderr.write(f"Warning: Failed to load model: {e}\n")
-    return predictor
+        sys.stderr.write(f"Warning: Could not load trained model ({e}). Using rule-based fallback.\n")
+        return model, False
 
 def main():
     try:
-        # Read input from stdin
         input_data = sys.stdin.read()
         if not input_data:
             print(json.dumps({"error": "No input provided"}))
             return
 
         data = json.loads(input_data)
-        
-        # Paths
-        model_path = os.path.join(current_dir, "trained_models", "waste_predictor.pkl")
-        
-        # Load model
-        predictor = load_model(model_path)
-        
-        if not predictor.is_trained:
-             # If model failed to load, it will use rule-based fallbacks automatically
-             # but we should note it
-             pass
-
-        # Extract data
-        food_item = data.get('food_item', {})
+        food_item   = data.get('food_item', {})
         user_history = data.get('user_history', [])
-        
-        # Predict
-        # Predict
-        try:
-            prediction = predictor.predict_waste_probability(user_history, food_item)
-        except Exception as e:
-            sys.stderr.write(f"Warning: ML prediction failed ({e}), using fallback.\n")
-            # Force rule-based fallback
-            prediction = predictor._rule_based_prediction(user_history, food_item)
-        
-        # Output result
-        print(json.dumps(prediction))
+
+        model, loaded = load_model()
+
+        if loaded:
+            prediction = model.predict_waste_probability(user_history, food_item)
+        else:
+            prediction = rule_based_prediction(food_item)
+
+        # Output only the final JSON line (waste.js reads the last line)
+        print(json.dumps(prediction, cls=NumpyEncoder))
 
     except Exception as e:
         print(json.dumps({"error": str(e)}))

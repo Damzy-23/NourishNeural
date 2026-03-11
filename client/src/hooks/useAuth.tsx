@@ -31,26 +31,47 @@ interface UserPreferences {
   updatedAt: string
 }
 
+export interface HouseholdMember {
+  userId: string
+  firstName: string
+  lastName: string
+  avatarUrl?: string | null
+  role: 'admin' | 'member'
+  joinedAt: string
+}
+
+export interface Household {
+  id: string
+  name: string
+  inviteCode: string
+  createdBy: string
+  createdAt: string
+  role: 'admin' | 'member'
+  members: HouseholdMember[]
+}
+
 interface AuthContextType {
   user: User | null
   preferences: UserPreferences | null
+  household: Household | null
   isAuthenticated: boolean
   isLoading: boolean
   login: (token: string, userData?: User) => void
   logout: () => void
   updateUser: (userData: Partial<User>) => void
   updatePreferences: (prefs: Partial<UserPreferences>) => void
+  refreshHousehold: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('pantrypal_token'))
+  const [token, setToken] = useState<string | null>(localStorage.getItem('nourish_neural_token'))
   // Initialize user as null - we'll fetch fresh data from server
   const [user, setUser] = useState<User | null>(null)
   const [preferences, setPreferences] = useState<UserPreferences | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  
+
   const queryClient = useQueryClient()
 
   // Set auth token in API service
@@ -92,13 +113,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       onError: () => {
         // Token is invalid, clear it
         setToken(null)
-        localStorage.removeItem('pantrypal_token')
+        localStorage.removeItem('nourish_neural_token')
         localStorage.removeItem('pantrypal_user')
         setUser(null)
         setPreferences(null)
       }
     }
   )
+
+  // Fetch user's household when user is loaded
+  const { data: householdData } = useQuery(
+    ['household', user?.id],
+    () => apiService.get<{ household: Household | null }>('/api/households/mine'),
+    {
+      enabled: !!user?.id,
+      retry: false,
+      staleTime: 30000,
+    }
+  )
+
+  const household = householdData?.household || null
+
+  const refreshHousehold = () => {
+    queryClient.invalidateQueries(['household'])
+  }
 
   // Fetch user preferences when user is loaded
   const { isLoading: prefsLoading } = useQuery(
@@ -132,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = (newToken: string, userData?: User) => {
     setToken(newToken)
-    localStorage.setItem('pantrypal_token', newToken)
+    localStorage.setItem('nourish_neural_token', newToken)
     // If user data is provided, set it immediately to avoid race condition
     if (userData) {
       setUser(userData)
@@ -161,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(null)
       setUser(null)
       setPreferences(null)
-      localStorage.removeItem('pantrypal_token')
+      localStorage.removeItem('nourish_neural_token')
       localStorage.removeItem('pantrypal_user')
       removeAuthToken()
       // Clear all cached data
@@ -187,12 +225,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     preferences,
+    household,
     isAuthenticated: !!token && !!user,
     isLoading,
     login,
     logout,
     updateUser,
-    updatePreferences
+    updatePreferences,
+    refreshHousehold
   }
 
   return (
@@ -213,9 +253,9 @@ export function useAuth() {
 // Hook for checking if user has specific role
 export function useRole(requiredRole: string | string[]) {
   const { user } = useAuth()
-  
+
   if (!user) return false
-  
+
   const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
   return roles.includes(user.role)
 }
@@ -223,9 +263,9 @@ export function useRole(requiredRole: string | string[]) {
 // Hook for checking if user has permission
 export function usePermission(permission: string) {
   const { user } = useAuth()
-  
+
   if (!user) return false
-  
+
   // Simple permission system - can be expanded
   switch (permission) {
     case 'admin':

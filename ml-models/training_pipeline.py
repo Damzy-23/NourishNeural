@@ -233,10 +233,10 @@ class PantryPalTrainingPipeline:
             self.results["waste_predictor"] = {
                 "accuracy": accuracy,
                 "target_accuracy": self.config["waste_predictor"]["target_accuracy"],
-                "achieved_target": accuracy >= self.config["waste_predictor"]["target_accuracy"]
+                "achieved_target": accuracy >= self.config["waste_predictor"]["target_accuracy"] / 100
             }
-            
-            logger.info(f"Waste predictor training completed with accuracy: {accuracy:.2f}%")
+
+            logger.info(f"Waste predictor training completed with accuracy: {accuracy:.2%}")
             return True
             
         except Exception as e:
@@ -366,7 +366,7 @@ print(f"BEST_ACCURACY:{{best_accuracy}}")
             ("AI Chat Training", self.run_ai_chat_training)
         ]
         
-        success_count = 0
+        success_count: int = 0
         total_steps = len(pipeline_steps)
         
         for step_name, step_function in pipeline_steps:
@@ -375,7 +375,7 @@ print(f"BEST_ACCURACY:{{best_accuracy}}")
             try:
                 success = step_function()
                 if success:
-                    success_count += 1
+                    success_count = success_count + 1
                     logger.info(f"[SUCCESS] {step_name} completed successfully")
                 else:
                     logger.error(f"[FAILED] {step_name} failed")
@@ -405,34 +405,37 @@ print(f"BEST_ACCURACY:{{best_accuracy}}")
     
     def generate_performance_summary(self) -> Dict:
         """Generate performance summary against targets"""
-        summary = {
-            "targets_achieved": 0,
+        targets_achieved: int = 0
+        detailed_results: dict = {}
+        summary: dict = {
+            "targets_achieved": targets_achieved,
             "total_targets": 4,
-            "detailed_results": {}
+            "detailed_results": detailed_results
         }
-        
+
         targets = {
             "food_classifier": {"target": 95.0, "metric": "accuracy"},
             "expiry_predictor": {"target": 2.0, "metric": "mae"},
             "waste_predictor": {"target": 85.0, "metric": "accuracy"},
             "ai_chat": {"target": 80.0, "metric": "satisfaction"}
         }
-        
+
         for model_name, target_info in targets.items():
             if model_name in self.results:
                 result = self.results[model_name]
                 achieved = result.get("achieved_target", False)
-                
-                summary["detailed_results"][model_name] = {
+
+                detailed_results[model_name] = {
                     "achieved": achieved,
                     "target": target_info["target"],
                     "actual": result.get(target_info["metric"], 0),
                     "metric": target_info["metric"]
                 }
-                
+
                 if achieved:
-                    summary["targets_achieved"] += 1
-        
+                    targets_achieved = targets_achieved + 1
+
+        summary["targets_achieved"] = targets_achieved
         return summary
     
     def save_results(self, results: Dict):

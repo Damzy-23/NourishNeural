@@ -16,10 +16,16 @@ import {
   CreditCard,
   Plus,
   Trash2,
-  X
+  X,
+  Users,
+  Copy,
+  LogOut,
+  RefreshCw,
+  Home
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import { useHousehold } from '../hooks/useHousehold'
 import { fadeUp, staggerContainer } from '../utils/motion'
 
 interface UserProfile {
@@ -104,7 +110,7 @@ const SHOPPING_FREQUENCIES = [
 export default function Profile() {
   const { user, updateUser } = useAuth()
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'notifications' | 'privacy' | 'loyalty'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'notifications' | 'privacy' | 'loyalty' | 'household'>('profile')
   const [isEditing, setIsEditing] = useState(false)
   const [profileForm, setProfileForm] = useState<Partial<UserProfile>>({})
   const [preferencesForm, setPreferencesForm] = useState<Partial<UserPreferences>>({})
@@ -113,22 +119,30 @@ export default function Profile() {
   const [selectedProgram, setSelectedProgram] = useState<string>('')
   const [cardNumber, setCardNumber] = useState('')
 
+  // Household
+  const { household, isAdmin, isMember, refreshHousehold } = useHousehold()
+  const [householdName, setHouseholdName] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
+  const [editingHouseholdName, setEditingHouseholdName] = useState(false)
+  const [newHouseholdName, setNewHouseholdName] = useState('')
+  const [copiedInvite, setCopiedInvite] = useState(false)
+
   // Fetch user profile
   const { data: profileResponse, refetch: refetchProfile } = useQuery(
     ['user-profile', user?.id],
     async () => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const response = await fetch('/api/users/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       })
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch profile')
       }
-      
+
       return response.json()
     },
     {
@@ -239,7 +253,7 @@ export default function Profile() {
   // Update profile mutation
   const updateProfileMutation = useMutation(
     async (profileData: Partial<UserProfile>) => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const response = await fetch('/api/users/profile', {
         method: 'PUT',
         headers: {
@@ -248,11 +262,11 @@ export default function Profile() {
         },
         body: JSON.stringify(profileData)
       })
-      
+
       if (!response.ok) {
         throw new Error('Failed to update profile')
       }
-      
+
       return response.json()
     },
     {
@@ -291,6 +305,76 @@ export default function Profile() {
     }
   )
 
+  // Household mutations
+  const createHouseholdMutation = useMutation(
+    (name: string) => apiService.post('/api/households', { name }),
+    {
+      onSuccess: () => {
+        refreshHousehold()
+        setHouseholdName('')
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
+      },
+    }
+  )
+
+  const joinHouseholdMutation = useMutation(
+    (code: string) => apiService.post('/api/households/join', { inviteCode: code }),
+    {
+      onSuccess: () => {
+        refreshHousehold()
+        setInviteCode('')
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
+      },
+    }
+  )
+
+  const updateHouseholdMutation = useMutation(
+    (name: string) => apiService.put('/api/households', { name }),
+    {
+      onSuccess: () => {
+        refreshHousehold()
+        setEditingHouseholdName(false)
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 3000)
+      },
+    }
+  )
+
+  const regenerateInviteMutation = useMutation(
+    () => apiService.post('/api/households/regenerate-invite', {}),
+    {
+      onSuccess: () => {
+        refreshHousehold()
+      },
+    }
+  )
+
+  const removeMemberMutation = useMutation(
+    (userId: string) => apiService.delete(`/api/households/members/${userId}`),
+    {
+      onSuccess: () => {
+        refreshHousehold()
+      },
+    }
+  )
+
+  const deleteHouseholdMutation = useMutation(
+    () => apiService.delete('/api/households'),
+    {
+      onSuccess: () => {
+        refreshHousehold()
+      },
+    }
+  )
+
+  const copyInviteCode = async (code: string) => {
+    await navigator.clipboard.writeText(code)
+    setCopiedInvite(true)
+    setTimeout(() => setCopiedInvite(false), 2000)
+  }
+
   const handleProfileSave = () => {
     // Prepare the data to send - convert name to firstName/lastName if needed
     const dataToSend = { ...profileForm }
@@ -315,7 +399,7 @@ export default function Profile() {
       const newArray = currentArray.includes(value)
         ? currentArray.filter(item => item !== value)
         : [...currentArray, value]
-      
+
       return {
         ...prev,
         [field]: newArray
@@ -383,7 +467,8 @@ export default function Profile() {
     { id: 'preferences', label: 'Preferences', icon: Heart },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy', icon: Shield },
-    { id: 'loyalty', label: 'Loyalty Cards', icon: CreditCard }
+    { id: 'loyalty', label: 'Loyalty Cards', icon: CreditCard },
+    { id: 'household', label: 'Household', icon: Home }
   ]
 
   return (
@@ -403,7 +488,7 @@ export default function Profile() {
           animate={{ y: [0, -16, 0], opacity: [0.3, 0.55, 0.3] }}
           transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
         />
- 
+
         {/* Header */}
         <motion.div
           className="relative"
@@ -477,11 +562,10 @@ export default function Profile() {
                       <motion.button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          activeTab === tab.id
+                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id
                             ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                             : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
-                        }`}
+                          }`}
                         whileHover={{ x: 4 }}
                       >
                         <Icon className="h-4 w-4" />
@@ -560,7 +644,7 @@ export default function Profile() {
                         className="input"
                       />
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                         Email
@@ -1011,6 +1095,270 @@ export default function Profile() {
                 </div>
               </motion.div>
             )}
+
+            {/* Household Tab */}
+            {activeTab === 'household' && (
+              <motion.div
+                variants={fadeUp}
+                initial="hidden"
+                animate="show"
+                className="bg-white dark:bg-neutral-800 rounded-2xl p-8 shadow-sm border border-neutral-200 dark:border-neutral-700"
+              >
+                <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                  <Home className="h-5 w-5 mr-2 text-primary-600 dark:text-primary-400" />
+                  Household
+                </h2>
+
+                {!isMember ? (
+                  /* No household — Create or Join */
+                  <div className="space-y-8">
+                    <div className="text-center py-6">
+                      <Users className="h-12 w-12 text-neutral-300 dark:text-neutral-600 mx-auto mb-3" />
+                      <p className="text-neutral-600 dark:text-neutral-400 mb-1">You're not part of a household yet.</p>
+                      <p className="text-sm text-neutral-500 dark:text-neutral-500">Create one or join an existing household with an invite code.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Create Household */}
+                      <div className="p-6 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-600">
+                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-4">Create a Household</h3>
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={householdName}
+                            onChange={(e) => setHouseholdName(e.target.value)}
+                            placeholder="e.g. The Smith Family"
+                            className="input w-full"
+                          />
+                          <motion.button
+                            onClick={() => createHouseholdMutation.mutate(householdName)}
+                            disabled={!householdName.trim() || createHouseholdMutation.isLoading}
+                            className="btn btn-primary w-full"
+                            whileHover={{ y: -1 }}
+                            whileTap={{ scale: 0.97 }}
+                          >
+                            {createHouseholdMutation.isLoading ? 'Creating...' : 'Create Household'}
+                          </motion.button>
+                        </div>
+                      </div>
+
+                      {/* Join Household */}
+                      <div className="p-6 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-600">
+                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-4">Join a Household</h3>
+                        <div className="space-y-3">
+                          <input
+                            type="text"
+                            value={inviteCode}
+                            onChange={(e) => setInviteCode(e.target.value)}
+                            placeholder="Paste invite code"
+                            className="input w-full"
+                          />
+                          <motion.button
+                            onClick={() => joinHouseholdMutation.mutate(inviteCode)}
+                            disabled={!inviteCode.trim() || joinHouseholdMutation.isLoading}
+                            className="btn btn-primary w-full"
+                            whileHover={{ y: -1 }}
+                            whileTap={{ scale: 0.97 }}
+                          >
+                            {joinHouseholdMutation.isLoading ? 'Joining...' : 'Join Household'}
+                          </motion.button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {(createHouseholdMutation.isError || joinHouseholdMutation.isError) && (
+                      <p className="text-red-500 text-sm text-center">
+                        {(createHouseholdMutation.error as any)?.response?.data?.error ||
+                         (joinHouseholdMutation.error as any)?.response?.data?.error ||
+                         'Something went wrong. Please try again.'}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  /* Has household — Show details */
+                  <div className="space-y-6">
+                    {/* Household Name */}
+                    <div className="flex items-center justify-between p-4 bg-neutral-50 dark:bg-neutral-700/50 rounded-xl">
+                      {editingHouseholdName && isAdmin ? (
+                        <div className="flex items-center space-x-3 flex-1">
+                          <input
+                            type="text"
+                            value={newHouseholdName}
+                            onChange={(e) => setNewHouseholdName(e.target.value)}
+                            className="input flex-1"
+                            autoFocus
+                          />
+                          <motion.button
+                            onClick={() => updateHouseholdMutation.mutate(newHouseholdName)}
+                            disabled={!newHouseholdName.trim() || updateHouseholdMutation.isLoading}
+                            className="btn btn-primary btn-sm"
+                            whileTap={{ scale: 0.97 }}
+                          >
+                            <Save className="h-4 w-4" />
+                          </motion.button>
+                          <motion.button
+                            onClick={() => setEditingHouseholdName(false)}
+                            className="btn btn-outline btn-sm"
+                            whileTap={{ scale: 0.97 }}
+                          >
+                            <X className="h-4 w-4" />
+                          </motion.button>
+                        </div>
+                      ) : (
+                        <>
+                          <div>
+                            <p className="text-sm text-neutral-500 dark:text-neutral-400">Household Name</p>
+                            <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                              {household?.name}
+                            </p>
+                          </div>
+                          {isAdmin && (
+                            <motion.button
+                              onClick={() => {
+                                setNewHouseholdName(household?.name || '')
+                                setEditingHouseholdName(true)
+                              }}
+                              className="p-2 hover:bg-neutral-200 dark:hover:bg-neutral-600 rounded-lg transition-colors"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <Edit className="h-4 w-4 text-neutral-600 dark:text-neutral-400" />
+                            </motion.button>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    {/* Invite Code */}
+                    <div className="p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl">
+                      <p className="text-sm text-primary-700 dark:text-primary-300 mb-2 font-medium">Invite Code</p>
+                      <div className="flex items-center space-x-3">
+                        <code className="flex-1 bg-white dark:bg-neutral-800 px-4 py-2 rounded-lg text-sm font-mono text-neutral-900 dark:text-neutral-100 border border-primary-200 dark:border-primary-700">
+                          {household?.inviteCode}
+                        </code>
+                        <motion.button
+                          onClick={() => copyInviteCode(household?.inviteCode || '')}
+                          className="btn btn-outline btn-sm flex items-center space-x-1"
+                          whileTap={{ scale: 0.97 }}
+                        >
+                          <Copy className="h-4 w-4" />
+                          <span>{copiedInvite ? 'Copied!' : 'Copy'}</span>
+                        </motion.button>
+                        {isAdmin && (
+                          <motion.button
+                            onClick={() => regenerateInviteMutation.mutate()}
+                            disabled={regenerateInviteMutation.isLoading}
+                            className="btn btn-outline btn-sm flex items-center space-x-1"
+                            whileTap={{ scale: 0.97 }}
+                            title="Generate new invite code"
+                          >
+                            <RefreshCw className={`h-4 w-4 ${regenerateInviteMutation.isLoading ? 'animate-spin' : ''}`} />
+                          </motion.button>
+                        )}
+                      </div>
+                      <p className="text-xs text-primary-600 dark:text-primary-400 mt-2">
+                        Share this code with family members so they can join your household.
+                      </p>
+                    </div>
+
+                    {/* Members List */}
+                    <div>
+                      <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-3 flex items-center">
+                        <Users className="h-4 w-4 mr-2" />
+                        Members ({household?.members?.length || 0})
+                      </h3>
+                      <div className="space-y-2">
+                        {household?.members?.map((member) => (
+                          <div
+                            key={member.userId}
+                            className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-700/50 rounded-xl"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
+                                <User className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-neutral-900 dark:text-neutral-100 text-sm">
+                                  {member.firstName} {member.lastName}
+                                  {member.userId === user?.id && (
+                                    <span className="ml-2 text-xs text-neutral-500">(You)</span>
+                                  )}
+                                </p>
+                                <p className="text-xs text-neutral-500 capitalize">{member.role}</p>
+                              </div>
+                            </div>
+                            {isAdmin && member.userId !== user?.id && (
+                              <motion.button
+                                onClick={() => {
+                                  if (confirm(`Remove ${member.firstName} from the household?`)) {
+                                    removeMemberMutation.mutate(member.userId)
+                                  }
+                                }}
+                                className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                                disabled={removeMemberMutation.isLoading}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </motion.button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                      {isAdmin ? (
+                        <motion.button
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this household? All shared items will become personal items for their original owners.')) {
+                              deleteHouseholdMutation.mutate()
+                            }
+                          }}
+                          disabled={deleteHouseholdMutation.isLoading}
+                          className="btn bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 flex items-center space-x-2"
+                          whileHover={{ y: -1 }}
+                          whileTap={{ scale: 0.97 }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span>{deleteHouseholdMutation.isLoading ? 'Deleting...' : 'Delete Household'}</span>
+                        </motion.button>
+                      ) : (
+                        <motion.button
+                          onClick={() => {
+                            if (confirm('Are you sure you want to leave this household?')) {
+                              removeMemberMutation.mutate(user?.id || '')
+                            }
+                          }}
+                          disabled={removeMemberMutation.isLoading}
+                          className="btn bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800 flex items-center space-x-2"
+                          whileHover={{ y: -1 }}
+                          whileTap={{ scale: 0.97 }}
+                        >
+                          <LogOut className="h-4 w-4" />
+                          <span>{removeMemberMutation.isLoading ? 'Leaving...' : 'Leave Household'}</span>
+                        </motion.button>
+                      )}
+                    </div>
+
+                    {saveSuccess && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg"
+                      >
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="text-green-700 dark:text-green-300 text-sm font-medium">
+                          Household updated successfully!
+                        </span>
+                      </motion.div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -1048,11 +1396,10 @@ export default function Profile() {
                       <motion.button
                         key={program.id}
                         onClick={() => setSelectedProgram(program.id)}
-                        className={`p-3 rounded-lg border-2 text-left transition-all ${
-                          selectedProgram === program.id
+                        className={`p-3 rounded-lg border-2 text-left transition-all ${selectedProgram === program.id
                             ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
                             : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
-                        }`}
+                          }`}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >

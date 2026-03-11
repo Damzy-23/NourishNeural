@@ -23,8 +23,9 @@ interface Message {
   content: string
   sender: 'user' | 'ai'
   timestamp: Date
-  type?: 'text' | 'recipe' | 'nutrition' | 'substitution' | 'shopping_tip'
+  type?: 'text' | 'recipe' | 'nutrition' | 'substitution' | 'shopping_tip' | 'agent'
   data?: any
+  toolsUsed?: any[]
 }
 
 interface AIFeature {
@@ -43,7 +44,7 @@ const AI_FEATURES: AIFeature[] = [
     name: 'Recipe Ideas',
     description: 'Get personalized recipes',
     icon: ChefHat,
-    endpoint: '/api/ai/recipe-suggestions',
+    endpoint: '/api/ai/recipes',
     prompt: 'What can I cook with my current pantry items?',
     color: 'from-orange-500 to-red-500'
   },
@@ -52,7 +53,7 @@ const AI_FEATURES: AIFeature[] = [
     name: 'Nutrition Analysis',
     description: 'Analyze meal nutrition',
     icon: TrendingUp,
-    endpoint: '/api/ai/nutrition-analysis',
+    endpoint: '/api/ai/nutrition',
     prompt: 'Can you analyze the nutrition of grilled chicken with rice and vegetables?',
     color: 'from-green-500 to-emerald-500'
   },
@@ -61,7 +62,7 @@ const AI_FEATURES: AIFeature[] = [
     name: 'Substitutions',
     description: 'Find ingredient alternatives',
     icon: Lightbulb,
-    endpoint: '/api/ai/food-substitutions',
+    endpoint: '/api/ai/substitutions',
     prompt: 'What can I use instead of eggs in baking?',
     color: 'from-yellow-500 to-orange-500'
   },
@@ -80,7 +81,7 @@ export default function AIAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hello! I'm your Nurexa AI assistant. I can help you with recipes, nutrition analysis, food substitutions, and smart shopping tips. What would you like to know?",
+      content: "Hello! I'm Nurexa, your smart food assistant. I can check your pantry, predict what's about to expire, suggest recipes to reduce waste, and give you personalised food advice. Try asking me what you should cook tonight!",
       sender: 'ai',
       timestamp: new Date(),
       type: 'text'
@@ -90,10 +91,25 @@ export default function AIAssistant() {
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Chat mutation
+  // Determine if a message should use the ReAct agent (data-aware queries)
+  const shouldUseAgent = (msg: string): boolean => {
+    const lower = msg.toLowerCase()
+    const agentTriggers = [
+      'pantry', 'expir', 'waste', 'what should i cook', 'what can i make',
+      'what do i have', 'going off', 'use up', 'running out', 'fridge',
+      'going bad', 'meal plan', 'predict', 'how much waste', 'food waste',
+      'my items', 'my food', 'what\'s in my', 'suggest recipe', 'cook tonight'
+    ]
+    return agentTriggers.some(trigger => lower.includes(trigger))
+  }
+
+  // Chat mutation - routes to agent for data-aware queries, chat for general
   const chatMutation = useMutation(
-    ({ message, endpoint }: { message: string; endpoint?: string }) =>
-      apiService.post(endpoint || '/api/ai/chat', { message }),
+    ({ message, endpoint }: { message: string; endpoint?: string }) => {
+      const useAgent = !endpoint && shouldUseAgent(message)
+      const url = endpoint || (useAgent ? '/api/ai/agent' : '/api/ai/chat')
+      return apiService.post(url, { message })
+    },
     {
       onSuccess: (response: any) => {
         const aiMessage: Message = {
@@ -102,7 +118,8 @@ export default function AIAssistant() {
           sender: 'ai',
           timestamp: new Date(),
           type: response.type || 'text',
-          data: response.data
+          data: response.data,
+          toolsUsed: response.toolsUsed
         }
         setMessages(prev => [...prev, aiMessage])
       },
@@ -165,7 +182,7 @@ export default function AIAssistant() {
     setMessages([
       {
         id: '1',
-        content: "Hello! I'm your Nurexa AI assistant. I can help you with recipes, nutrition analysis, food substitutions, and smart shopping tips. What would you like to know?",
+        content: "Hello! I'm Nurexa, your smart food assistant. I can check your pantry, predict what's about to expire, suggest recipes to reduce waste, and give you personalised food advice. Try asking me what you should cook tonight!",
         sender: 'ai',
         timestamp: new Date(),
         type: 'text'
@@ -185,11 +202,10 @@ export default function AIAssistant() {
         transition={{ duration: 0.3 }}
       >
         {/* Avatar */}
-        <div className={`flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center ${
-          isUser
+        <div className={`flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center ${isUser
             ? 'bg-gradient-to-br from-blue-500 to-primary-500 shadow-lg shadow-blue-500/30'
             : 'bg-white border-2 border-neutral-200'
-        }`}>
+          }`}>
           {isUser ? (
             <User className="h-5 w-5 text-white" />
           ) : (
@@ -199,11 +215,10 @@ export default function AIAssistant() {
 
         {/* Message Content */}
         <div className={`flex-1 max-w-2xl ${isUser ? 'text-right' : ''}`}>
-          <div className={`inline-block px-5 py-3 rounded-2xl ${
-            isUser
+          <div className={`inline-block px-5 py-3 rounded-2xl ${isUser
               ? 'bg-gradient-to-br from-blue-500 to-primary-500 text-white shadow-lg shadow-blue-500/20 rounded-br-md'
               : 'bg-white text-neutral-900 border-2 border-neutral-200 rounded-bl-md'
-          }`}>
+            }`}>
             {/* Special rendering for different message types */}
             {message.type === 'recipe' && message.data ? (
               <div className="space-y-3">
@@ -333,11 +348,10 @@ export default function AIAssistant() {
                   key={feature.id}
                   onClick={() => handleFeatureClick(feature)}
                   disabled={chatMutation.isLoading}
-                  className={`relative overflow-hidden bg-white dark:bg-neutral-800 rounded-2xl border-2 p-5 transition-all duration-300 ${
-                    selectedFeature === feature.id
+                  className={`relative overflow-hidden bg-white dark:bg-neutral-800 rounded-2xl border-2 p-5 transition-all duration-300 ${selectedFeature === feature.id
                       ? 'border-primary-400 dark:border-primary-500 shadow-lg shadow-primary-500/20'
                       : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 hover:shadow-md'
-                  }`}
+                    }`}
                   variants={fadeUp}
                   whileHover={{ y: -4, scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}

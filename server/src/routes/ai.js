@@ -1,16 +1,43 @@
 const express = require('express');
 const { authenticateJWT, optionalAuth } = require('../middleware/supabaseAuth');
+const { supabase } = require('../config/supabase');
 const OpenAI = require('openai');
+const { spawn } = require('child_process');
+const path = require('path');
 
-// TODO: Re-enable rate limiting when ready
-const aiRateLimit = (req, res, next) => next(); // Temporarily bypass rate limiting
+// Rate limiting — toggle via RATE_LIMIT_ENABLED=true in .env
+let aiRateLimit;
+try {
+  if (process.env.RATE_LIMIT_ENABLED === 'true') {
+    const rateLimit = require('express-rate-limit');
+    aiRateLimit = rateLimit({
+      windowMs: 60 * 1000, // 1 minute
+      max: 30,             // 30 requests per minute per IP
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: 'Too many AI requests, please slow down.' }
+    });
+    console.log('✅ AI rate limiting ENABLED (30 req/min)');
+  } else {
+    aiRateLimit = (req, res, next) => next();
+    console.log('ℹ️  AI rate limiting DISABLED (set RATE_LIMIT_ENABLED=true to enable)');
+  }
+} catch (e) {
+  aiRateLimit = (req, res, next) => next();
+}
 
 const router = express.Router();
 
-// Initialize OpenAI
+// Initialize OpenAI client
+// If USE_OLLAMA is true, we point to the local Ollama instance
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.USE_OLLAMA === 'true' ? 'ollama' : process.env.OPENAI_API_KEY,
+  baseURL: process.env.USE_OLLAMA === 'true' ? process.env.OLLAMA_BASE_URL : undefined
 });
+
+const getModelName = () => process.env.USE_OLLAMA === 'true'
+  ? (process.env.OLLAMA_AGENT_MODEL || process.env.OLLAMA_MODEL)
+  : (process.env.OPENAI_MODEL || 'gpt-4o-mini');
 
 // Enhanced AI Chat endpoint with fallback responses
 router.post('/chat', async (req, res) => {
@@ -20,6 +47,7 @@ router.post('/chat', async (req, res) => {
     console.log('🤖 AI Chat request received:', message?.substring(0, 50));
 
     if (!message) {
+      if (res.headersSent) return;
       return res.status(400).json({ error: 'Message is required' });
     }
 
@@ -29,7 +57,7 @@ router.post('/chat', async (req, res) => {
 
     try {
       if (process.env.OPENAI_API_KEY) {
-        console.log('🤖 Attempting OpenAI call...');
+        console.log('🤖 Attempting AI call via OpenAI/Ollama...');
 
         // Build system prompt for Nurexa AI - conversational and human-like
         const systemPrompt = `You are Nurexa, a friendly AI food companion in the Nourish Neural app. You're like a knowledgeable friend who genuinely cares about helping people eat better.
@@ -74,8 +102,10 @@ KNOWLEDGE:
 
 Remember: You're helping a friend, not writing a health textbook. Be real, be helpful, be human.`;
 
+        const modelName = process.env.USE_OLLAMA === 'true' ? process.env.OLLAMA_MODEL : (process.env.OPENAI_MODEL || 'gpt-4o-mini');
+
         const completion = await openai.chat.completions.create({
-          model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+          model: modelName,
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: message }
@@ -85,13 +115,14 @@ Remember: You're helping a friend, not writing a health textbook. Be real, be he
         });
 
         aiResponse = completion.choices[0].message.content;
-        console.log('🤖 OpenAI response received successfully');
+        console.log('🤖 AI response received successfully');
       } else {
         console.log('🤖 No OpenAI API key, using fallback');
         throw new Error('No OpenAI API key');
       }
     } catch (openaiError) {
-      console.error('🤖 OpenAI API error:', openaiError.message);
+      console.error('🤖 AI API error:', openaiError.message);
+
       console.log('🤖 Using fallback response...');
       // Enhanced fallback responses with context awareness
       try {
@@ -100,12 +131,12 @@ Remember: You're helping a friend, not writing a health textbook. Be real, be he
         console.log('🤖 Fallback response generated successfully');
       } catch (fallbackError) {
         console.error('🤖 Fallback also failed:', fallbackError.message);
-        aiResponse = `I'd be happy to help with that! For budget-friendly grocery shopping, my top tips are: shop at Aldi or Lidl for basics, plan your meals before shopping, buy seasonal produce, and don't shop when you're hungry. What specific aspect of budget shopping would you like more help with?`;
+        aiResponse = `I'd be happy to help with that! While I'm having a technical moment, here's a tip: for budget shopping, planning your meals around seasonal produce usually saves the most. What specifically can I help you with?`;
         responseType = 'text';
       }
     }
 
-    // Parse response for structured data
+    // Parse response for structured data if it's an object-like string
     const response = {
       response: aiResponse,
       message: aiResponse,
@@ -121,22 +152,25 @@ Remember: You're helping a friend, not writing a health textbook. Be real, be he
       }
     };
 
-    res.json(response);
+    if (res.headersSent) return;
+    return res.json(response);
   } catch (error) {
     console.error('🤖 AI Chat Critical Error:', error.message);
     console.error(error.stack);
 
     // Even if everything fails, return a helpful response
-    res.json({
-      response: `Great question! I'd love to help with that. While I'm having a small technical hiccup, here's a quick tip: for budget shopping, Aldi and Lidl are your best friends for everyday items, and shopping in the evening often gets you reduced items. What specifically would you like to know more about?`,
-      message: `Great question! I'd love to help with that. While I'm having a small technical hiccup, here's a quick tip: for budget shopping, Aldi and Lidl are your best friends for everyday items, and shopping in the evening often gets you reduced items. What specifically would you like to know more about?`,
-      type: 'text',
-      suggestions: [],
-      recipes: [],
-      nutritionInfo: null,
-      substitutions: [],
-      data: { recipes: [], nutrition: null, substitutions: [] }
-    });
+    if (!res.headersSent) {
+      return res.json({
+        response: `Great question! I'd love to help with that. While I'm having a small technical hiccup, here's a quick tip: for budget shopping, Aldi and Lidl are your best friends for everyday items, and shopping in the evening often gets you reduced items. What specifically would you like to know more about?`,
+        message: `Great question! I'd love to help with that. While I'm having a small technical hiccup, here's a quick tip: for budget shopping, Aldi and Lidl are your best friends for everyday items, and shopping in the evening often gets you reduced items. What specifically would you like to know more about?`,
+        type: 'text',
+        suggestions: [],
+        recipes: [],
+        nutritionInfo: null,
+        substitutions: [],
+        data: { recipes: [], nutrition: null, substitutions: [] }
+      });
+    }
   }
 });
 
@@ -144,7 +178,7 @@ Remember: You're helping a friend, not writing a health textbook. Be real, be he
 router.post('/recipes', authenticateJWT, aiRateLimit, async (req, res) => {
   try {
     const { ingredients, dietaryRestrictions, cuisine, difficulty } = req.body;
-    
+
     if (!ingredients || ingredients.length === 0) {
       return res.status(400).json({ error: 'Ingredients are required' });
     }
@@ -165,7 +199,7 @@ For each recipe, provide:
 - Nutritional info per serving (calories, protein, carbs, fat)`;
 
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4',
+      model: process.env.USE_OLLAMA === 'true' ? process.env.OLLAMA_MODEL : (process.env.OPENAI_MODEL || 'gpt-4'),
       messages: [
         { role: 'system', content: 'You are a culinary expert. Provide detailed, practical recipes.' },
         { role: 'user', content: prompt }
@@ -186,7 +220,7 @@ For each recipe, provide:
 router.post('/nutrition', optionalAuth, aiRateLimit, async (req, res) => {
   try {
     const { food, quantity, unit } = req.body;
-    
+
     if (!food) {
       return res.status(400).json({ error: 'Food item is required' });
     }
@@ -205,7 +239,7 @@ Include:
 Provide accurate, UK-standard nutritional information.`;
 
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4',
+      model: process.env.USE_OLLAMA === 'true' ? process.env.OLLAMA_MODEL : (process.env.OPENAI_MODEL || 'gpt-4'),
       messages: [
         { role: 'system', content: 'You are a nutrition expert. Provide accurate nutritional information.' },
         { role: 'user', content: prompt }
@@ -226,7 +260,7 @@ Provide accurate, UK-standard nutritional information.`;
 router.post('/substitutions', optionalAuth, aiRateLimit, async (req, res) => {
   try {
     const { ingredient, reason } = req.body;
-    
+
     if (!ingredient) {
       return res.status(400).json({ error: 'Ingredient is required' });
     }
@@ -242,7 +276,7 @@ For each substitute, provide:
 - Cost comparison`;
 
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4',
+      model: process.env.USE_OLLAMA === 'true' ? process.env.OLLAMA_MODEL : (process.env.OPENAI_MODEL || 'gpt-4'),
       messages: [
         { role: 'system', content: 'You are a culinary expert. Provide practical substitution advice.' },
         { role: 'user', content: prompt }
@@ -279,7 +313,7 @@ Include:
 - Food waste reduction tips`;
 
     const completion = await openai.chat.completions.create({
-      model: process.env.OPENAI_MODEL || 'gpt-4',
+      model: process.env.USE_OLLAMA === 'true' ? process.env.OLLAMA_MODEL : (process.env.OPENAI_MODEL || 'gpt-4'),
       messages: [
         { role: 'system', content: 'You are a grocery shopping expert. Provide practical, UK-focused advice.' },
         { role: 'user', content: prompt }
@@ -298,16 +332,18 @@ Include:
 
 // Helper functions for parsing AI responses
 function extractSuggestions(response) {
+  if (!response || typeof response !== 'string') return [];
   // Extract bullet points or numbered suggestions
   const suggestions = response.match(/(?:^|\n)[•\-\*]\s*(.+?)(?=\n|$)/g);
   return suggestions ? suggestions.map(s => s.replace(/^[•\-\*]\s*/, '').trim()) : [];
 }
 
 function extractRecipes(response) {
+  if (!response || typeof response !== 'string') return [];
   // Basic recipe extraction - in production, use more sophisticated parsing
   const recipes = [];
   const recipeBlocks = response.split(/(?=Recipe|Recipe \d+|^Recipe)/gi);
-  
+
   recipeBlocks.forEach(block => {
     if (block.trim().length > 50) {
       recipes.push({
@@ -317,7 +353,7 @@ function extractRecipes(response) {
       });
     }
   });
-  
+
   return recipes;
 }
 
@@ -345,22 +381,24 @@ function extractInstructions(block) {
 }
 
 function extractNutritionInfo(response) {
+  if (!response || typeof response !== 'string') return null;
   // Extract nutritional values
   const nutrition = {};
   const caloriesMatch = response.match(/calories?[:\s]*(\d+(?:\.\d+)?)/i);
   const proteinMatch = response.match(/protein[:\s]*(\d+(?:\.\d+)?)/i);
   const carbsMatch = response.match(/carbohydrates?[:\s]*(\d+(?:\.\d+)?)/i);
   const fatMatch = response.match(/fat[:\s]*(\d+(?:\.\d+)?)/i);
-  
+
   if (caloriesMatch) nutrition.calories = parseFloat(caloriesMatch[1]);
   if (proteinMatch) nutrition.protein = parseFloat(proteinMatch[1]);
   if (carbsMatch) nutrition.carbs = parseFloat(carbsMatch[1]);
   if (fatMatch) nutrition.fat = parseFloat(fatMatch[1]);
-  
+
   return Object.keys(nutrition).length > 0 ? nutrition : null;
 }
 
 function extractSubstitutions(response) {
+  if (!response || typeof response !== 'string') return [];
   // Extract substitution suggestions
   const substitutions = [];
   const subMatches = response.match(/(?:^|\n)[•\-\*]\s*(.+?)(?=\n|$)/g);
@@ -386,42 +424,42 @@ function parseSubstitutions(response) {
 // Enhanced fallback response generation
 function generateFallbackResponse(message, context) {
   const lowerMessage = message.toLowerCase();
-  
+
   // Recipe-related queries
   if (lowerMessage.includes('recipe') || lowerMessage.includes('cook') || lowerMessage.includes('make')) {
     return generateRecipeResponse(message, context);
   }
-  
+
   // Nutrition queries
   if (lowerMessage.includes('nutrition') || lowerMessage.includes('calories') || lowerMessage.includes('protein') || lowerMessage.includes('vitamin')) {
     return generateNutritionResponse(message, context);
   }
-  
+
   // Substitution queries
   if (lowerMessage.includes('substitute') || lowerMessage.includes('replace') || lowerMessage.includes('instead of')) {
     return generateSubstitutionResponse(message, context);
   }
-  
+
   // Shopping queries
   if (lowerMessage.includes('shop') || lowerMessage.includes('buy') || lowerMessage.includes('grocery') || lowerMessage.includes('budget')) {
     return generateShoppingResponse(message, context);
   }
-  
+
   // Meal planning queries
   if (lowerMessage.includes('meal plan') || lowerMessage.includes('meal prep') || lowerMessage.includes('weekly menu')) {
     return generateMealPlanningResponse(message, context);
   }
-  
+
   // Expiry/freshness queries
   if (lowerMessage.includes('expire') || lowerMessage.includes('fresh') || lowerMessage.includes('spoiled') || lowerMessage.includes('bad')) {
     return generateFreshnessResponse(message, context);
   }
-  
+
   // General food advice
   if (lowerMessage.includes('healthy') || lowerMessage.includes('diet') || lowerMessage.includes('eat')) {
     return generateHealthResponse(message, context);
   }
-  
+
   // Default helpful response
   return generateDefaultResponse(message, context);
 }
@@ -442,7 +480,7 @@ function generateRecipeResponse(message, context) {
 • Don't overcrowd the pan when cooking meat
 
 Would you like specific recipes for any particular cuisine or dietary requirements?`,
-    
+
     `I'd love to help you with cooking! Here are some versatile recipe ideas:
 
 **Budget-Friendly Meals:**
@@ -457,7 +495,7 @@ Would you like specific recipes for any particular cuisine or dietary requiremen
 
 What type of meal are you planning to make? I can give you more specific suggestions!`
   ];
-  
+
   return responses[Math.floor(Math.random() * responses.length)];
 }
 
@@ -484,7 +522,7 @@ function generateNutritionResponse(message, context) {
 • Seasonal produce is often more nutritious and affordable
 
 Would you like specific nutrition info for any particular food or meal?`,
-    
+
     `Nutrition is so important for your health! Here's what you should know:
 
 **Balanced Plate Method:**
@@ -506,7 +544,7 @@ Would you like specific nutrition info for any particular food or meal?`,
 
 What specific nutritional information are you looking for?`
   ];
-  
+
   return responses[Math.floor(Math.random() * responses.length)];
 }
 
@@ -519,20 +557,20 @@ function generateSubstitutionResponse(message, context) {
     'sugar': 'Honey, maple syrup, or stevia (adjust sweetness to taste)',
     'cheese': 'Nutritional yeast, vegan cheese alternatives, or hummus for creaminess'
   };
-  
+
   let response = `I can help you find substitutions! Here are some common ones:\n\n`;
-  
+
   Object.entries(commonSubstitutions).forEach(([ingredient, substitute]) => {
     response += `**${ingredient.charAt(0).toUpperCase() + ingredient.slice(1)}**: ${substitute}\n\n`;
   });
-  
+
   response += `**General Substitution Tips:**\n`;
   response += `• Start with small amounts and adjust to taste\n`;
   response += `• Some substitutions may change texture slightly\n`;
   response += `• Check for allergies when using alternatives\n`;
   response += `• UK supermarkets have great ranges of alternatives\n\n`;
   response += `What specific ingredient are you looking to substitute? I can give you more detailed advice!`;
-  
+
   return response;
 }
 
@@ -559,7 +597,7 @@ function generateShoppingResponse(message, context) {
 • Buy in bulk for non-perishables when on sale
 
 What's your typical budget? I can give you more specific advice!`,
-    
+
     `Here are my top grocery shopping strategies for the UK:
 
 **Best Times to Shop:**
@@ -582,7 +620,7 @@ What's your typical budget? I can give you more specific advice!`,
 
 Need help with meal planning or specific store recommendations?`
   ];
-  
+
   return responses[Math.floor(Math.random() * responses.length)];
 }
 
@@ -711,47 +749,31 @@ What's your current situation like? I can help you figure out realistic changes 
 
 function generateDefaultResponse(message, context) {
   const responses = [
-    `I'm here to help with all your food and cooking questions! I can assist with:
+    `Hey! I'm Nurexa, your food companion on Nourish Neural. I can help with loads of things:
 
-• **Recipe suggestions** based on ingredients you have
-• **Nutritional advice** and meal planning
-• **Food substitutions** when you're missing ingredients
-• **Shopping tips** and budget-friendly meal ideas
-• **Storage and freshness** advice for your groceries
+- Recipe ideas based on what you have in the fridge
+- Nutritional info and honest healthy-eating advice
+- Ingredient swaps when you're missing something
+- Smart shopping tips tailored to UK supermarkets
+- Food storage and freshness guidance
 
-Just ask me anything about cooking, nutrition, shopping, or food management. What would you like to know?`,
-    
-    `Hello! I'm your PantryPal AI assistant, and I'm excited to help you with all things food-related!
+What would you like to know? Just ask away!`,
 
-I can help you with:
-• Finding recipes for ingredients you have on hand
-• Understanding nutrition and making healthy choices
-• Finding substitutions for missing ingredients
-• Planning meals and shopping lists
-• Storing food properly to reduce waste
-• Budget-friendly cooking tips
+    `Hi there! I'm Nurexa, and I'm here to make food easier and more enjoyable for you.
 
-What's on your mind today? Feel free to ask me anything about cooking, nutrition, or managing your pantry!`,
-    
-    `Hi there! I'm here to make your food journey easier and more enjoyable.
+Ask me anything — what to cook tonight, whether something's still fresh, how to eat well on a budget, you name it. What's on your mind?`,
 
-Whether you need help with:
-• Quick and easy recipe ideas
-• Understanding food labels and nutrition
-• Finding alternatives for ingredients
-• Planning meals for the week
-• Shopping smarter and saving money
-• Keeping your food fresh longer
+    `Hello! I'm Nurexa, your Nourish Neural food assistant. Think of me as a knowledgeable friend who genuinely cares about helping you eat better without making it complicated.
 
-I'm ready to help! What would you like to know about food, cooking, or nutrition?`
+I can help with recipes, nutrition, shopping, meal planning, and cutting down on food waste. What would you like to explore?`
   ];
-  
+
   return responses[Math.floor(Math.random() * responses.length)];
 }
 
 function getResponseType(message) {
   const lowerMessage = message.toLowerCase();
-  
+
   if (lowerMessage.includes('recipe') || lowerMessage.includes('cook')) {
     return 'recipe';
   } else if (lowerMessage.includes('nutrition') || lowerMessage.includes('calories')) {
@@ -761,8 +783,349 @@ function getResponseType(message) {
   } else if (lowerMessage.includes('shop') || lowerMessage.includes('buy')) {
     return 'shopping_tip';
   }
-  
+
   return 'text';
 }
+
+// =============================================================================
+// ReAct Agent - Reasoning + Acting loop with tool-calling
+// =============================================================================
+
+// Tool definitions for the ReAct agent
+const AGENT_TOOLS = {
+  check_pantry: {
+    description: 'Search pantry items by name or category. Use when the user asks about their food, what they have, or specific items.',
+    parameters: '{"query": "string", "category": "string (optional)"}',
+    execute: async (params, userId) => {
+      let query = supabase
+        .from('pantry_items')
+        .select('name, category, quantity, unit, expiry_date, estimated_price')
+        .eq('user_id', userId)
+        .eq('is_archived', false);
+
+      if (params.query) {
+        query = query.ilike('name', `%${params.query}%`);
+      }
+      if (params.category) {
+        query = query.ilike('category', `%${params.category}%`);
+      }
+
+      const { data, error } = await query.limit(15);
+      if (error) throw error;
+      return data || [];
+    }
+  },
+
+  get_expiring_items: {
+    description: 'Get pantry items expiring within N days. Use when user asks what to cook, what is expiring, or needs waste prevention advice.',
+    parameters: '{"days": "number (default 3)"}',
+    execute: async (params, userId) => {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() + (params.days || 3));
+
+      const { data, error } = await supabase
+        .from('pantry_items')
+        .select('name, category, quantity, unit, expiry_date, estimated_price')
+        .eq('user_id', userId)
+        .eq('is_archived', false)
+        .lte('expiry_date', cutoff.toISOString().split('T')[0])
+        .gte('expiry_date', new Date().toISOString().split('T')[0])
+        .order('expiry_date');
+
+      if (error) throw error;
+      return data || [];
+    }
+  },
+
+  check_waste_stats: {
+    description: 'Get waste statistics and patterns. Use when user asks about their waste habits, spending on wasted food, or wants to improve.',
+    parameters: '{"time_range": "string (week|month|year)"}',
+    execute: async (params, userId) => {
+      let startDate = new Date();
+      const range = params.time_range || 'month';
+      if (range === 'week') startDate.setDate(startDate.getDate() - 7);
+      else if (range === 'year') startDate.setFullYear(startDate.getFullYear() - 1);
+      else startDate.setMonth(startDate.getMonth() - 1);
+
+      const { data, error } = await supabase
+        .from('waste_logs')
+        .select('item_name, category, total_loss, waste_reason, wasted_at')
+        .eq('user_id', userId)
+        .gte('wasted_at', startDate.toISOString());
+
+      if (error) throw error;
+
+      const logs = data || [];
+      const totalLoss = logs.reduce((sum, l) => sum + (parseFloat(l.total_loss) || 0), 0);
+      const categories = {};
+      const reasons = {};
+      logs.forEach(l => {
+        const cat = l.category || 'Other';
+        categories[cat] = (categories[cat] || 0) + 1;
+        const reason = l.waste_reason || 'other';
+        reasons[reason] = (reasons[reason] || 0) + 1;
+      });
+
+      return {
+        period: range,
+        total_items_wasted: logs.length,
+        total_money_lost: `£${totalLoss.toFixed(2)}`,
+        top_categories: Object.entries(categories).sort(([, a], [, b]) => b - a).slice(0, 3),
+        top_reasons: Object.entries(reasons).sort(([, a], [, b]) => b - a).slice(0, 3),
+        recent_items: logs.slice(-5).map(l => l.item_name)
+      };
+    }
+  },
+
+  predict_waste: {
+    description: 'Predict waste probability for a specific food item. Use when user asks if something is still good or will go to waste.',
+    parameters: '{"category": "string", "storage_type": "string (fridge|freezer|cupboard)", "days_since_purchase": "number"}',
+    execute: async (params) => {
+      return new Promise((resolve, reject) => {
+        const scriptPath = path.join(__dirname, '../../../ml-models/predict.py');
+        const pythonExe = process.env.PYTHON_PATH || 'python';
+        const proc = spawn(pythonExe, [scriptPath]);
+
+        let dataString = '';
+        proc.stdin.write(JSON.stringify({ food_item: params, user_history: {} }));
+        proc.stdin.end();
+
+        proc.stdout.on('data', (d) => { dataString += d.toString(); });
+
+        const timeout = setTimeout(() => { proc.kill(); reject(new Error('timeout')); }, 10000);
+
+        proc.on('close', (code) => {
+          clearTimeout(timeout);
+          if (code !== 0) {
+            // Fallback: simple heuristic
+            const daysLeft = Math.max(0, 7 - (params.days_since_purchase || 0));
+            resolve({
+              waste_probability: daysLeft <= 1 ? 0.8 : daysLeft <= 3 ? 0.5 : 0.2,
+              risk_level: daysLeft <= 1 ? 'high' : daysLeft <= 3 ? 'medium' : 'low',
+              note: 'Heuristic estimate (ML model unavailable)'
+            });
+            return;
+          }
+          try {
+            const lines = dataString.trim().split('\n');
+            resolve(JSON.parse(lines[lines.length - 1]));
+          } catch {
+            resolve({ waste_probability: 0.5, risk_level: 'medium', note: 'Parse error, estimate provided' });
+          }
+        });
+      });
+    }
+  },
+
+  suggest_recipes: {
+    description: 'Find recipes that use specific ingredients. Use when user wants meal ideas or asks what to cook.',
+    parameters: '{"ingredients": ["string"]}',
+    execute: async (params) => {
+      const ingredients = params.ingredients || [];
+
+      // --- Attempt LLM-powered suggestions first ---
+      try {
+        const prompt = `The user has these ingredients: ${ingredients.join(', ')}.
+Suggest 3 practical UK-friendly recipes they can make. For each recipe give:
+- name
+- a one-sentence description
+- the key ingredients used from the list
+Respond as a JSON array: [{"name": "", "description": "", "uses": ["ingredient1"]}]`;
+
+        const completion = await openai.chat.completions.create({
+          model: getModelName(),
+          messages: [
+            { role: 'system', content: 'You are a helpful recipe assistant. Respond ONLY with valid JSON, no markdown.' },
+            { role: 'user', content: prompt }
+          ],
+          max_tokens: 400,
+          temperature: 0.7
+        });
+
+        const raw = completion.choices[0].message.content.trim();
+        // Strip any accidental markdown fences
+        const jsonStr = raw.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
+        const llmRecipes = JSON.parse(jsonStr);
+        if (Array.isArray(llmRecipes) && llmRecipes.length > 0) {
+          return llmRecipes.slice(0, 5);
+        }
+      } catch (llmError) {
+        console.warn('suggest_recipes LLM call failed, using mini-DB fallback:', llmError.message);
+      }
+
+      // --- Fallback: hardcoded mini-DB ---
+      const recipeDB = [
+        { name: 'Creamy Mushroom & Spinach Chicken', description: 'A rich, one-pan weeknight dinner.', ingredients: ['chicken breast', 'spinach', 'mushrooms', 'double cream', 'garlic'] },
+        { name: 'Vegetable Stir Fry', description: 'Quick and colourful with a soy-ginger sauce.', ingredients: ['bell peppers', 'mushrooms', 'carrots', 'soy sauce', 'noodles'] },
+        { name: 'Omelette', description: 'Simple, protein-packed, endlessly customisable.', ingredients: ['eggs', 'cheese', 'spinach', 'mushrooms'] },
+        { name: 'Pasta Bolognese', description: 'Classic Italian comfort food.', ingredients: ['pasta', 'beef mince', 'tomato sauce', 'onion', 'garlic'] },
+        { name: 'Chicken Salad', description: 'Light, fresh, and great for lunch.', ingredients: ['chicken breast', 'lettuce', 'tomatoes', 'cucumber', 'olive oil'] },
+        { name: 'Banana Smoothie', description: 'Thick and filling — great for breakfast.', ingredients: ['banana', 'milk', 'yogurt', 'honey'] },
+        { name: 'Tomato Soup', description: 'Warming, simple, and perfect with crusty bread.', ingredients: ['tomatoes', 'onion', 'garlic', 'vegetable stock', 'cream'] },
+        { name: 'Egg Fried Rice', description: 'A brilliant way to use up leftover rice.', ingredients: ['rice', 'eggs', 'soy sauce', 'spring onions', 'peas'] },
+        { name: 'Grilled Cheese Sandwich', description: 'Melty, golden, five-minute comfort food.', ingredients: ['bread', 'cheese', 'butter'] },
+        { name: 'Fish Pie', description: 'A British classic with a creamy mashed potato topping.', ingredients: ['cod', 'salmon', 'potatoes', 'milk', 'cheese', 'peas'] }
+      ];
+
+      const inputLower = ingredients.map(i => i.toLowerCase());
+      return recipeDB
+        .map(r => {
+          const matchCount = r.ingredients.filter(ing =>
+            inputLower.some(i => i.includes(ing) || ing.includes(i))
+          ).length;
+          return { name: r.name, description: r.description, matchCount, matchPercent: Math.round((matchCount / r.ingredients.length) * 100) };
+        })
+        .filter(r => r.matchCount > 0)
+        .sort((a, b) => b.matchCount - a.matchCount)
+        .slice(0, 5);
+    }
+  }
+};
+
+// Build the ReAct system prompt
+const REACT_SYSTEM_PROMPT = `You are Nurexa, a smart food waste prevention assistant in the Nourish Neural app.
+You have access to real tools that look up the user's actual pantry, waste data, and predictions.
+
+Available tools:
+${Object.entries(AGENT_TOOLS).map(([name, tool]) =>
+  `- ${name}: ${tool.description} Parameters: ${tool.parameters}`
+).join('\n')}
+
+To use a tool, respond with EXACTLY this format:
+Thought: [your reasoning about what to do next]
+Action: [tool_name]
+Action Input: [valid JSON parameters]
+
+After receiving an Observation, continue reasoning.
+When you have enough information to answer, respond with:
+Thought: I now have enough information.
+Action: final_answer
+Action Input: [your complete answer to the user]
+
+RULES:
+- Always start with a Thought
+- Use tools to look up real data - NEVER fabricate pantry contents or waste numbers
+- Maximum 4 tool calls per request
+- Keep final answers conversational, warm, and practical
+- Focus on reducing food waste with actionable UK-relevant advice
+- Do not use markdown formatting (no **bold**, no headers, no numbered lists)
+- Write naturally like a helpful friend`;
+
+// ReAct agent loop
+async function runReActAgent(userMessage, userId, maxSteps = 5) {
+  const messages = [
+    { role: 'system', content: REACT_SYSTEM_PROMPT },
+    { role: 'user', content: userMessage }
+  ];
+
+  const toolLog = []; // Track tool calls for transparency
+
+  for (let step = 0; step < maxSteps; step++) {
+    let response;
+    try {
+      const completion = await openai.chat.completions.create({
+        model: getModelName(),
+        messages,
+        max_tokens: 500,
+        temperature: 0.3,
+        stop: ['Observation:']
+      });
+      response = completion.choices[0].message.content || '';
+    } catch (llmError) {
+      console.error('ReAct LLM call failed:', llmError.message);
+      return {
+        response: "I'm having trouble connecting to my AI brain right now. Try asking me again in a moment!",
+        toolsUsed: toolLog
+      };
+    }
+
+    // Parse for Action and Action Input
+    const actionMatch = response.match(/Action:\s*(\w+)/);
+    const inputMatch = response.match(/Action Input:\s*([\s\S]*?)$/);
+
+    if (!actionMatch || !inputMatch) {
+      // No valid action - treat the whole response as the answer
+      const cleanResponse = response.replace(/^Thought:.*?\n?/i, '').trim();
+      return { response: cleanResponse || response, toolsUsed: toolLog };
+    }
+
+    const actionName = actionMatch[1].trim();
+    const actionInput = inputMatch[1].trim();
+
+    // Final answer
+    if (actionName === 'final_answer') {
+      return { response: actionInput, toolsUsed: toolLog };
+    }
+
+    // Execute tool
+    const tool = AGENT_TOOLS[actionName];
+    if (!tool) {
+      messages.push({ role: 'assistant', content: response });
+      messages.push({
+        role: 'user',
+        content: `Observation: Error - unknown tool "${actionName}". Available tools: ${Object.keys(AGENT_TOOLS).join(', ')}`
+      });
+      continue;
+    }
+
+    let toolResult;
+    try {
+      const params = JSON.parse(actionInput);
+      toolResult = await tool.execute(params, userId);
+      toolLog.push({ tool: actionName, params, success: true });
+    } catch (e) {
+      toolResult = { error: e.message };
+      toolLog.push({ tool: actionName, error: e.message, success: false });
+    }
+
+    messages.push({ role: 'assistant', content: response });
+    messages.push({
+      role: 'user',
+      content: `Observation: ${JSON.stringify(toolResult, null, 2)}`
+    });
+  }
+
+  return {
+    response: "I ran out of steps trying to answer your question. Could you try being more specific?",
+    toolsUsed: toolLog
+  };
+}
+
+/**
+ * POST /api/ai/agent
+ * ReAct agent endpoint - data-aware AI assistant
+ * Uses Thought/Action/Observation loop to query real user data
+ */
+router.post('/agent', authenticateJWT, async (req, res) => {
+  try {
+    const { message } = req.body;
+    const userId = req.user.id;
+
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    console.log('🤖 ReAct Agent request:', message.substring(0, 80));
+
+    const result = await runReActAgent(message, userId);
+
+    console.log('🤖 ReAct Agent completed, tools used:', result.toolsUsed.length);
+
+    res.json({
+      response: result.response,
+      message: result.response,
+      type: 'agent',
+      toolsUsed: result.toolsUsed
+    });
+
+  } catch (error) {
+    console.error('ReAct Agent error:', error);
+    res.status(500).json({
+      error: 'Agent failed',
+      response: "Something went wrong on my end. Try asking again!",
+      details: error.message
+    });
+  }
+});
 
 module.exports = router; 

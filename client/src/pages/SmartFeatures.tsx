@@ -188,7 +188,7 @@ export default function SmartFeatures() {
   const { data: expiringItems } = useQuery<ExpiringItem[]>(
     ['expiring-items'],
     async () => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/smart/expiring-items', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -199,7 +199,7 @@ export default function SmartFeatures() {
 
   // Fetch pantry items for meal planner
   const { data: pantryItems } = useQuery('pantryItems', async () => {
-    const token = localStorage.getItem('pantrypal_token')
+    const token = localStorage.getItem('nourish_neural_token')
     const res = await fetch('/api/pantry', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -211,7 +211,7 @@ export default function SmartFeatures() {
   const { data: leftoverRecipes, refetch: refetchLeftoverRecipes } = useQuery<LeftoverRecipe[]>(
     ['leftover-recipes'],
     async () => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/smart/leftover-recipes', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -225,7 +225,7 @@ export default function SmartFeatures() {
     ['substitutions', substitutionQuery],
     async () => {
       if (!substitutionQuery) return []
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch(`/api/smart/substitutions?ingredient=${encodeURIComponent(substitutionQuery)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -239,7 +239,7 @@ export default function SmartFeatures() {
     ['cost-breakdown', selectedRecipeForCost],
     async () => {
       if (!selectedRecipeForCost) return { breakdown: [], totalCost: 0, costPerServing: 0 }
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch(`/api/smart/cost-breakdown?recipe=${encodeURIComponent(selectedRecipeForCost)}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -252,7 +252,7 @@ export default function SmartFeatures() {
   const { data: nutritionGoals } = useQuery<NutritionGoal[]>(
     ['nutrition-goals'],
     async () => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/smart/nutrition-goals', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -265,7 +265,7 @@ export default function SmartFeatures() {
   const { data: mealVotes } = useQuery<MealVote[]>(
     ['meal-votes'],
     async () => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/smart/meal-votes', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -278,7 +278,7 @@ export default function SmartFeatures() {
   const { data: depletionPredictions } = useQuery<DepletionPrediction[]>(
     ['depletion-predictions'],
     async () => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/smart/depletion-predictions', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -290,7 +290,7 @@ export default function SmartFeatures() {
   // Mutations
   const addNutritionGoalMutation = useMutation(
     async (goal: { nutrient: string; target: number; unit: string }) => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/smart/nutrition-goals', {
         method: 'POST',
         headers: {
@@ -311,7 +311,7 @@ export default function SmartFeatures() {
 
   const voteMealMutation = useMutation(
     async ({ mealId, vote }: { mealId: string; vote: 'yes' | 'no' | 'maybe' }) => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/smart/meal-votes', {
         method: 'POST',
         headers: {
@@ -329,7 +329,7 @@ export default function SmartFeatures() {
 
   const addMealForVoteMutation = useMutation(
     async (mealName: string) => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/smart/meal-votes/add', {
         method: 'POST',
         headers: {
@@ -356,7 +356,7 @@ export default function SmartFeatures() {
 
   const addToGroceryListMutation = useMutation(
     async ({ name, quantity, unit, category }: { name: string; quantity: number; unit: string; category?: string }) => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
 
       // 1. Create a "Smart Restock" list if it doesn't exist (optional, or just add to most recent active list)
       // For simplicity here, we'll create a new list for the day if not passed a list ID, but relying on backend to handle simple item add might be better.
@@ -385,7 +385,7 @@ export default function SmartFeatures() {
 
   const toggleAutoAddMutation = useMutation(
     async ({ itemName, autoAdd }: { itemName: string; autoAdd: boolean }) => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/smart/depletion-auto-add', {
         method: 'POST',
         headers: {
@@ -403,7 +403,7 @@ export default function SmartFeatures() {
 
   const generatePlanMutation = useMutation(
     async () => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/meal-planner/generate', {
         method: 'POST',
         headers: {
@@ -432,7 +432,7 @@ export default function SmartFeatures() {
 
   const generateListMutation = useMutation(
     async (plan: WeeklyPlan) => {
-      const token = localStorage.getItem('pantrypal_token')
+      const token = localStorage.getItem('nourish_neural_token')
       const res = await fetch('/api/meal-planner/shopping-list', {
         method: 'POST',
         headers: {

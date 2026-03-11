@@ -5,7 +5,7 @@ This module handles downloading, preprocessing, and organizing datasets.
 
 import os
 import requests
-import zipfile
+import tarfile
 import pandas as pd
 from typing import Dict, List, Tuple
 import logging
@@ -103,8 +103,8 @@ class DatasetManager:
                     f.write(chunk)
             
             logger.info("Extracting Food-101 dataset...")
-            with zipfile.ZipFile(filename, 'r') as zip_ref:
-                zip_ref.extractall(extract_to)
+            with tarfile.open(filename, 'r:gz') as tar:
+                tar.extractall(extract_to)
             
             logger.info(f"Food-101 dataset extracted to {extract_to}")
             return extract_to

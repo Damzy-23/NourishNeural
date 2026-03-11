@@ -478,11 +478,286 @@ WHERE is_archived = FALSE
 GROUP BY user_id;
 
 -- =====================================================
+-- HOUSEHOLDS TABLE (Collaboration)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS households (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name TEXT NOT NULL,
+  created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  invite_code TEXT NOT NULL UNIQUE DEFAULT encode(gen_random_bytes(6), 'hex'),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_households_invite_code ON households(invite_code);
+CREATE INDEX IF NOT EXISTS idx_households_created_by ON households(created_by);
+
+ALTER TABLE households ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Household members can view household"
+  ON households FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = households.id
+      AND household_members.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Authenticated users can create households"
+  ON households FOR INSERT
+  WITH CHECK (auth.uid() = created_by);
+
+CREATE POLICY "Household admins can update household"
+  ON households FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = households.id
+      AND household_members.user_id = auth.uid()
+      AND household_members.role = 'admin'
+    )
+  );
+
+CREATE POLICY "Household admins can delete household"
+  ON households FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = households.id
+      AND household_members.user_id = auth.uid()
+      AND household_members.role = 'admin'
+    )
+  );
+
+CREATE TRIGGER update_households_updated_at
+  BEFORE UPDATE ON households
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- =====================================================
+-- HOUSEHOLD MEMBERS TABLE
+-- =====================================================
+CREATE TABLE IF NOT EXISTS household_members (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  household_id UUID NOT NULL REFERENCES households(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  role TEXT NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member')),
+  joined_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(household_id, user_id)
+);
+
+-- Enforce one household per user
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_household_per_user ON household_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_household_members_household_id ON household_members(household_id);
+
+ALTER TABLE household_members ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Members can view household members"
+  ON household_members FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM household_members AS hm
+      WHERE hm.household_id = household_members.household_id
+      AND hm.user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Users can join households"
+  ON household_members FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    OR EXISTS (
+      SELECT 1 FROM household_members AS hm
+      WHERE hm.household_id = household_members.household_id
+      AND hm.user_id = auth.uid()
+      AND hm.role = 'admin'
+    )
+  );
+
+CREATE POLICY "Admins can remove members or self-remove"
+  ON household_members FOR DELETE
+  USING (
+    auth.uid() = user_id
+    OR EXISTS (
+      SELECT 1 FROM household_members AS hm
+      WHERE hm.household_id = household_members.household_id
+      AND hm.user_id = auth.uid()
+      AND hm.role = 'admin'
+    )
+  );
+
+-- =====================================================
+-- ADD household_id TO EXISTING TABLES
+-- =====================================================
+ALTER TABLE pantry_items
+  ADD COLUMN IF NOT EXISTS household_id UUID REFERENCES households(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_pantry_items_household_id ON pantry_items(household_id);
+
+ALTER TABLE grocery_lists
+  ADD COLUMN IF NOT EXISTS household_id UUID REFERENCES households(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_grocery_lists_household_id ON grocery_lists(household_id);
+
+ALTER TABLE meal_plans
+  ADD COLUMN IF NOT EXISTS household_id UUID REFERENCES households(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_meal_plans_household_id ON meal_plans(household_id);
+
+-- =====================================================
+-- UPDATE RLS POLICIES FOR HOUSEHOLD ACCESS
+-- =====================================================
+
+-- pantry_items
+DROP POLICY IF EXISTS "Users can view their own pantry items" ON pantry_items;
+CREATE POLICY "Users can view own or household pantry items"
+  ON pantry_items FOR SELECT
+  USING (
+    auth.uid() = user_id
+    OR (household_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = pantry_items.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Users can insert their own pantry items" ON pantry_items;
+CREATE POLICY "Users can insert own or household pantry items"
+  ON pantry_items FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    AND (household_id IS NULL OR EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = pantry_items.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Users can update their own pantry items" ON pantry_items;
+CREATE POLICY "Users can update own or household pantry items"
+  ON pantry_items FOR UPDATE
+  USING (
+    auth.uid() = user_id
+    OR (household_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = pantry_items.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Users can delete their own pantry items" ON pantry_items;
+CREATE POLICY "Users can delete own or household pantry items"
+  ON pantry_items FOR DELETE
+  USING (
+    auth.uid() = user_id
+    OR (household_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = pantry_items.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+-- grocery_lists
+DROP POLICY IF EXISTS "Users can view their own grocery lists" ON grocery_lists;
+CREATE POLICY "Users can view own or household grocery lists"
+  ON grocery_lists FOR SELECT
+  USING (
+    auth.uid() = user_id
+    OR (household_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = grocery_lists.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Users can insert their own grocery lists" ON grocery_lists;
+CREATE POLICY "Users can insert own or household grocery lists"
+  ON grocery_lists FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    AND (household_id IS NULL OR EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = grocery_lists.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Users can update their own grocery lists" ON grocery_lists;
+CREATE POLICY "Users can update own or household grocery lists"
+  ON grocery_lists FOR UPDATE
+  USING (
+    auth.uid() = user_id
+    OR (household_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = grocery_lists.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Users can delete their own grocery lists" ON grocery_lists;
+CREATE POLICY "Users can delete own or household grocery lists"
+  ON grocery_lists FOR DELETE
+  USING (
+    auth.uid() = user_id
+    OR (household_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = grocery_lists.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+-- meal_plans
+DROP POLICY IF EXISTS "Users can view their own meal plans" ON meal_plans;
+CREATE POLICY "Users can view own or household meal plans"
+  ON meal_plans FOR SELECT
+  USING (
+    auth.uid() = user_id
+    OR (household_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = meal_plans.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Users can insert their own meal plans" ON meal_plans;
+CREATE POLICY "Users can insert own or household meal plans"
+  ON meal_plans FOR INSERT
+  WITH CHECK (
+    auth.uid() = user_id
+    AND (household_id IS NULL OR EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = meal_plans.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Users can update their own meal plans" ON meal_plans;
+CREATE POLICY "Users can update own or household meal plans"
+  ON meal_plans FOR UPDATE
+  USING (
+    auth.uid() = user_id
+    OR (household_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = meal_plans.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+DROP POLICY IF EXISTS "Users can delete their own meal plans" ON meal_plans;
+CREATE POLICY "Users can delete own or household meal plans"
+  ON meal_plans FOR DELETE
+  USING (
+    auth.uid() = user_id
+    OR (household_id IS NOT NULL AND EXISTS (
+      SELECT 1 FROM household_members
+      WHERE household_members.household_id = meal_plans.household_id
+      AND household_members.user_id = auth.uid()
+    ))
+  );
+
+-- =====================================================
 -- COMPLETION MESSAGE
 -- =====================================================
 -- Schema created successfully!
 -- Next steps:
--- 1. Review the tables and RLS policies
--- 2. Test with sample data
--- 3. Update backend routes to use Supabase client
--- 4. Update frontend to call Supabase-backed API
+-- 1. Run the household migration SQL in Supabase SQL editor
+-- 2. Review the tables and RLS policies
+-- 3. Test with sample data

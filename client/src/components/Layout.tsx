@@ -12,7 +12,7 @@ import {
   Package,
   Moon,
   Sun,
-  Sparkles
+  CalendarDays
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../contexts/ThemeContext'
@@ -24,7 +24,7 @@ const navigation = [
   { name: 'Pantry', href: '/app/pantry', icon: Package },
   { name: 'Stores', href: '/app/stores', icon: Store },
   { name: 'Nurexa AI', href: '/app/ai-assistant', icon: Bot },
-  { name: 'Smart Features', href: '/app/smart-features', icon: Sparkles },
+  { name: 'Meal Plan', href: '/app/meal-plan', icon: CalendarDays },
   { name: 'Profile', href: '/app/profile', icon: User },
 ]
 

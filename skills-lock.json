@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "skills": {
+    "backend-code-review": {
+      "source": "langgenius/dify",
+      "sourceType": "github",
+      "computedHash": "83eeea10d27e504e0129a55f8d3f36170df35c99803a80478bd79ae753364a56"
+    },
+    "component-refactoring": {
+      "source": "langgenius/dify",
+      "sourceType": "github",
+      "computedHash": "0bf67719f12666b608aa10f3b5330f34a314327d17be8476439e7518d9b13f57"
+    },
+    "frontend-code-review": {
+      "source": "langgenius/dify",
+      "sourceType": "github",
+      "computedHash": "affbe67082bd8329d044657752f998bdd4d388dd05ca6250f4f9af7d2b642586"
+    },
+    "frontend-testing": {
+      "source": "langgenius/dify",
+      "sourceType": "github",
+      "computedHash": "b41cd7dd6023e377beaa3e1962cf6c4a33b39e6c124dc278b335692f6d672372"
+    },
+    "orpc-contract-first": {
+      "source": "langgenius/dify",
+      "sourceType": "github",
+      "computedHash": "ac22092cc45744418c4203216ac935be12dfbc37bcb1ed56d983db8f29f80832"
+    }
+  }
+}

@@ -47,7 +47,22 @@
       "Bash(cmd /c \"taskkill /F /PID 99704\")",
       "mcp__ide__getDiagnostics",
       "Bash(tree:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm:*)",
+      "Bash(python3:*)",
+      "Bash(pip --version:*)",
+      "Bash(python -c:*)",
+      "Bash(where:*)",
+      "Bash(python -m pip:*)",
+      "Bash(c:\\\\Users\\\\damzy\\\\OneDrive\\\\Documents\\\\NourishNeural\\\\.venv\\\\Scripts\\\\pip.exe install:*)",
+      "Bash(\"/c/Users/damzy/OneDrive/Documents/NourishNeural/.venv/Scripts/pip.exe\" install pandas numpy scikit-learn matplotlib seaborn Pillow requests beautifulsoup4 tqdm joblib fastapi uvicorn pydantic psycopg2-binary sqlalchemy pytest ipykernel)",
+      "Bash(\"/c/Users/damzy/OneDrive/Documents/NourishNeural/.venv/Scripts/python.exe\" -c \"import tensorflow; print\\(''TF:'', tensorflow.__version__\\)\")",
+      "Bash(\"/c/Users/damzy/OneDrive/Documents/NourishNeural/.venv/Scripts/python.exe\" -c \"import torch; print\\(''PyTorch:'', torch.__version__\\)\")",
+      "Bash(\"/c/Users/damzy/OneDrive/Documents/NourishNeural/.venv/Scripts/python.exe\" -c \"import cv2; print\\(''cv2:'', cv2.__version__\\)\")",
+      "Bash(\"/c/Users/damzy/OneDrive/Documents/NourishNeural/.venv/Scripts/python.exe\" run_waste_training.py)",
+      "Bash(\"/c/Users/damzy/OneDrive/Documents/NourishNeural/.venv/Scripts/python.exe\" test_waste_model.py)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(\"/c/Users/damzy/OneDrive/Documents/NourishNeural/.venv/Scripts/python.exe\" run_expiry_training.py)"
     ],
     "deny": [],
     "ask": []

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, ChefHat, FileText, Shield, Users, Clock } from 'lucide-react'
 
 export default function TermsOfService() {
-  const lastUpdated = "January 1, 2025"
+  const lastUpdated = "March 6, 2026"
 
   return (
     <>
@@ -89,7 +89,7 @@ export default function TermsOfService() {
                       By creating an account, accessing, or using Nourish Neural, you confirm that:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
-                      <li>You are at least 18 years old or have parental consent</li>
+                      <li>You are at least 16 years old or have parental consent</li>
                       <li>You have the legal capacity to enter into these Terms</li>
                       <li>You will provide accurate and complete information</li>
                       <li>You will maintain the security of your account credentials</li>
@@ -290,9 +290,8 @@ export default function TermsOfService() {
                       If you have any questions about these Terms, please contact us at:
                     </p>
                     <div className="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-6">
-                      <p><strong>Email:</strong> legal@pantrypal.com</p>
-                      <p><strong>Address:</strong> Nourish Neural Legal Team, 123 Innovation Street, Tech City, TC 12345</p>
-                      <p><strong>Phone:</strong> +1 (555) 123-PALM</p>
+                      <p><strong>Email:</strong> legal@nourishneural.co.uk</p>
+                      <p><strong>Address:</strong> Nourish Neural Legal Team, London, United Kingdom</p>
                     </div>
                   </div>
                 </section>
@@ -316,7 +315,7 @@ export default function TermsOfService() {
             <div className="bg-neutral-50 dark:bg-neutral-900 px-8 py-6 border-t border-neutral-200 dark:border-neutral-700">
               <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                 <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-                  © 2025 Nourish Neural. All rights reserved.
+                  © 2026 Nourish Neural. All rights reserved.
                 </p>
                 <div className="flex space-x-6">
                   <Link to="/privacy" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">

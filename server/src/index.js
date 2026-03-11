@@ -25,19 +25,16 @@ const { supabase } = require('./config/supabase');
 
 // Import routes
 const supabaseAuthRoutes = require('./routes/supabase-auth');
-// Old routes disabled - they use Passport which is not configured
-// const authRoutes = require('./routes/auth');
-// const userRoutes = require('./routes/users');
-// const groceryRoutes = require('./routes/groceries');
+const groceryRoutes = require('./routes/supabase-groceries');
 const storeRoutes = require('./routes/stores');
 const aiRoutes = require('./routes/ai');
 const pantryRoutes = require('./routes/pantry');
 const mlRoutes = require('./routes/ml');
-const smartFeaturesRoutes = require('./routes/smart-features');
 const barcodeRoutes = require('./routes/barcode');
 const loyaltyRoutes = require('./routes/loyalty');
 const mealPlannerRoutes = require('./routes/meal-planner');
 const wasteRoutes = require('./routes/waste');
+const householdRoutes = require('./routes/households');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -159,37 +156,11 @@ app.get('/api/pantry/categories', (req, res) => {
 });
 */
 
-// Mock grocery lists in-memory storage
-let mockGroceryLists = [
-  {
-    id: '1', name: 'Weekly Shopping', status: 'active', items: [
-      { id: '1', name: 'Milk', quantity: 2, unit: 'litres', category: 'Dairy', isChecked: false, estimatedPrice: 2.40 },
-      { id: '2', name: 'Bread', quantity: 1, unit: 'loaf', category: 'Grains', isChecked: true, estimatedPrice: 1.50 },
-      { id: '3', name: 'Apples', quantity: 6, unit: 'pieces', category: 'Fruits', isChecked: false, estimatedPrice: 3.00 }
-    ], totalEstimatedCost: 6.90, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
-  },
-  {
-    id: '2', name: 'Dinner Party', status: 'completed', items: [
-      { id: '4', name: 'Wine', quantity: 2, unit: 'bottles', category: 'Beverages', isChecked: true, estimatedPrice: 12.00 },
-      { id: '5', name: 'Cheese', quantity: 200, unit: 'grams', category: 'Dairy', isChecked: true, estimatedPrice: 4.00 }
-    ], totalEstimatedCost: 16.00, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
-  }
-];
-
-let nextListId = 3;
-let nextItemId = 6;
-
-// Mock grocery lists endpoints
-app.get('/api/groceries', (req, res) => {
-  res.json({
-    lists: mockGroceryLists
-  });
-});
+// Grocery lists are handled by the Supabase-backed route below
 
 
 // API routes - Use Supabase auth routes
 app.use('/api/auth', supabaseAuthRoutes);
-app.use('/api/smart', smartFeaturesRoutes);
 // app.use('/api/users', userRoutes);
 
 // Mock endpoints must be defined before route handlers to take precedence
@@ -602,92 +573,8 @@ app.put('/api/users/profile', (req, res) => {
   });
 });
 
-// Mock grocery list operations
-app.post('/api/groceries', (req, res) => {
-  const { name, items } = req.body;
 
-  // Create items with IDs
-  const listItems = (items || []).map(item => ({
-    ...item,
-    id: String(nextItemId++),
-    isChecked: false
-  }));
-
-  const totalCost = listItems.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0);
-
-  const newList = {
-    id: String(nextListId++),
-    name: name || 'New Grocery List',
-    items: listItems,
-    status: 'active',
-    totalEstimatedCost: totalCost,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-
-  mockGroceryLists.push(newList);
-
-  res.json({
-    success: true,
-    message: 'Grocery list created successfully',
-    list: newList
-  });
-});
-
-app.delete('/api/groceries/:id', (req, res) => {
-  const { id } = req.params;
-  const initialLength = mockGroceryLists.length;
-  mockGroceryLists = mockGroceryLists.filter(list => list.id !== id);
-
-  if (mockGroceryLists.length < initialLength) {
-    res.json({
-      success: true,
-      message: `Grocery list ${id} deleted successfully`
-    });
-  } else {
-    res.status(404).json({
-      success: false,
-      error: 'Grocery list not found'
-    });
-  }
-});
-
-// Mock toggle grocery item endpoint
-app.patch('/api/groceries/:listId/items/:itemId/toggle', (req, res) => {
-  const { listId, itemId } = req.params;
-
-  // Find the list
-  const list = mockGroceryLists.find(l => l.id === listId);
-
-  if (!list) {
-    return res.status(404).json({
-      success: false,
-      error: 'Grocery list not found'
-    });
-  }
-
-  // Find and toggle the item
-  const item = list.items.find(i => i.id === itemId);
-
-  if (!item) {
-    return res.status(404).json({
-      success: false,
-      error: 'Item not found'
-    });
-  }
-
-  // Toggle the checked status
-  item.isChecked = !item.isChecked;
-  list.updatedAt = new Date().toISOString();
-
-  res.json({
-    success: true,
-    message: 'Item status updated successfully',
-    item: item
-  });
-});
-
-// app.use('/api/groceries', groceryRoutes); // Disabled - uses Passport
+app.use('/api/groceries', groceryRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/pantry', pantryRoutes);
@@ -696,6 +583,7 @@ app.use('/api/barcode', barcodeRoutes);
 app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/meal-planner', mealPlannerRoutes);
 app.use('/api/waste', wasteRoutes);
+app.use('/api/households', householdRoutes);
 
 // GraphQL setup (disabled - using Supabase)
 // setupGraphQL(app);

@@ -16,18 +16,18 @@ import {
   MapPin,
   CheckCircle,
   Target,
-  Brain,
   Search,
   Activity,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  TrendingDown,
+  TrendingUp,
+  Minus,
+  Trash2
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import SmartFoodClassifier from '../components/SmartFoodClassifier'
-import SmartRecipeRecommendations from '../components/SmartRecipeRecommendations'
-import SmartShoppingListGenerator from '../components/SmartShoppingListGenerator'
-import SmartWasteDashboard from '../components/SmartWasteDashboard'
 import { fadeUp, staggerContainer } from '../utils/motion'
 
 const MotionLink = motion(Link)
@@ -114,6 +114,123 @@ const quickActions: QuickAction[] = [
     link: '/app/ai-assistant'
   }
 ]
+
+function WasteAnalyticsSection() {
+  const { user } = useAuth()
+
+  const { data: wasteStats } = useQuery(
+    ['waste-stats'],
+    () => apiService.get('/api/waste/stats?timeRange=month'),
+    { enabled: !!user }
+  )
+
+  const { data: wasteForecast } = useQuery(
+    ['waste-forecast'],
+    () => apiService.post('/api/waste/forecast', {}),
+    { enabled: !!user }
+  )
+
+  const stats = wasteStats as any
+  const forecast = wasteForecast as any
+
+  const trendIcon = forecast?.trend === 'improving'
+    ? TrendingDown
+    : forecast?.trend === 'worsening'
+      ? TrendingUp
+      : Minus
+
+  const trendColor = forecast?.trend === 'improving'
+    ? 'text-green-600 dark:text-green-400'
+    : forecast?.trend === 'worsening'
+      ? 'text-red-600 dark:text-red-400'
+      : 'text-neutral-500 dark:text-neutral-400'
+
+  const trendLabel = forecast?.trend === 'improving'
+    ? 'Improving'
+    : forecast?.trend === 'worsening'
+      ? 'Needs attention'
+      : forecast?.trend === 'insufficient_data'
+        ? 'Not enough data'
+        : 'Stable'
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+    >
+      <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Food Waste Tracker</h2>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">This month's waste overview</p>
+            </div>
+          </div>
+          {forecast?.trend && forecast.trend !== 'insufficient_data' && (
+            <div className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-neutral-50 dark:bg-neutral-700/50 ${trendColor}`}>
+              {(() => { const Icon = trendIcon; return <Icon className="w-4 h-4" /> })()}
+              <span className="text-xs font-bold">{trendLabel}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Items Wasted</p>
+            <p className="text-2xl font-black text-neutral-900 dark:text-neutral-100">{stats?.summary?.totalItems || 0}</p>
+          </div>
+          <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Money Lost</p>
+            <p className="text-2xl font-black text-neutral-900 dark:text-neutral-100">
+              £{(stats?.summary?.totalLoss || 0).toFixed(2)}
+            </p>
+          </div>
+          <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Top Wasted</p>
+            <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100 truncate">
+              {stats?.summary?.mostWastedCategory || 'N/A'}
+            </p>
+          </div>
+          <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Main Reason</p>
+            <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100 capitalize truncate">
+              {stats?.summary?.mostCommonReason || 'N/A'}
+            </p>
+          </div>
+        </div>
+
+        {/* AI Insight */}
+        {forecast?.insight && forecast.trend !== 'insufficient_data' && (
+          <div className="p-4 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800">
+            <div className="flex items-start space-x-2">
+              <Sparkles className="w-4 h-4 text-purple-500 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{forecast.insight}</p>
+                {forecast?.tips && forecast.tips.length > 0 && (
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                    Tip: {forecast.tips[0]}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(!stats?.summary?.totalItems && !forecast?.insight) && (
+          <div className="text-center py-4">
+            <p className="text-sm text-neutral-500 dark:text-neutral-400">
+              Start logging waste in your Pantry to see insights here
+            </p>
+          </div>
+        )}
+      </div>
+    </motion.section>
+  )
+}
 
 export default function Dashboard() {
   const { user } = useAuth()
@@ -520,80 +637,8 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Expandable Sections */}
-          <div className="space-y-6">
-            {/* Smart Components - Collapsible */}
-            <details className="group">
-              <summary className="cursor-pointer bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5 hover:shadow-md transition-all">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-primary-500 flex items-center justify-center">
-                      <Brain className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Smart Recommendations</h2>
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">AI-powered insights for your kitchen</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-neutral-400 dark:text-neutral-500 group-open:rotate-90 transition-transform" />
-                </div>
-              </summary>
-              <div className="mt-4 space-y-6">
-                <SmartRecipeRecommendations
-                  pantryItems={[
-                    {
-                      id: '1',
-                      name: 'Whole Milk 1L',
-                      quantity: 2,
-                      unit: 'bottles',
-                      category: 'Dairy',
-                      expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                      purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                      estimatedPrice: 2.50,
-                      notes: 'Organic brand'
-                    }
-                  ]}
-                  userPreferences={{
-                    dietaryRestrictions: [],
-                    maxCookingTime: 60,
-                    servingSize: 4
-                  }}
-                />
-                <SmartShoppingListGenerator
-                  pantryItems={[
-                    {
-                      id: '1',
-                      name: 'Whole Milk 1L',
-                      quantity: 2,
-                      unit: 'bottles',
-                      category: 'Dairy',
-                      expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                      purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                      estimatedPrice: 2.50,
-                      notes: 'Organic brand'
-                    }
-                  ]}
-                  budgetLimit={100}
-                  householdSize={4}
-                />
-                <SmartWasteDashboard
-                  pantryItems={[
-                    {
-                      id: '1',
-                      name: 'Whole Milk 1L',
-                      quantity: 2,
-                      unit: 'bottles',
-                      category: 'Dairy',
-                      expiryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-                      purchaseDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-                      estimatedPrice: 2.50,
-                      notes: 'Organic brand'
-                    }
-                  ]}
-                />
-              </div>
-            </details>
-          </div>
+          {/* Waste Analytics Section */}
+          <WasteAnalyticsSection />
         </div>
       </div>
     </>

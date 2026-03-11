@@ -5,22 +5,57 @@ const { supabase } = require('../config/supabase');
 const router = express.Router();
 
 /**
+ * Helper: get user's household_id from membership table
+ */
+async function getUserHouseholdId(userId) {
+  const { data } = await supabase
+    .from('household_members')
+    .select('household_id')
+    .eq('user_id', userId)
+    .single();
+  return data?.household_id || null;
+}
+
+/**
+ * Helper: check if user can access a pantry item (owner or household member)
+ */
+async function canAccessItem(userId, item) {
+  if (item.user_id === userId) return true;
+  if (item.household_id) {
+    const householdId = await getUserHouseholdId(userId);
+    return householdId === item.household_id;
+  }
+  return false;
+}
+
+/**
  * GET /api/pantry
  * Get all pantry items for the authenticated user
- * Query params: category, expiringSoon, lowStock
+ * Query params: category, expiringSoon, lowStock, scope (personal|household)
  */
 router.get('/', authenticateJWT, async (req, res) => {
   try {
-    const { category, expiringSoon, lowStock } = req.query;
+    const { category, expiringSoon, lowStock, scope } = req.query;
     const userId = req.user.id;
 
     // Start building the query
     let query = supabase
       .from('pantry_items')
       .select('*')
-      .eq('user_id', userId)
       .eq('is_archived', false)
       .order('expiry_date', { ascending: true });
+
+    if (scope === 'household') {
+      // Household scope: show items shared with user's household
+      const householdId = await getUserHouseholdId(userId);
+      if (!householdId) {
+        return res.json({ items: [] });
+      }
+      query = query.eq('household_id', householdId);
+    } else {
+      // Personal scope (default): user's own items with no household_id
+      query = query.eq('user_id', userId).is('household_id', null);
+    }
 
     // Filter by category
     if (category && category !== 'all') {
@@ -69,13 +104,28 @@ router.get('/', authenticateJWT, async (req, res) => {
 router.get('/stats', authenticateJWT, async (req, res) => {
   try {
     const userId = req.user.id;
+    const { scope } = req.query;
 
     // Get all pantry items for calculations
-    const { data: items, error } = await supabase
+    let query = supabase
       .from('pantry_items')
       .select('*')
-      .eq('user_id', userId)
       .eq('is_archived', false);
+
+    if (scope === 'household') {
+      const householdId = await getUserHouseholdId(userId);
+      if (!householdId) {
+        return res.json({
+          totalItems: 0, totalValue: 0, categoryBreakdown: {},
+          expiringSoon: 0, expired: 0, lowStock: 0, averageItemValue: 0
+        });
+      }
+      query = query.eq('household_id', householdId);
+    } else {
+      query = query.eq('user_id', userId).is('household_id', null);
+    }
+
+    const { data: items, error } = await query;
 
     if (error) {
       throw error;
@@ -204,7 +254,8 @@ router.post('/', authenticateJWT, async (req, res) => {
       storeName,
       brand,
       notes,
-      imageUrl
+      imageUrl,
+      householdId
     } = req.body;
 
     // Validate required fields
@@ -212,6 +263,16 @@ router.post('/', authenticateJWT, async (req, res) => {
       return res.status(400).json({
         error: 'Name, quantity, and unit are required'
       });
+    }
+
+    // If householdId is provided, verify user is a member
+    let validatedHouseholdId = null;
+    if (householdId) {
+      const userHouseholdId = await getUserHouseholdId(userId);
+      if (userHouseholdId !== householdId) {
+        return res.status(403).json({ error: 'You are not a member of this household' });
+      }
+      validatedHouseholdId = householdId;
     }
 
     // Check if item already exists (by name and barcode)
@@ -275,7 +336,8 @@ router.post('/', authenticateJWT, async (req, res) => {
         store_name: storeName || null,
         brand: brand || null,
         notes: notes || null,
-        image_url: imageUrl || null
+        image_url: imageUrl || null,
+        household_id: validatedHouseholdId
       })
       .select()
       .single();
@@ -308,12 +370,11 @@ router.put('/:id', authenticateJWT, async (req, res) => {
     const itemId = req.params.id;
     const updateData = req.body;
 
-    // Check if item exists and belongs to user
+    // Check if item exists and user can access it (owner or household member)
     const { data: existingItem, error: fetchError } = await supabase
       .from('pantry_items')
       .select('*')
       .eq('id', itemId)
-      .eq('user_id', userId)
       .single();
 
     if (fetchError) {
@@ -321,6 +382,10 @@ router.put('/:id', authenticateJWT, async (req, res) => {
         return res.status(404).json({ error: 'Pantry item not found' });
       }
       throw fetchError;
+    }
+
+    if (!(await canAccessItem(userId, existingItem))) {
+      return res.status(404).json({ error: 'Pantry item not found' });
     }
 
     // Prepare update object (only include provided fields)
@@ -375,12 +440,11 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
     const itemId = req.params.id;
     const hardDelete = req.query.hard === 'true';
 
-    // Check if item exists and belongs to user
+    // Check if item exists and user can access it
     const { data: existingItem, error: fetchError } = await supabase
       .from('pantry_items')
       .select('*')
       .eq('id', itemId)
-      .eq('user_id', userId)
       .single();
 
     if (fetchError) {
@@ -388,6 +452,10 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
         return res.status(404).json({ error: 'Pantry item not found' });
       }
       throw fetchError;
+    }
+
+    if (!(await canAccessItem(userId, existingItem))) {
+      return res.status(404).json({ error: 'Pantry item not found' });
     }
 
     if (hardDelete) {
@@ -434,12 +502,11 @@ router.post('/:id/consume', authenticateJWT, async (req, res) => {
       return res.status(400).json({ error: 'Valid amount is required' });
     }
 
-    // Get the item
+    // Get the item and verify access
     const { data: item, error: fetchError } = await supabase
       .from('pantry_items')
       .select('*')
       .eq('id', itemId)
-      .eq('user_id', userId)
       .single();
 
     if (fetchError) {
@@ -447,6 +514,10 @@ router.post('/:id/consume', authenticateJWT, async (req, res) => {
         return res.status(404).json({ error: 'Pantry item not found' });
       }
       throw fetchError;
+    }
+
+    if (!(await canAccessItem(userId, item))) {
+      return res.status(404).json({ error: 'Pantry item not found' });
     }
 
     const newQuantity = parseFloat(item.quantity) - parseFloat(amount);

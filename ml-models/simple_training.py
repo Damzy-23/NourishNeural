@@ -182,42 +182,44 @@ def main():
     os.makedirs('models', exist_ok=True)
     os.makedirs('results', exist_ok=True)
     
-    results = {
+    steps_completed: list = []
+    performance_results: dict = {}
+    results: dict = {
         'pipeline_status': 'running',
         'start_time': start_time,
-        'steps_completed': [],
-        'performance_results': {}
+        'steps_completed': steps_completed,
+        'performance_results': performance_results
     }
-    
+
     # Step 1: Data Collection
     logger.info("Step 1: Data Collection")
     if run_data_collection():
-        results['steps_completed'].append('data_collection')
+        steps_completed.append('data_collection')
     else:
         logger.warning("Data collection failed, continuing with mock data")
-    
+
     # Step 2: AI Chat Training
     logger.info("Step 2: AI Chat Training")
     if run_ai_chat_training():
-        results['steps_completed'].append('ai_chat_training')
-        results['performance_results']['ai_chat'] = {
+        steps_completed.append('ai_chat_training')
+        performance_results['ai_chat'] = {
             'status': 'completed',
             'satisfaction_score': 85.0,  # Estimated
             'training_examples': 1000  # Estimated
         }
-    
+
     # Step 3: Simple Model Training
     logger.info("Step 3: Simple Model Training")
     model_results = run_simple_model_training()
     if model_results:
-        results['steps_completed'].append('simple_model_training')
-        results['performance_results']['expiry_predictor'] = {
+        steps_completed.append('simple_model_training')
+        performance_results['expiry_predictor'] = {
             'status': 'completed',
             'mae': model_results['expiry_mae'],
             'target_mae': 2.0,
             'achieved_target': model_results['expiry_mae'] <= 2.0
         }
-        results['performance_results']['waste_predictor'] = {
+        performance_results['waste_predictor'] = {
             'status': 'completed',
             'accuracy': model_results['waste_accuracy'],
             'target_accuracy': 85.0,
@@ -228,31 +230,30 @@ def main():
     end_time = datetime.now()
     duration = (end_time - start_time).total_seconds()
     
-    results.update({
-        'pipeline_status': 'completed',
-        'end_time': end_time,
-        'duration_seconds': duration,
-        'success_rate': len(results['steps_completed']) / 3
-    })
-    
+    success_rate = len(steps_completed) / 3
+    results['pipeline_status'] = 'completed'
+    results['end_time'] = end_time
+    results['duration_seconds'] = duration
+    results['success_rate'] = success_rate
+
     # Save results
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     results_file = f"results/simple_training_results_{timestamp}.json"
-    
+
     with open(results_file, 'w') as f:
         json.dump(results, f, indent=2, default=str)
-    
+
     # Print summary
     print("\n" + "="*60)
-    print("PANTROPAL SIMPLIFIED TRAINING SUMMARY")
+    print("PANTRYPAL SIMPLIFIED TRAINING SUMMARY")
     print("="*60)
-    print(f"Pipeline Status: {results['pipeline_status'].upper()}")
-    print(f"Success Rate: {results['success_rate']:.1%}")
+    print(f"Pipeline Status: completed".upper())
+    print(f"Success Rate: {success_rate:.1%}")
     print(f"Duration: {duration:.2f} seconds")
-    print(f"Steps Completed: {len(results['steps_completed'])}/3")
-    
+    print(f"Steps Completed: {len(steps_completed)}/3")
+
     print("\nPerformance Results:")
-    for model, perf in results['performance_results'].items():
+    for model, perf in performance_results.items():
         status = "ACHIEVED" if perf.get('achieved_target', False) else "NOT ACHIEVED"
         print(f"  {model}: {status}")
         if 'mae' in perf:
@@ -261,11 +262,11 @@ def main():
             print(f"    Accuracy: {perf['accuracy']:.1%} (target: {perf['target_accuracy']}%)")
         if 'satisfaction_score' in perf:
             print(f"    Satisfaction: {perf['satisfaction_score']}% (target: 80%)")
-    
+
     # Check targets
-    targets_achieved = sum(1 for perf in results['performance_results'].values() 
+    targets_achieved = sum(1 for perf in performance_results.values()
                           if perf.get('achieved_target', False))
-    total_targets = len(results['performance_results'])
+    total_targets = len(performance_results)
     
     if targets_achieved == total_targets and total_targets > 0:
         logger.info("[SUCCESS] ALL PERFORMANCE TARGETS ACHIEVED!")

@@ -1,306 +1,185 @@
 """
 Food Recognition Model using Computer Vision
-This model identifies food items from images for PantryPal.
+Identifies food items from images for Nourish Neural.
+Uses MobileNetV3-Large (PyTorch) — matches the training pipeline.
 """
 
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
+import torch
+import torch.nn as nn
+import torchvision.transforms as transforms
+from torchvision.models import mobilenet_v3_large
+from PIL import Image
 import numpy as np
-import cv2
-from typing import List, Tuple, Dict
+from typing import List, Dict, Optional
 import logging
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
+class UKFoodClassifier(nn.Module):
+    """MobileNetV3-Large UK food classifier (must match training architecture)"""
+
+    def __init__(self, num_classes: int = 200, pretrained: bool = False):
+        super().__init__()
+        self.backbone = mobilenet_v3_large(weights=None)
+        feature_dim = 960
+        self.backbone.classifier = nn.Identity()
+
+        self.classifier = nn.Sequential(
+            nn.Dropout(0.3),
+            nn.Linear(feature_dim, 512),
+            nn.ReLU(),
+            nn.Dropout(0.2),
+            nn.Linear(512, num_classes)
+        )
+
+        self.storage_head = nn.Sequential(
+            nn.Linear(feature_dim, 128), nn.ReLU(), nn.Dropout(0.2), nn.Linear(128, 5)
+        )
+        self.supermarket_head = nn.Sequential(
+            nn.Linear(feature_dim, 128), nn.ReLU(), nn.Dropout(0.2), nn.Linear(128, 6)
+        )
+        self.quality_head = nn.Sequential(
+            nn.Linear(feature_dim, 128), nn.ReLU(), nn.Dropout(0.2), nn.Linear(128, 1), nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        features = self.backbone(x)
+        return {
+            'classification': self.classifier(features),
+            'storage': self.storage_head(features),
+            'supermarket': self.supermarket_head(features),
+            'quality': self.quality_head(features)
+        }
+
+
 class FoodRecognitionModel:
     """
-    CNN-based model for food recognition.
-    Optimized for UK supermarket foods and common household items.
+    Inference wrapper for food recognition.
+    Loads trained MobileNetV3 checkpoint and runs predictions.
     """
-    
-    def __init__(self, num_classes: int = 101, input_shape: Tuple[int, int, int] = (224, 224, 3)):
+
+    STORAGE_TYPES = ['fridge', 'freezer', 'pantry', 'room', 'special']
+    SUPERMARKETS = ['tesco', 'sainsburys', 'asda', 'morrisons', 'aldi', 'lidl']
+
+    def __init__(self, num_classes: int = 200, model_path: Optional[str] = None):
         self.num_classes = num_classes
-        self.input_shape = input_shape
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = None
-        self.class_names = []
-        
-    def build_model(self) -> keras.Model:
-        """
-        Build the CNN architecture for food recognition.
-        Uses EfficientNet backbone for better performance on food images.
-        """
-        # Use EfficientNetB0 as backbone
-        base_model = keras.applications.EfficientNetB0(
-            weights='imagenet',
-            include_top=False,
-            input_shape=self.input_shape
-        )
-        
-        # Freeze early layers, fine-tune later layers
-        base_model.trainable = True
-        fine_tune_at = len(base_model.layers) - 20
-        
-        for layer in base_model.layers[:fine_tune_at]:
-            layer.trainable = False
-        
-        # Add custom classification head
-        inputs = keras.Input(shape=self.input_shape)
-        
-        # Data augmentation
-        x = layers.RandomFlip("horizontal")(inputs)
-        x = layers.RandomRotation(0.1)(x)
-        x = layers.RandomZoom(0.1)(x)
-        
-        # Base model
-        x = base_model(x, training=False)
-        
-        # Global average pooling
-        x = layers.GlobalAveragePooling2D()(x)
-        
-        # Dropout for regularization
-        x = layers.Dropout(0.2)(x)
-        
-        # Dense layers
-        x = layers.Dense(512, activation='relu')(x)
-        x = layers.Dropout(0.3)(x)
-        x = layers.Dense(256, activation='relu')(x)
-        x = layers.Dropout(0.2)(x)
-        
-        # Output layer
-        outputs = layers.Dense(self.num_classes, activation='softmax')(x)
-        
-        model = keras.Model(inputs, outputs)
-        
-        # Compile model
-        model.compile(
-            optimizer=keras.optimizers.Adam(learning_rate=0.0001),
-            loss='categorical_crossentropy',
-            metrics=['accuracy', 'top_3_accuracy']
-        )
-        
-        self.model = model
-        logger.info(f"Built food recognition model with {model.count_params()} parameters")
-        return model
-    
-    def preprocess_image(self, image_path: str) -> np.ndarray:
-        """
-        Preprocess image for model input.
-        """
-        # Load image
-        image = cv2.imread(image_path)
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        
-        # Resize to model input shape
-        image = cv2.resize(image, (self.input_shape[0], self.input_shape[1]))
-        
-        # Normalize to [0, 1]
-        image = image.astype(np.float32) / 255.0
-        
-        # Add batch dimension
-        image = np.expand_dims(image, axis=0)
-        
-        return image
-    
-    def preprocess_batch(self, image_paths: List[str]) -> np.ndarray:
-        """
-        Preprocess batch of images.
-        """
-        images = []
-        for path in image_paths:
-            image = self.preprocess_image(path)
-            images.append(image[0])  # Remove batch dimension
-        
-        return np.array(images)
-    
-    def train(self, train_data, val_data, epochs: int = 50, batch_size: int = 32):
-        """
-        Train the food recognition model.
-        """
-        if self.model is None:
-            self.build_model()
-        
-        # Callbacks
-        callbacks = [
-            keras.callbacks.EarlyStopping(
-                monitor='val_accuracy',
-                patience=5,
-                restore_best_weights=True
-            ),
-            keras.callbacks.ReduceLROnPlateau(
-                monitor='val_loss',
-                factor=0.5,
-                patience=3,
-                min_lr=1e-7
-            ),
-            keras.callbacks.ModelCheckpoint(
-                'models/food_recognition_best.h5',
-                monitor='val_accuracy',
-                save_best_only=True,
-                save_weights_only=False
-            )
-        ]
-        
-        # Train model
-        history = self.model.fit(
-            train_data,
-            validation_data=val_data,
-            epochs=epochs,
-            batch_size=batch_size,
-            callbacks=callbacks,
-            verbose=1
-        )
-        
-        logger.info("Training completed!")
-        return history
-    
-    def predict(self, image_path: str) -> Dict[str, float]:
+        self.class_names: List[str] = []
+
+        # Standard ImageNet preprocessing
+        self.transform = transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        ])
+
+        if model_path:
+            self.load_model(model_path)
+
+    def build_model(self) -> UKFoodClassifier:
+        """Build model architecture (without trained weights)"""
+        self.model = UKFoodClassifier(num_classes=self.num_classes).to(self.device)
+        param_count = sum(p.numel() for p in self.model.parameters()) / 1e6
+        logger.info(f"Built food recognition model with {param_count:.1f}M parameters")
+        return self.model
+
+    def load_model(self, model_path: str):
+        """Load trained model from checkpoint"""
+        if not os.path.exists(model_path):
+            logger.warning(f"Model file not found: {model_path}")
+            return
+
+        self.model = UKFoodClassifier(num_classes=self.num_classes).to(self.device)
+        checkpoint = torch.load(model_path, map_location=self.device, weights_only=False)
+
+        if 'model_state_dict' in checkpoint:
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+        else:
+            self.model.load_state_dict(checkpoint)
+
+        self.model.eval()
+        logger.info(f"Loaded model from {model_path}")
+
+    def preprocess_image(self, image_path: str) -> torch.Tensor:
+        """Preprocess a single image for inference"""
+        image = Image.open(image_path).convert('RGB')
+        tensor = self.transform(image).unsqueeze(0)  # Add batch dim
+        return tensor.to(self.device)
+
+    def predict(self, image_path: str, top_k: int = 5) -> Dict[str, any]:
         """
         Predict food category from image.
-        Returns dictionary with class probabilities.
+        Returns top-k class probabilities plus storage/supermarket/quality predictions.
         """
         if self.model is None:
             raise ValueError("Model not loaded. Please train or load a model first.")
-        
-        # Preprocess image
-        image = self.preprocess_image(image_path)
-        
-        # Make prediction
-        predictions = self.model.predict(image, verbose=0)
-        
-        # Get top predictions
-        top_indices = np.argsort(predictions[0])[-5:][::-1]
-        
-        results = {}
-        for idx in top_indices:
-            if idx < len(self.class_names):
-                class_name = self.class_names[idx]
-                confidence = float(predictions[0][idx])
-                results[class_name] = confidence
-        
-        return results
-    
-    def predict_batch(self, image_paths: List[str]) -> List[Dict[str, float]]:
-        """
-        Predict food categories for batch of images.
-        """
-        if self.model is None:
-            raise ValueError("Model not loaded. Please train or load a model first.")
-        
-        # Preprocess images
-        images = self.preprocess_batch(image_paths)
-        
-        # Make predictions
-        predictions = self.model.predict(images, verbose=0)
-        
-        results = []
-        for pred in predictions:
-            top_indices = np.argsort(pred)[-5:][::-1]
-            
-            result = {}
-            for idx in top_indices:
-                if idx < len(self.class_names):
-                    class_name = self.class_names[idx]
-                    confidence = float(pred[idx])
-                    result[class_name] = confidence
-            
-            results.append(result)
-        
-        return results
-    
-    def load_model(self, model_path: str):
-        """
-        Load pre-trained model.
-        """
-        self.model = keras.models.load_model(model_path)
-        logger.info(f"Loaded model from {model_path}")
-    
-    def save_model(self, model_path: str):
-        """
-        Save trained model.
-        """
-        if self.model is None:
-            raise ValueError("No model to save. Please train a model first.")
-        
-        self.model.save(model_path)
-        logger.info(f"Saved model to {model_path}")
-    
+
+        self.model.eval()
+        tensor = self.preprocess_image(image_path)
+
+        with torch.no_grad():
+            outputs = self.model(tensor)
+
+        # Classification probabilities
+        probs = torch.softmax(outputs['classification'], dim=1)[0]
+        top_probs, top_indices = probs.topk(top_k)
+
+        classifications = {}
+        for prob, idx in zip(top_probs.cpu().numpy(), top_indices.cpu().numpy()):
+            name = self.class_names[idx] if idx < len(self.class_names) else f"class_{idx}"
+            classifications[name] = float(prob)
+
+        # Storage recommendation
+        storage_idx = outputs['storage'].argmax(dim=1).item()
+        storage = self.STORAGE_TYPES[storage_idx] if storage_idx < len(self.STORAGE_TYPES) else 'unknown'
+
+        # Supermarket prediction
+        supermarket_idx = outputs['supermarket'].argmax(dim=1).item()
+        supermarket = self.SUPERMARKETS[supermarket_idx] if supermarket_idx < len(self.SUPERMARKETS) else 'unknown'
+
+        # Quality score
+        quality = float(outputs['quality'][0].item())
+
+        return {
+            'classifications': classifications,
+            'recommended_storage': storage,
+            'likely_supermarket': supermarket,
+            'quality_score': quality
+        }
+
+    def predict_batch(self, image_paths: List[str], top_k: int = 5) -> List[Dict]:
+        """Predict food categories for a batch of images"""
+        return [self.predict(path, top_k=top_k) for path in image_paths]
+
     def set_class_names(self, class_names: List[str]):
-        """
-        Set class names for predictions.
-        """
+        """Set class names for human-readable predictions"""
         self.class_names = class_names
         logger.info(f"Set {len(class_names)} class names")
 
-class BarcodeScanner:
-    """
-    Barcode scanning functionality for product identification.
-    """
-    
-    def __init__(self):
-        self.product_database = {}
-        self.load_uk_product_database()
-    
-    def load_uk_product_database(self):
-        """
-        Load UK supermarket product database.
-        This would typically connect to supermarket APIs.
-        """
-        # Mock UK product database
-        self.product_database = {
-            "5000159461125": {  # Example Tesco barcode
-                "name": "Tesco Whole Milk 1L",
-                "brand": "Tesco",
-                "category": "Dairy",
-                "price": 1.20,
-                "nutritional_info": {
-                    "calories_per_100ml": 64,
-                    "protein": 3.4,
-                    "fat": 3.6,
-                    "carbs": 4.7
-                }
-            },
-            "5010037000123": {  # Example Sainsbury's barcode
-                "name": "Sainsbury's White Bread",
-                "brand": "Sainsbury's",
-                "category": "Bakery",
-                "price": 1.50,
-                "nutritional_info": {
-                    "calories_per_100g": 247,
-                    "protein": 8.2,
-                    "fat": 2.4,
-                    "carbs": 47.2
-                }
-            }
-        }
-    
-    def scan_barcode(self, barcode: str) -> Dict:
-        """
-        Look up product information from barcode.
-        """
-        if barcode in self.product_database:
-            return self.product_database[barcode]
-        else:
-            return {
-                "error": "Product not found",
-                "barcode": barcode,
-                "suggestion": "Try manual entry or photo recognition"
-            }
+    def save_model(self, model_path: str):
+        """Save model weights"""
+        if self.model is None:
+            raise ValueError("No model to save.")
+        os.makedirs(os.path.dirname(model_path) or '.', exist_ok=True)
+        torch.save(self.model.state_dict(), model_path)
+        logger.info(f"Saved model to {model_path}")
 
-# Example usage and testing
+
 if __name__ == "__main__":
-    # Initialize model
-    model = FoodRecognitionModel(num_classes=101)
-    
-    # Build model architecture
+    # Quick test — build model and print summary
+    model = FoodRecognitionModel(num_classes=200)
     model.build_model()
-    
-    # Print model summary
-    model.model.summary()
-    
-    # Example prediction (would need actual image)
-    # results = model.predict("path/to/image.jpg")
-    # print(f"Prediction results: {results}")
-    
+
+    # Test with a dummy input
+    dummy = torch.randn(1, 3, 224, 224).to(model.device)
+    with torch.no_grad():
+        out = model.model(dummy)
+    print(f"Classification output shape: {out['classification'].shape}")
+    print(f"Storage output shape: {out['storage'].shape}")
+    print(f"Quality output shape: {out['quality'].shape}")
     print("Food Recognition Model initialized successfully!")
