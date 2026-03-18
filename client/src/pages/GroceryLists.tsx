@@ -16,10 +16,12 @@ import {
   Share2,
   Search,
   Filter,
-  ArrowUpDown
+  ArrowUpDown,
+  Users
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
+import { useHousehold } from '../hooks/useHousehold'
 import { fadeUp } from '../utils/motion'
 import jsPDF from 'jspdf'
 
@@ -61,7 +63,9 @@ interface CreateListForm {
 
 export default function GroceryLists() {
   const { user } = useAuth()
+  const { household, isMember } = useHousehold()
   const queryClient = useQueryClient()
+  const [scope, setScope] = useState<'personal' | 'household'>('personal')
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingList, setEditingList] = useState<string | null>(null)
   const [newListForm, setNewListForm] = useState<CreateListForm>({
@@ -84,8 +88,8 @@ export default function GroceryLists() {
 
   // Fetch grocery lists
   const { data: listsResponse, isLoading, error } = useQuery(
-    ['grocery-lists'],
-    () => apiService.get('/api/groceries'),
+    ['grocery-lists', scope],
+    () => apiService.get(`/api/groceries?scope=${scope}`),
     {
       enabled: !!user,
     }
@@ -95,7 +99,10 @@ export default function GroceryLists() {
 
   // Create grocery list mutation
   const createListMutation = useMutation(
-    (listData: CreateListForm) => apiService.post('/api/groceries', listData),
+    (listData: CreateListForm) => apiService.post('/api/groceries', {
+      ...listData,
+      householdId: scope === 'household' && household ? household.id : null
+    }),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(['grocery-lists'])
@@ -258,7 +265,7 @@ export default function GroceryLists() {
       navigator.share({
         title: list.name,
         text: text
-      }).catch(() => {});
+      }).catch(() => { });
     } else {
       // Fallback: copy to clipboard
       navigator.clipboard.writeText(text).then(() => {
@@ -284,8 +291,8 @@ export default function GroceryLists() {
       const progress = calculateProgress(list)
       const matchesStatus =
         filterStatus === 'all' ? true :
-        filterStatus === 'completed' ? progress === 100 :
-        filterStatus === 'active' ? progress < 100 : true
+          filterStatus === 'completed' ? progress === 100 :
+            filterStatus === 'active' ? progress < 100 : true
 
       return matchesSearch && matchesStatus
     })
@@ -387,6 +394,38 @@ export default function GroceryLists() {
                 New List
               </motion.button>
             </div>
+
+            {/* Scope Toggle */}
+            {isMember && (
+              <motion.div
+                className="mt-6 border-t border-neutral-200/50 dark:border-neutral-700/50 pt-5 flex"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
+              >
+                <div className="flex bg-neutral-100/80 dark:bg-neutral-800/80 p-1.5 rounded-xl w-full sm:w-auto backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/50 shadow-inner">
+                  <button
+                    onClick={() => setScope('personal')}
+                    className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${scope === 'personal'
+                        ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                        : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50'
+                      }`}
+                  >
+                    Personal
+                  </button>
+                  <button
+                    onClick={() => setScope('household')}
+                    className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${scope === 'household'
+                        ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10'
+                        : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50'
+                      }`}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Household</span>
+                  </button>
+                </div>
+              </motion.div>
+            )}
           </div>
         </motion.div>
 
@@ -736,7 +775,7 @@ export default function GroceryLists() {
                         </button>
                       </div>
                     </div>
-                    
+
                     {/* Progress Bar */}
                     <div className="mt-2">
                       <div className="flex items-center justify-between text-sm text-neutral-600 dark:text-neutral-400 mb-1">
@@ -744,14 +783,14 @@ export default function GroceryLists() {
                         <span>{progress}%</span>
                       </div>
                       <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2">
-                        <div 
+                        <div
                           className="bg-primary-500 h-2 rounded-full transition-all duration-300"
                           style={{ width: `${progress}%` }}
                         />
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="card-content">
                     {/* List Stats */}
                     <div className="grid grid-cols-2 gap-4 mb-4">
@@ -771,11 +810,10 @@ export default function GroceryLists() {
                         <div key={item.id} className="flex items-center space-x-2">
                           <button
                             onClick={() => handleToggleItem(list.id, item.id)}
-                            className={`h-4 w-4 rounded border-2 flex items-center justify-center ${
-                              item.isChecked 
-                                ? 'bg-primary-500 border-primary-500 text-white' 
+                            className={`h-4 w-4 rounded border-2 flex items-center justify-center ${item.isChecked
+                                ? 'bg-primary-500 border-primary-500 text-white'
                                 : 'border-neutral-300'
-                            }`}
+                              }`}
                           >
                             {item.isChecked && <Check className="h-3 w-3" />}
                           </button>

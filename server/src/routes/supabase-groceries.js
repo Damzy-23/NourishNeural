@@ -4,6 +4,18 @@ const { supabase } = require('../config/supabase');
 
 const router = express.Router();
 
+/**
+ * Helper: get user's household_id from membership table
+ */
+async function getUserHouseholdId(userId) {
+    const { data } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', userId)
+        .single();
+    return data?.household_id || null;
+}
+
 // ─────────────────────────────────────────────
 // Helper: re-calculate and persist total_estimated_cost on a list
 // ─────────────────────────────────────────────
@@ -27,28 +39,58 @@ async function syncListCost(listId) {
 router.get('/', authenticateJWT, async (req, res) => {
     try {
         const userId = req.user.id;
+        const { scope } = req.query;
 
-        const { data: lists, error } = await supabase
+        // Step 1: fetch all non-archived lists
+        let query = supabase
             .from('grocery_lists')
-            .select(`
-        *,
-        items:grocery_list_items (*)
-      `)
-            .eq('user_id', userId)
+            .select('*')
             .neq('status', 'archived')
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (scope === 'household') {
+            const householdId = await getUserHouseholdId(userId);
+            if (!householdId) {
+                return res.json({ lists: [] });
+            }
+            query = query.eq('household_id', householdId);
+        } else {
+            query = query.eq('user_id', userId).is('household_id', null);
+        }
 
-        // Shape items to match the existing frontend contract
-        const shaped = (lists || []).map(list => ({
+        const { data: lists, error: listsError } = await query;
+
+        if (listsError) throw listsError;
+
+        if (!lists || lists.length === 0) {
+            return res.json({ lists: [] });
+        }
+
+        // Step 2: fetch all items for those lists in one query
+        const listIds = lists.map(l => l.id);
+        const { data: allItems, error: itemsError } = await supabase
+            .from('grocery_list_items')
+            .select('*')
+            .in('list_id', listIds)
+            .order('created_at', { ascending: true });
+
+        if (itemsError) throw itemsError;
+
+        // Step 3: zip items onto their parent lists
+        const itemsByList = {};
+        (allItems || []).forEach(item => {
+            if (!itemsByList[item.list_id]) itemsByList[item.list_id] = [];
+            itemsByList[item.list_id].push(item);
+        });
+
+        const shaped = lists.map(list => ({
             id: list.id,
             name: list.name,
             status: list.status,
             totalEstimatedCost: list.total_estimated_cost,
             createdAt: list.created_at,
             updatedAt: list.updated_at,
-            items: (list.items || []).map(item => ({
+            items: (itemsByList[list.id] || []).map(item => ({
                 id: item.id,
                 name: item.name,
                 quantity: item.quantity,
@@ -73,10 +115,19 @@ router.get('/', authenticateJWT, async (req, res) => {
 router.post('/', authenticateJWT, async (req, res) => {
     try {
         const userId = req.user.id;
-        const { name, items } = req.body;
+        const { name, items, householdId } = req.body;
 
         if (!name || !name.trim()) {
             return res.status(400).json({ error: 'List name is required' });
+        }
+
+        let validatedHouseholdId = null;
+        if (householdId) {
+            const userHouseholdId = await getUserHouseholdId(userId);
+            if (userHouseholdId !== householdId) {
+                return res.status(403).json({ error: 'Not a member of this household' });
+            }
+            validatedHouseholdId = householdId;
         }
 
         // Create the list
@@ -85,7 +136,8 @@ router.post('/', authenticateJWT, async (req, res) => {
             .insert({
                 user_id: userId,
                 name: name.trim(),
-                status: 'active'
+                status: 'active',
+                household_id: validatedHouseholdId
             })
             .select()
             .single();

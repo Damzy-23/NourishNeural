@@ -5,6 +5,9 @@ yarn-debug.log*
 yarn-error.log*
 package-lock.json
 
+# Uploads (temp files from image classification)
+server/uploads/
+
 # Build outputs
 dist/
 build/
@@ -128,6 +131,8 @@ client/.env
 
 # ML Models (large files)
 ml-models/models/*.pth
+ml-models/data/
+*.csv
 
 
 # Node modules in subdirectories

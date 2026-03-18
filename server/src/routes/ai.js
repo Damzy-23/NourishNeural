@@ -59,58 +59,23 @@ router.post('/chat', async (req, res) => {
       if (process.env.OPENAI_API_KEY) {
         console.log('🤖 Attempting AI call via OpenAI/Ollama...');
 
-        // Build system prompt for Nurexa AI - conversational and human-like
-        const systemPrompt = `You are Nurexa, a friendly AI food companion in the Nourish Neural app. You're like a knowledgeable friend who genuinely cares about helping people eat better.
-
-PERSONALITY:
-- Warm, approachable, and encouraging - never preachy or judgmental
-- Speak naturally like a real person, not a textbook or health pamphlet
-- Use casual language, contractions, and occasional humor when appropriate
-- Be empathetic - acknowledge that eating healthy can be challenging
-- Give honest, practical advice that works in real life
-
-COMMUNICATION STYLE:
-- Start with a direct, helpful response to their question
-- Keep responses concise but complete - don't overwhelm with bullet points
-- Use 2-3 key points max, not endless lists
-- Share tips like you're chatting with a friend over coffee
-- Ask follow-up questions to personalize advice when relevant
-- Use "you" and "I" to feel personal, not formal
-- Write in flowing paragraphs when possible, not step-by-step lists
-- For recipes, write conversationally like explaining to a friend, not numbered instructions
-
-FORMATTING RULES:
-- NEVER use markdown formatting like **bold**, *italics*, or ### headers
-- NEVER use numbered lists (1. 2. 3.) for instructions
-- Write naturally in paragraphs instead
-- If you must list things, use simple dashes (-) sparingly
-- Keep it clean and readable without special formatting
-
-AVOID:
-- Generic health disclaimers like "consult a healthcare professional"
-- Long numbered lists that feel like Wikipedia articles
-- Overly formal or clinical language
-- Repeating the same advice structure every time
-- Being preachy about "healthy eating" - meet people where they are
-- Any markdown syntax (**bold**, *italic*, ##headers, etc.)
-
-KNOWLEDGE:
-- UK-focused (supermarkets, products, measurements)
-- Practical cooking tips from real kitchen experience
-- Budget-conscious advice
-- Modern understanding of nutrition (not outdated food pyramid stuff)
-
-Remember: You're helping a friend, not writing a health textbook. Be real, be helpful, be human.`;
-
         const modelName = process.env.USE_OLLAMA === 'true' ? process.env.OLLAMA_MODEL : (process.env.OPENAI_MODEL || 'gpt-4o-mini');
+        const useOllama = process.env.USE_OLLAMA === 'true';
+
+        // When using Ollama with nurexa model, the system prompt is baked into
+        // the model via the Modelfile — sending it again doubles prompt tokens
+        // and slows response time significantly on local hardware.
+        const messages = useOllama
+          ? [{ role: 'user', content: message }]
+          : [
+              { role: 'system', content: `You are Nurexa, a friendly AI food companion. Be warm, concise, and practical. UK-focused. No markdown formatting. Write in natural paragraphs, not numbered lists.` },
+              { role: 'user', content: message }
+            ];
 
         const completion = await openai.chat.completions.create({
           model: modelName,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: message }
-          ],
-          max_tokens: 600,
+          messages,
+          max_tokens: useOllama ? 300 : 600,
           temperature: 0.85
         });
 
@@ -892,7 +857,7 @@ const AGENT_TOOLS = {
 
         proc.stdout.on('data', (d) => { dataString += d.toString(); });
 
-        const timeout = setTimeout(() => { proc.kill(); reject(new Error('timeout')); }, 10000);
+        const timeout = setTimeout(() => { proc.kill(); reject(new Error('timeout')); }, 30000);
 
         proc.on('close', (code) => {
           clearTimeout(timeout);
@@ -1040,17 +1005,27 @@ async function runReActAgent(userMessage, userId, maxSteps = 5) {
     }
 
     // Parse for Action and Action Input
-    const actionMatch = response.match(/Action:\s*(\w+)/);
+    const actionMatch = response.match(/Action:\s*([\w_-]+)/);
     const inputMatch = response.match(/Action Input:\s*([\s\S]*?)$/);
 
-    if (!actionMatch || !inputMatch) {
-      // No valid action - treat the whole response as the answer
-      const cleanResponse = response.replace(/^Thought:.*?\n?/i, '').trim();
-      return { response: cleanResponse || response, toolsUsed: toolLog };
+    if (!actionMatch) {
+      // No action found — treat response as a direct answer
+      // Strip Thought: prefix if present, keep the conversational text
+      const cleanResponse = response
+        .replace(/^Thought:.*?\n/im, '')
+        .replace(/^Thought:.*$/im, '')
+        .trim();
+      if (cleanResponse) {
+        return { response: cleanResponse, toolsUsed: toolLog };
+      }
+      // Entire response was just a Thought with no answer — nudge the LLM
+      messages.push({ role: 'assistant', content: response });
+      messages.push({ role: 'user', content: 'Observation: Please provide your answer using Action: final_answer' });
+      continue;
     }
 
     const actionName = actionMatch[1].trim();
-    const actionInput = inputMatch[1].trim();
+    const actionInput = (inputMatch ? inputMatch[1] : '{}').trim();
 
     // Final answer
     if (actionName === 'final_answer') {
@@ -1070,7 +1045,13 @@ async function runReActAgent(userMessage, userId, maxSteps = 5) {
 
     let toolResult;
     try {
-      const params = JSON.parse(actionInput);
+      // Try JSON parse; if it fails, wrap as a string param for simple tools
+      let params;
+      try {
+        params = JSON.parse(actionInput);
+      } catch {
+        params = actionInput.startsWith('{') ? {} : { query: actionInput };
+      }
       toolResult = await tool.execute(params, userId);
       toolLog.push({ tool: actionName, params, success: true });
     } catch (e) {

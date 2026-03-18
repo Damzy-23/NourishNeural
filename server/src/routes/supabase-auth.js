@@ -2,8 +2,23 @@ const express = require('express');
 const router = express.Router();
 const { supabase } = require('../config/supabase');
 
+// Rate limiting for auth endpoints (brute-force protection)
+let authRateLimit;
+try {
+  const rateLimit = require('express-rate-limit');
+  authRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 15,                   // 15 attempts per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many auth attempts, please try again later.' }
+  });
+} catch (e) {
+  authRateLimit = (req, res, next) => next();
+}
+
 // Register with email/password
-router.post('/register', async (req, res) => {
+router.post('/register', authRateLimit, async (req, res) => {
   try {
     const { firstName, lastName, email, password, age } = req.body;
 
@@ -121,7 +136,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login with email/password
-router.post('/login', async (req, res) => {
+router.post('/login', authRateLimit, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -322,7 +337,7 @@ router.post('/refresh', async (req, res) => {
 });
 
 // Forgot password - Send reset email
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', authRateLimit, async (req, res) => {
   try {
     const { email } = req.body;
 

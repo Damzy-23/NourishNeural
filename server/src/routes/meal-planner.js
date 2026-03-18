@@ -4,10 +4,11 @@ const { supabase } = require('../config/supabase');
 const OpenAI = require('openai');
 const router = express.Router();
 
-// Initialize OpenAI/Ollama client
+// Initialize OpenAI/Ollama client with extended timeout for local LLM
 const openai = new OpenAI({
     apiKey: process.env.USE_OLLAMA === 'true' ? 'ollama' : process.env.OPENAI_API_KEY,
-    baseURL: process.env.USE_OLLAMA === 'true' ? process.env.OLLAMA_BASE_URL : undefined
+    baseURL: process.env.USE_OLLAMA === 'true' ? process.env.OLLAMA_BASE_URL : undefined,
+    timeout: 90000 // 90s — local LLM needs time for structured JSON
 });
 
 const getModelName = () => process.env.USE_OLLAMA === 'true'
@@ -238,42 +239,42 @@ router.post('/generate', authenticateJWT, async (req, res) => {
         let llmPlan = null;
         try {
             const expiringList = expiringSoon.length > 0
-                ? expiringSoon.map(i => `${i.name} (expires ${i.expiry_date})`).join(', ')
-                : 'None expiring soon';
+                ? expiringSoon.map(i => i.name).join(', ')
+                : 'none';
             const otherItems = sorted
                 .filter(i => !expiringSoon.includes(i))
-                .slice(0, 15)
+                .slice(0, 10)
                 .map(i => i.name)
                 .join(', ');
 
-            const prompt = `Create a 7-day meal plan (Monday-Sunday, with Breakfast, Lunch, Dinner each day) that PRIORITISES using these expiring items first:
-Expiring soon: ${expiringList}
-Other available items: ${otherItems || 'basic staples'}
-${preferences ? `Preferences: ${JSON.stringify(preferences)}` : ''}
-
-Return ONLY valid JSON in this exact format (no markdown, no explanation):
-{"Monday":{"Breakfast":{"name":"...","ingredients":["..."]},"Lunch":{"name":"...","ingredients":["..."]},"Dinner":{"name":"...","ingredients":["..."]}},"Tuesday":{...},...}
-
-Rules:
-- Use expiring items in the first 2-3 days
-- Keep meals simple and practical
-- UK-style meals and ingredients
-- Each meal needs a name and ingredients list`;
+            // Simplified prompt — ask for meal names only (no ingredients) to keep response short
+            const prompt = `7-day UK meal plan using these items. Expiring: ${expiringList}. Other: ${otherItems || 'staples'}.
+Return ONLY JSON, no text: {"Monday":{"Breakfast":"meal name","Lunch":"meal name","Dinner":"meal name"},"Tuesday":{...},...,"Sunday":{...}}`;
 
             const completion = await openai.chat.completions.create({
                 model: getModelName(),
                 messages: [
-                    { role: 'system', content: 'You are a UK meal planner focused on reducing food waste. Return only valid JSON, no markdown.' },
+                    { role: 'system', content: 'Return only valid JSON. No markdown, no explanation. UK meals.' },
                     { role: 'user', content: prompt }
                 ],
-                max_tokens: 1500,
+                max_tokens: 800,
                 temperature: 0.5
             });
 
             const raw = completion.choices[0].message.content.trim();
             const jsonMatch = raw.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
-                llmPlan = JSON.parse(jsonMatch[0]);
+                const parsed = JSON.parse(jsonMatch[0]);
+                // Normalize: if values are strings, wrap them as { name: "..." }
+                llmPlan = {};
+                for (const [day, meals] of Object.entries(parsed)) {
+                    llmPlan[day] = {};
+                    for (const [type, val] of Object.entries(meals)) {
+                        llmPlan[day][type] = typeof val === 'string'
+                            ? { name: val, ingredients: [] }
+                            : { name: val.name || val, ingredients: val.ingredients || [] };
+                    }
+                }
             }
         } catch (llmError) {
             console.error('LLM meal plan generation failed:', llmError.message);

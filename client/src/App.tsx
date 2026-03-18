@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
+import { WifiOff } from 'lucide-react'
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
 import LandingPage from './pages/LandingPage'
@@ -21,6 +23,18 @@ import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   const { isLoading } = useAuth()
+  const [isOffline, setIsOffline] = useState(!navigator.onLine)
+
+  useEffect(() => {
+    const goOffline = () => setIsOffline(true)
+    const goOnline = () => setIsOffline(false)
+    window.addEventListener('offline', goOffline)
+    window.addEventListener('online', goOnline)
+    return () => {
+      window.removeEventListener('offline', goOffline)
+      window.removeEventListener('online', goOnline)
+    }
+  }, [])
 
   if (isLoading) {
     return (
@@ -43,6 +57,13 @@ function App() {
         <title>Nourish Neural - AI Culinary Intelligence</title>
         <meta name="description" content="Your smart grocery companion – find, plan, and shop smarter." />
       </Helmet>
+
+      {isOffline && (
+        <div className="fixed top-0 left-0 right-0 z-[9999] bg-amber-500 text-white text-center py-2 px-4 text-sm font-medium flex items-center justify-center gap-2">
+          <WifiOff className="w-4 h-4" />
+          You're offline — showing cached data
+        </div>
+      )}
 
       <Routes>
         {/* Public routes */}

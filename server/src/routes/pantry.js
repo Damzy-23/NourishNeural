@@ -214,7 +214,6 @@ router.get('/:id', authenticateJWT, async (req, res) => {
       .from('pantry_items')
       .select('*')
       .eq('id', itemId)
-      .eq('user_id', userId)
       .single();
 
     if (error) {
@@ -223,6 +222,12 @@ router.get('/:id', authenticateJWT, async (req, res) => {
       }
       throw error;
     }
+
+    if (!(await canAccessItem(userId, item))) {
+      return res.status(404).json({ error: 'Pantry item not found' });
+    }
+
+
 
     res.json({ item });
   } catch (error) {
@@ -275,25 +280,24 @@ router.post('/', authenticateJWT, async (req, res) => {
       validatedHouseholdId = householdId;
     }
 
-    // Check if item already exists (by name and barcode)
+    // Check if item already exists (by name and barcode in the correct scope)
+    let itemQuery = supabase
+      .from('pantry_items')
+      .select('*')
+      .eq('is_archived', false);
+
+    if (validatedHouseholdId) {
+      itemQuery = itemQuery.eq('household_id', validatedHouseholdId);
+    } else {
+      itemQuery = itemQuery.eq('user_id', userId).is('household_id', null);
+    }
+
     let existingItem = null;
     if (barcode) {
-      const { data } = await supabase
-        .from('pantry_items')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('barcode', barcode)
-        .eq('is_archived', false)
-        .single();
+      const { data } = await itemQuery.eq('barcode', barcode).single();
       existingItem = data;
     } else {
-      const { data } = await supabase
-        .from('pantry_items')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('name', name)
-        .eq('is_archived', false)
-        .single();
+      const { data } = await itemQuery.eq('name', name).single();
       existingItem = data;
     }
 

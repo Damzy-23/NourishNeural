@@ -51,10 +51,38 @@ const MEAL_ICONS: Record<MealType, React.ElementType> = {
   Dinner: Moon
 }
 
-const MEAL_COLORS: Record<MealType, string> = {
-  Breakfast: 'orange',
-  Lunch: 'blue',
-  Dinner: 'purple'
+const MEAL_STYLES: Record<MealType, {
+  filledBg: string
+  filledBorder: string
+  iconColor: string
+  textColor: string
+  hoverColor: string
+  hoverBg: string
+}> = {
+  Breakfast: {
+    filledBg: 'bg-orange-50 dark:bg-orange-900/20',
+    filledBorder: 'border border-orange-200 dark:border-orange-800',
+    iconColor: 'text-orange-500',
+    textColor: 'text-orange-700 dark:text-orange-300',
+    hoverColor: 'hover:text-orange-500',
+    hoverBg: 'hover:bg-orange-50 dark:hover:bg-orange-900/20'
+  },
+  Lunch: {
+    filledBg: 'bg-blue-50 dark:bg-blue-900/20',
+    filledBorder: 'border border-blue-200 dark:border-blue-800',
+    iconColor: 'text-blue-500',
+    textColor: 'text-blue-700 dark:text-blue-300',
+    hoverColor: 'hover:text-blue-500',
+    hoverBg: 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
+  },
+  Dinner: {
+    filledBg: 'bg-purple-50 dark:bg-purple-900/20',
+    filledBorder: 'border border-purple-200 dark:border-purple-800',
+    iconColor: 'text-purple-500',
+    textColor: 'text-purple-700 dark:text-purple-300',
+    hoverColor: 'hover:text-purple-500',
+    hoverBg: 'hover:bg-purple-50 dark:hover:bg-purple-900/20'
+  }
 }
 
 function getMondayOf(date: Date): Date {
@@ -195,7 +223,7 @@ export default function MealPlanCalendar() {
       const result: any = await apiService.post('/api/meal-planner/generate', {
         pantryItems: [],
         preferences: {}
-      })
+      }, { timeout: 90000 })
       const generatedPlan: Record<string, DayMeals> = result?.plan || {}
 
       // Map day names to actual dates
@@ -265,44 +293,57 @@ export default function MealPlanCalendar() {
 
       <div className="relative min-h-screen pb-16">
         <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-purple-50/30 via-white to-blue-50/20 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800" />
+        <motion.div
+          className="pointer-events-none absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-purple-200/30 blur-3xl"
+          animate={{ y: [0, 18, 0], opacity: [0.3, 0.55, 0.3] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          className="pointer-events-none absolute bottom-[-10%] left-[-8%] h-64 w-64 rounded-full bg-blue-200/25 blur-3xl"
+          animate={{ y: [0, -14, 0], opacity: [0.25, 0.5, 0.25] }}
+          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
+        />
 
         <div className="relative">
           {/* Header */}
           <motion.div className="mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
-                  <CalendarDays className="w-5 h-5 text-white" />
+            <div className="relative glass-card rounded-3xl p-6">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-blue-500/5 rounded-3xl" />
+              <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
+                    <CalendarDays className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-3xl font-black gradient-text">Meal Planner</h1>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">Plan your week, one meal at a time</p>
+                  </div>
                 </div>
-                <div>
-                  <h1 className="text-3xl font-black text-neutral-900 dark:text-neutral-100">Meal Planner</h1>
-                  <p className="text-sm text-neutral-500 dark:text-neutral-400">Plan your week, one meal at a time</p>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleAIGenerate}
+                    disabled={isGenerating}
+                    className="btn btn-primary flex items-center space-x-2"
+                  >
+                    {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    <span>AI Generate</span>
+                  </button>
+                  <button
+                    onClick={handleGenerateShoppingList}
+                    disabled={isGenShoppingList || !currentPlan}
+                    className="btn btn-outline flex items-center space-x-2"
+                  >
+                    {isGenShoppingList ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
+                    <span>Shopping List</span>
+                  </button>
                 </div>
-              </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={handleAIGenerate}
-                  disabled={isGenerating}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-semibold text-sm hover:opacity-90 disabled:opacity-60 transition-opacity shadow-md"
-                >
-                  {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                  <span>AI Generate</span>
-                </button>
-                <button
-                  onClick={handleGenerateShoppingList}
-                  disabled={isGenShoppingList || !currentPlan}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700 disabled:opacity-50 transition-colors text-sm font-semibold"
-                >
-                  {isGenShoppingList ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
-                  <span>Shopping List</span>
-                </button>
               </div>
             </div>
           </motion.div>
 
           {/* Week Navigation */}
           <motion.div
-            className="flex items-center justify-between mb-6 bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 px-4 py-3"
+            className="flex items-center justify-between mb-6 glass-card rounded-2xl px-4 py-3"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           >
             <button
@@ -334,6 +375,25 @@ export default function MealPlanCalendar() {
             <motion.div
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
             >
+              {/* First-use prompt when no meals planned this week */}
+              {!currentPlan && (
+                <motion.div
+                  className="mb-4 p-5 rounded-2xl border border-dashed border-purple-300 dark:border-purple-700 bg-purple-50/50 dark:bg-purple-900/10 text-center"
+                  initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
+                >
+                  <CalendarDays className="w-10 h-10 text-purple-400 mx-auto mb-2" />
+                  <h3 className="text-base font-bold text-neutral-800 dark:text-neutral-200 mb-1">No meals planned this week</h3>
+                  <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-3">Tap a slot below to add a meal, or let AI fill in the whole week.</p>
+                  <button
+                    onClick={handleAIGenerate}
+                    disabled={isGenerating}
+                    className="btn btn-primary inline-flex items-center space-x-2"
+                  >
+                    {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                    <span>Generate with AI</span>
+                  </button>
+                </motion.div>
+              )}
               {/* Desktop: 7-column grid */}
               <div className="hidden md:grid grid-cols-7 gap-2">
                 {weekDates.map((dateStr) => {
@@ -355,15 +415,15 @@ export default function MealPlanCalendar() {
                         {MEAL_TYPES.map(mealType => {
                           const meal = getMealForSlot(dateStr, mealType)
                           const Icon = MEAL_ICONS[mealType]
-                          const color = MEAL_COLORS[mealType]
+                          const styles = MEAL_STYLES[mealType]
 
                           return (
-                            <div key={mealType} className={`rounded-xl p-2 min-h-[52px] ${meal ? `bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-200 dark:border-${color}-800` : 'bg-neutral-50 dark:bg-neutral-700/40 border border-dashed border-neutral-200 dark:border-neutral-600'}`}>
+                            <div key={mealType} className={`rounded-xl p-2 min-h-[52px] ${meal ? `${styles.filledBg} ${styles.filledBorder}` : 'bg-neutral-50 dark:bg-neutral-700/40 border border-dashed border-neutral-200 dark:border-neutral-600'}`}>
                               <div className="flex items-start justify-between gap-1">
                                 <div className="flex items-center gap-1 min-w-0">
-                                  <Icon className={`w-3 h-3 flex-shrink-0 ${meal ? `text-${color}-500` : 'text-neutral-400 dark:text-neutral-500'}`} />
+                                  <Icon className={`w-3 h-3 flex-shrink-0 ${meal ? styles.iconColor : 'text-neutral-400 dark:text-neutral-500'}`} />
                                   {meal ? (
-                                    <p className={`text-xs font-semibold text-${color}-700 dark:text-${color}-300 leading-tight line-clamp-2`}>{meal.name}</p>
+                                    <p className={`text-xs font-semibold ${styles.textColor} leading-tight line-clamp-2`}>{meal.name}</p>
                                   ) : (
                                     <p className="text-xs text-neutral-400 dark:text-neutral-500">{mealType}</p>
                                   )}
@@ -379,7 +439,7 @@ export default function MealPlanCalendar() {
                                       </button>
                                     </>
                                   ) : (
-                                    <button onClick={() => openEditSlot(dateStr, mealType)} className={`p-0.5 rounded text-neutral-400 hover:text-${color}-500 transition-colors`}>
+                                    <button onClick={() => openEditSlot(dateStr, mealType)} className={`p-0.5 rounded text-neutral-400 ${styles.hoverColor} transition-colors`}>
                                       <Plus className="w-3.5 h-3.5" />
                                     </button>
                                   )}
@@ -410,15 +470,15 @@ export default function MealPlanCalendar() {
                         {MEAL_TYPES.map(mealType => {
                           const meal = getMealForSlot(dateStr, mealType)
                           const Icon = MEAL_ICONS[mealType]
-                          const color = MEAL_COLORS[mealType]
+                          const styles = MEAL_STYLES[mealType]
 
                           return (
-                            <div key={mealType} className={`flex items-center justify-between rounded-xl px-3 py-2.5 ${meal ? `bg-${color}-50 dark:bg-${color}-900/20 border border-${color}-200 dark:border-${color}-800` : 'bg-neutral-50 dark:bg-neutral-700/40 border border-dashed border-neutral-200 dark:border-neutral-600'}`}>
+                            <div key={mealType} className={`flex items-center justify-between rounded-xl px-3 py-2.5 ${meal ? `${styles.filledBg} ${styles.filledBorder}` : 'bg-neutral-50 dark:bg-neutral-700/40 border border-dashed border-neutral-200 dark:border-neutral-600'}`}>
                               <div className="flex items-center space-x-2 min-w-0">
-                                <Icon className={`w-4 h-4 flex-shrink-0 ${meal ? `text-${color}-500` : 'text-neutral-400'}`} />
+                                <Icon className={`w-4 h-4 flex-shrink-0 ${meal ? styles.iconColor : 'text-neutral-400'}`} />
                                 <div className="min-w-0">
                                   <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400">{mealType}</p>
-                                  {meal && <p className={`text-sm font-bold text-${color}-700 dark:text-${color}-300 truncate`}>{meal.name}</p>}
+                                  {meal && <p className={`text-sm font-bold ${styles.textColor} truncate`}>{meal.name}</p>}
                                 </div>
                               </div>
                               <div className="flex items-center space-x-1 flex-shrink-0">
@@ -432,7 +492,7 @@ export default function MealPlanCalendar() {
                                     </button>
                                   </>
                                 ) : (
-                                  <button onClick={() => openEditSlot(dateStr, mealType)} className={`p-1.5 rounded-lg text-neutral-400 hover:text-${color}-500 hover:bg-${color}-50 dark:hover:bg-${color}-900/20 transition-colors`}>
+                                  <button onClick={() => openEditSlot(dateStr, mealType)} className={`p-1.5 rounded-lg text-neutral-400 ${styles.hoverColor} ${styles.hoverBg} transition-colors`}>
                                     <Plus className="w-4 h-4" />
                                   </button>
                                 )}

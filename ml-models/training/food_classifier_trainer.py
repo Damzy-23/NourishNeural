@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 import torchvision.transforms as transforms
 from torchvision.models import mobilenet_v3_large, MobileNet_V3_Large_Weights
 import pandas as pd
@@ -44,12 +44,12 @@ def setup_gpu(max_vram_gb: float = 4.0):
         return torch.device('cpu')
 
     gpu_name = torch.cuda.get_device_name(0)
-    total_vram = torch.cuda.get_device_properties(0).total_mem / (1024**3)
+    total_vram = torch.cuda.get_device_properties(0).total_memory / (1024**3)
     logger.info(f"GPU: {gpu_name} ({total_vram:.1f} GB VRAM)")
 
     # Cap VRAM usage so other apps don't crash
     max_bytes = int(max_vram_gb * 1024**3)
-    torch.cuda.set_per_process_memory_fraction(max_bytes / torch.cuda.get_device_properties(0).total_mem, 0)
+    torch.cuda.set_per_process_memory_fraction(max_bytes / torch.cuda.get_device_properties(0).total_memory, 0)
     logger.info(f"VRAM cap set to {max_vram_gb:.1f} GB (of {total_vram:.1f} GB)")
 
     # Enable cudnn benchmarking for consistent input sizes
@@ -192,7 +192,7 @@ class FoodClassifierTrainer:
         self.device = setup_gpu(max_vram_gb=config.get('max_vram_gb', 4.0))
 
         # Mixed precision scaler (fp16 halves VRAM usage)
-        self.scaler = GradScaler(enabled=(self.device.type == 'cuda'))
+        self.scaler = GradScaler('cuda', enabled=(self.device.type == 'cuda'))
         self.grad_accum_steps = config.get('grad_accum_steps', 4)
 
         # Initialize model
@@ -308,7 +308,7 @@ class FoodClassifierTrainer:
             data, target = data.to(self.device, non_blocking=True), target.to(self.device, non_blocking=True)
 
             # Mixed precision forward pass
-            with autocast(device_type='cuda', enabled=(self.device.type == 'cuda')):
+            with autocast('cuda', enabled=(self.device.type == 'cuda')):
                 outputs = self.model(data)
 
                 # Main classification loss
@@ -361,7 +361,7 @@ class FoodClassifierTrainer:
             for data, target in val_loader:
                 data, target = data.to(self.device, non_blocking=True), target.to(self.device, non_blocking=True)
 
-                with autocast(device_type='cuda', enabled=(self.device.type == 'cuda')):
+                with autocast('cuda', enabled=(self.device.type == 'cuda')):
                     outputs = self.model(data)
                     loss = self.criterion(outputs['classification'], target)
 
@@ -498,7 +498,7 @@ class FoodClassifierTrainer:
         with torch.no_grad():
             for data, target in test_loader:
                 data, target = data.to(self.device), target.to(self.device)
-                with autocast(device_type='cuda', enabled=(self.device.type == 'cuda')):
+                with autocast('cuda', enabled=(self.device.type == 'cuda')):
                     outputs = self.model(data)
                 _, predicted = outputs['classification'].max(1)
 
@@ -543,9 +543,12 @@ class FoodClassifierTrainer:
 def main():
     """Main training function — optimized for RTX 2060 (6GB VRAM)"""
 
+    # Resolve paths relative to ml-models/ directory
+    ml_dir = os.path.dirname(os.path.dirname(__file__))
+
     config = {
-        # Model
-        'num_classes': 200,
+        # Model — 8 NourishNeural pantry categories from Food-11
+        'num_classes': 8,
         'pretrained': True,
 
         # Training — conservative for 6GB VRAM
@@ -553,20 +556,21 @@ def main():
         'grad_accum_steps': 4,     # Effective batch size = 8 * 4 = 32
         'learning_rate': 3e-4,     # Slightly higher LR for MobileNet
         'weight_decay': 1e-4,
-        'epochs': 80,
-        'early_stopping_patience': 10,
+        'epochs': 50,
+        'early_stopping_patience': 8,
         'use_augmentation': True,
         'label_smoothing': 0.1,
 
         # GPU — cap at 4GB so desktop stays responsive
         'max_vram_gb': 4.0,
 
-        # Data
-        'train_data_path': 'data/training/products_with_expiry.csv',
-        'val_data_path': 'data/training/products_with_expiry.csv',  # Same for demo
+        # Data — Food-11 dataset mapped to pantry categories
+        'train_data_path': os.path.join(ml_dir, 'data', 'training', 'food11_train.csv'),
+        'val_data_path': os.path.join(ml_dir, 'data', 'training', 'food11_val.csv'),
+        'test_data_path': os.path.join(ml_dir, 'data', 'training', 'food11_test.csv'),
     }
 
-    logger.info("=== UK Food Classifier — Local Training (RTX 2060) ===")
+    logger.info("=== UK Food Classifier -- Local Training (RTX 2060) ===")
 
     # Initialize trainer
     trainer = FoodClassifierTrainer(config)
@@ -577,12 +581,46 @@ def main():
     # Plot training history
     trainer.plot_training_history()
 
+    # Load best model and evaluate on test set
+    logger.info("Loading best model for evaluation...")
+    trainer.load_model('best_food_classifier.pth')
+
+    _, val_transform = trainer.get_transforms()
+    test_dataset = UKFoodDataset(
+        config['test_data_path'],
+        transform=val_transform,
+        is_training=False
+    )
+
+    num_workers = 0 if os.name == 'nt' else 4
+    test_loader = DataLoader(
+        test_dataset,
+        batch_size=config['batch_size'],
+        shuffle=False,
+        num_workers=num_workers,
+    )
+
+    class_names = list(test_dataset.idx_to_category.values())
+    results = trainer.evaluate_model(test_loader, class_names)
+
     # Save final model
     trainer.save_model('final_food_classifier.pth')
 
-    logger.info(f"Training completed with best accuracy: {best_accuracy:.1f}%")
+    # Save class names for inference
+    import json
+    models_dir = os.path.join(ml_dir, 'models')
+    with open(os.path.join(models_dir, 'food_classes.json'), 'w') as f:
+        json.dump({
+            'classes': class_names,
+            'num_classes': len(class_names),
+            'dataset': 'Food-11 (mapped to NourishNeural categories)',
+            'test_accuracy': results['accuracy'],
+        }, f, indent=2)
 
-    target_accuracy = 95.0
+    logger.info(f"Training completed with best accuracy: {best_accuracy:.1f}%")
+    logger.info(f"Test set accuracy: {results['accuracy']*100:.1f}%")
+
+    target_accuracy = 85.0
     if best_accuracy >= target_accuracy:
         logger.info(f"Target accuracy of {target_accuracy}% achieved!")
     else:

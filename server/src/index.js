@@ -10,18 +10,9 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 console.log('📁 Loading .env from:', path.resolve(__dirname, '../.env'));
 
-// Import mock database
-const mockDB = require('./mockDatabase');
-
-// Import Supabase client (used in profile endpoints)
+// Import Supabase client
 const { supabase } = require('./config/supabase');
-
-// Database and GraphQL setup (disabled for now - using Supabase)
-// const { connectDB } = require('./config/database');
-// const { setupGraphQL } = require('./config/graphql');
-// const { setupPassport } = require('./config/passport');
-// const { setupSession } = require('./config/session');
-// const { setupRateLimiting } = require('./middleware/rateLimiter');
+const { authenticateJWT } = require('./middleware/supabaseAuth');
 
 // Import routes
 const supabaseAuthRoutes = require('./routes/supabase-auth');
@@ -73,15 +64,6 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('combined'));
 }
 
-// Rate limiting - temporarily disabled
-// app.use(setupRateLimiting());
-
-// Session setup - temporarily disabled
-// setupSession(app);
-
-// Passport setup - temporarily disabled
-// setupPassport(app);
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -92,119 +74,258 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Mock dashboard endpoint
-app.get('/api/dashboard', (req, res) => {
-  res.json({
-    stats: {
-      groceryLists: { total: 5, active: 2, completed: 3, itemsCount: 24 },
-      pantry: { totalItems: 45, totalValue: 125.50, expiringSoon: 8, lowStock: 3, categories: { 'Dairy': 8, 'Vegetables': 12, 'Meat': 6, 'Grains': 10, 'Snacks': 9 } },
-      spending: { thisMonth: 180.75, lastMonth: 195.30, saved: 14.55, budget: 200, trend: 'down' },
-      activity: {
-        recentLists: [
-          { id: 1, name: 'Weekly Shopping', items: 12, progress: 75, status: 'active', updatedAt: new Date().toISOString() },
-          { id: 2, name: 'Dinner Party', items: 8, progress: 100, status: 'completed', updatedAt: new Date().toISOString() }
-        ], recentPantryItems: [], completedTasks: 5
+// ─── Helper: extract user from Bearer token (no 401 on failure) ───
+async function getUserFromToken(req) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ') || !supabase) return null;
+  const { data: { user } } = await supabase.auth.getUser(authHeader.substring(7));
+  return user || null;
+}
+
+// ─── Dashboard stats — real Supabase aggregation ───
+app.get('/api/dashboard', async (req, res) => {
+  try {
+    const user = await getUserFromToken(req);
+    const userId = user?.id;
+
+    // Pantry stats
+    let pantryStats = { totalItems: 0, totalValue: 0, expiringSoon: 0, lowStock: 0, categories: {} };
+    if (userId) {
+      const { data: pantryItems } = await supabase
+        .from('pantry_items')
+        .select('name, category, quantity, unit, estimated_price, expiry_date')
+        .eq('user_id', userId)
+        .eq('is_archived', false);
+
+      if (pantryItems) {
+        const now = new Date();
+        pantryStats.totalItems = pantryItems.length;
+        pantryStats.totalValue = pantryItems.reduce((sum, i) => sum + (parseFloat(i.estimated_price) || 0), 0);
+        pantryStats.expiringSoon = pantryItems.filter(i => {
+          if (!i.expiry_date) return false;
+          const days = (new Date(i.expiry_date) - now) / 86400000;
+          return days >= 0 && days <= 3;
+        }).length;
+        pantryStats.lowStock = pantryItems.filter(i => (i.quantity || 0) <= 1).length;
+
+        // Category breakdown
+        pantryItems.forEach(i => {
+          const cat = i.category || 'Other';
+          pantryStats.categories[cat] = (pantryStats.categories[cat] || 0) + 1;
+        });
       }
     }
-  });
-});
 
-// Mock recommendations endpoint
-app.get('/api/dashboard/recommendations', (req, res) => {
-  res.json({
-    recommendations: [
-      { id: 1, type: 'expiry', title: 'Milk expires tomorrow', description: 'Use your milk in a recipe or freeze it', action: 'View recipes', link: '/app/ai-assistant', priority: 'high' },
-      { id: 2, type: 'recipe', title: 'Try pasta with tomatoes', description: 'You have all ingredients for this recipe', action: 'See recipe', link: '/app/ai-assistant', priority: 'medium' },
-      { id: 3, type: 'shopping', title: 'Low on bread', description: 'Add bread to your shopping list', action: 'Add to list', link: '/app/grocery-lists', priority: 'low' }
-    ]
-  });
-});
+    // Grocery list stats
+    let groceryStats = { total: 0, active: 0, completed: 0, itemsCount: 0 };
+    if (userId) {
+      const { data: lists } = await supabase
+        .from('grocery_lists')
+        .select('id, status, items')
+        .eq('user_id', userId);
 
-// Mock pantry endpoints - DISABLED: Real routes are now handled by pantryRoutes
-// These mock routes were conflicting with the real Supabase-backed routes
-// The real routes are mounted at: app.use('/api/pantry', pantryRoutes);
-/*
-app.get('/api/pantry', (req, res) => {
-  res.json({
-    items: [
-      { id: 1, name: 'Milk', quantity: 1, unit: 'litre', category: 'Dairy', expiryDate: '2024-01-15', estimatedPrice: 1.20, notes: 'Whole milk' },
-      { id: 2, name: 'Bread', quantity: 2, unit: 'loaves', category: 'Grains', expiryDate: '2024-01-20', estimatedPrice: 1.50, notes: 'Whole wheat' },
-      { id: 3, name: 'Tomatoes', quantity: 6, unit: 'pieces', category: 'Vegetables', expiryDate: '2024-01-18', estimatedPrice: 2.00, notes: 'Cherry tomatoes' },
-      { id: 4, name: 'Chicken Breast', quantity: 500, unit: 'grams', category: 'Meat', expiryDate: '2024-01-16', estimatedPrice: 4.50, notes: 'Free range' },
-      { id: 5, name: 'Pasta', quantity: 500, unit: 'grams', category: 'Grains', expiryDate: '2025-01-01', estimatedPrice: 1.80, notes: 'Spaghetti' }
-    ]
-  });
-});
-
-app.get('/api/pantry/stats', (req, res) => {
-  res.json({
-    stats: {
-      totalItems: 45,
-      totalValue: 125.50,
-      expiringSoon: 8,
-      lowStock: 3,
-      categories: { 'Dairy': 8, 'Vegetables': 12, 'Meat': 6, 'Grains': 10, 'Snacks': 9 },
-      averageItemValue: 2.79
+      if (lists) {
+        groceryStats.total = lists.length;
+        groceryStats.active = lists.filter(l => l.status !== 'completed').length;
+        groceryStats.completed = lists.filter(l => l.status === 'completed').length;
+        groceryStats.itemsCount = lists.reduce((sum, l) => {
+          const items = Array.isArray(l.items) ? l.items : [];
+          return sum + items.length;
+        }, 0);
+      }
     }
-  });
+
+    // Recent activity
+    let recentLists = [];
+    if (userId) {
+      const { data: recent } = await supabase
+        .from('grocery_lists')
+        .select('id, name, items, status, updated_at')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .limit(3);
+
+      if (recent) {
+        recentLists = recent.map(l => {
+          const items = Array.isArray(l.items) ? l.items : [];
+          const checked = items.filter(i => i.checked).length;
+          return {
+            id: l.id,
+            name: l.name,
+            items: items.length,
+            progress: items.length > 0 ? Math.round((checked / items.length) * 100) : 0,
+            status: l.status || 'active',
+            updatedAt: l.updated_at
+          };
+        });
+      }
+    }
+
+    // Spending estimate (sum of pantry item prices added this month)
+    let spending = { thisMonth: 0, lastMonth: 0, saved: 0, budget: 200, trend: 'stable' };
+    if (userId) {
+      const now = new Date();
+      const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+
+      const { data: thisMonthItems } = await supabase
+        .from('pantry_items')
+        .select('estimated_price')
+        .eq('user_id', userId)
+        .gte('created_at', thisMonthStart);
+
+      const { data: lastMonthItems } = await supabase
+        .from('pantry_items')
+        .select('estimated_price')
+        .eq('user_id', userId)
+        .gte('created_at', lastMonthStart)
+        .lt('created_at', thisMonthStart);
+
+      spending.thisMonth = (thisMonthItems || []).reduce((s, i) => s + (parseFloat(i.estimated_price) || 0), 0);
+      spending.lastMonth = (lastMonthItems || []).reduce((s, i) => s + (parseFloat(i.estimated_price) || 0), 0);
+      spending.saved = Math.max(0, spending.lastMonth - spending.thisMonth);
+      spending.trend = spending.thisMonth < spending.lastMonth ? 'down' : spending.thisMonth > spending.lastMonth ? 'up' : 'stable';
+    }
+
+    res.json({
+      stats: {
+        groceryLists: groceryStats,
+        pantry: pantryStats,
+        spending,
+        activity: {
+          recentLists,
+          recentPantryItems: [],
+          completedTasks: groceryStats.completed
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Dashboard stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard stats', details: error.message });
+  }
 });
 
-app.get('/api/pantry/categories', (req, res) => {
-  res.json({
-    categories: ['Dairy', 'Vegetables', 'Meat', 'Grains', 'Snacks', 'Beverages', 'Frozen', 'Condiments']
-  });
+// ─── Dashboard recommendations — dynamic from pantry data ───
+app.get('/api/dashboard/recommendations', async (req, res) => {
+  try {
+    const user = await getUserFromToken(req);
+    const recommendations = [];
+
+    if (user?.id) {
+      const now = new Date();
+
+      // Items expiring within 2 days
+      const twoDaysOut = new Date(now.getTime() + 2 * 86400000).toISOString().split('T')[0];
+      const { data: expiring } = await supabase
+        .from('pantry_items')
+        .select('name, expiry_date')
+        .eq('user_id', user.id)
+        .eq('is_archived', false)
+        .lte('expiry_date', twoDaysOut)
+        .gte('expiry_date', now.toISOString().split('T')[0])
+        .order('expiry_date')
+        .limit(3);
+
+      if (expiring?.length) {
+        expiring.forEach((item, i) => {
+          const daysLeft = Math.ceil((new Date(item.expiry_date) - now) / 86400000);
+          recommendations.push({
+            id: `exp-${i}`,
+            type: 'expiry',
+            title: daysLeft === 0 ? `${item.name} expires today` : `${item.name} expires ${daysLeft === 1 ? 'tomorrow' : `in ${daysLeft} days`}`,
+            description: `Use it up or freeze it to avoid waste`,
+            action: 'Find recipes',
+            link: '/app/ai-assistant',
+            priority: daysLeft === 0 ? 'high' : 'medium'
+          });
+        });
+      }
+
+      // Low stock items (quantity <= 1)
+      const { data: lowStock } = await supabase
+        .from('pantry_items')
+        .select('name')
+        .eq('user_id', user.id)
+        .eq('is_archived', false)
+        .lte('quantity', 1)
+        .limit(2);
+
+      if (lowStock?.length) {
+        recommendations.push({
+          id: 'low-1',
+          type: 'shopping',
+          title: `Running low on ${lowStock.map(i => i.name).join(' and ')}`,
+          description: 'Add to your shopping list before you run out',
+          action: 'Add to list',
+          link: '/app/grocery-lists',
+          priority: 'low'
+        });
+      }
+
+      // If no recommendations, add a helpful default
+      if (recommendations.length === 0) {
+        recommendations.push({
+          id: 'tip-1',
+          type: 'recipe',
+          title: 'Ask Nurexa for recipe ideas',
+          description: 'Get personalised suggestions based on what you have',
+          action: 'Chat now',
+          link: '/app/ai-assistant',
+          priority: 'low'
+        });
+      }
+    }
+
+    res.json({ recommendations });
+  } catch (error) {
+    console.error('Recommendations error:', error);
+    res.json({ recommendations: [] });
+  }
 });
-*/
 
-// Grocery lists are handled by the Supabase-backed route below
-
-
-// API routes - Use Supabase auth routes
-app.use('/api/auth', supabaseAuthRoutes);
-// app.use('/api/users', userRoutes);
-
-// Mock endpoints must be defined before route handlers to take precedence
-// User profile endpoints
-app.get('/api/users/profile', (req, res) => {
+// ─── User profile — Supabase-backed ───
+app.get('/api/users/profile', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'Authentication required',
-        details: 'Valid token required to access profile'
-      });
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
     const token = authHeader.substring(7);
-    const session = mockDB.getSession(token);
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-    if (!session) {
-      return res.status(401).json({
-        error: 'Invalid token',
-        details: 'Token is invalid or expired'
-      });
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
     }
 
-    const user = mockDB.getUserById(session.userId);
-    if (!user) {
-      return res.status(404).json({
-        error: 'User not found',
-        details: 'User profile not found'
-      });
-    }
-
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
+    const { data: profile } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
 
     res.json({
-      profile: userWithoutPassword
+      profile: {
+        id: user.id,
+        email: user.email,
+        firstName: profile?.first_name || user.user_metadata?.first_name || '',
+        lastName: profile?.last_name || user.user_metadata?.last_name || '',
+        age: profile?.age || user.user_metadata?.age || null,
+        phone: profile?.phone || null,
+        address: profile?.address || null,
+        city: profile?.city || null,
+        postalCode: profile?.postal_code || null,
+        country: profile?.country || null,
+        avatarUrl: profile?.avatar_url || null,
+        isVerified: user.email_confirmed_at != null,
+        role: user.role || 'user',
+        createdAt: user.created_at,
+        updatedAt: profile?.updated_at || user.updated_at
+      }
     });
   } catch (error) {
     console.error('Profile fetch error:', error);
-    res.status(500).json({
-      error: 'Failed to fetch profile',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Failed to fetch profile', details: error.message });
   }
 });
 
@@ -212,33 +333,16 @@ app.put('/api/users/profile', async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'Authentication required',
-        details: 'Valid token required to update profile'
-      });
+      return res.status(401).json({ error: 'Authentication required' });
     }
 
     const token = authHeader.substring(7);
-
-    // Use Supabase to verify token and get user
-    if (!supabase) {
-      return res.status(500).json({
-        error: 'Supabase not configured',
-        details: 'Please set SUPABASE_URL and SUPABASE_SERVICE_KEY in your .env file'
-      });
-    }
-
-    // Get user from token
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !user) {
-      return res.status(401).json({
-        error: 'Invalid token',
-        details: 'Token is invalid or expired'
-      });
+      return res.status(401).json({ error: 'Invalid token' });
     }
 
-    // Parse name into firstName and lastName if provided
     let firstName = req.body.firstName;
     let lastName = req.body.lastName;
 
@@ -248,7 +352,6 @@ app.put('/api/users/profile', async (req, res) => {
       lastName = nameParts.slice(1).join(' ') || '';
     }
 
-    // Update user profile in Supabase
     const { data: updatedProfile, error: updateError } = await supabase
       .from('user_profiles')
       .upsert({
@@ -269,13 +372,9 @@ app.put('/api/users/profile', async (req, res) => {
 
     if (updateError) {
       console.error('Supabase profile update error:', updateError);
-      return res.status(500).json({
-        error: 'Failed to update profile',
-        details: updateError.message
-      });
+      return res.status(500).json({ error: 'Failed to update profile', details: updateError.message });
     }
 
-    // Also update user metadata in Supabase Auth
     await supabase.auth.admin.updateUserById(user.id, {
       user_metadata: {
         first_name: firstName || user.user_metadata?.first_name,
@@ -307,273 +406,224 @@ app.put('/api/users/profile', async (req, res) => {
     });
   } catch (error) {
     console.error('Profile update error:', error);
-    res.status(500).json({
-      error: 'Failed to update profile',
-      details: error.message
-    });
+    res.status(500).json({ error: 'Failed to update profile', details: error.message });
   }
 });
 
-// Mock user preferences endpoint
-app.get('/api/users/preferences', (req, res) => {
-  res.json({
-    preferences: {
-      id: '1',
-      userId: '1',
-      dietaryRestrictions: ['Vegetarian'],
-      allergies: ['Peanuts'],
-      cuisinePreferences: ['Italian', 'Indian'],
-      budgetLimit: 200,
-      householdSize: 4,
-      shoppingFrequency: 'Weekly',
-      preferredStores: ['Tesco', 'Sainsbury\'s'],
-      notificationSettings: {
-        emailNotifications: true,
-        pushNotifications: true,
-        expiryReminders: true,
-        shoppingReminders: true,
-        dealAlerts: false
-      },
-      privacySettings: {
-        shareDataWithPartners: false,
-        allowAnalytics: true,
-        publicProfile: false
-      }
-    }
-  });
-});
-
-// Mock update user preferences endpoint
-app.put('/api/users/preferences', (req, res) => {
-  const { preferences } = req.body;
-  res.json({
-    success: true,
-    message: 'Preferences updated successfully',
-    preferences: {
-      dietaryRestrictions: preferences.dietaryRestrictions || ['Vegetarian'],
-      budgetLimit: preferences.budgetLimit || 200,
-      householdSize: preferences.householdSize || 4,
-      preferredStores: preferences.preferredStores || ['Tesco', 'Sainsbury\'s'],
-      notifications: preferences.notifications || {
-        expiryAlerts: true,
-        lowStockAlerts: true,
-        recipeSuggestions: true,
-        weeklyReports: false
-      },
-      theme: preferences.theme || 'light',
-      language: preferences.language || 'en',
-      timezone: preferences.timezone || 'Europe/London'
-    }
-  });
-});
-
-// Authentication endpoints (DISABLED - Using Supabase routes instead)
-/* app.post('/api/auth/register', async (req, res) => {
-  try {
-    const { firstName, lastName, email, password, age } = req.body;
-
-    // Validate required fields
-    if (!firstName || !lastName || !email || !password || !age) {
-      return res.status(400).json({
-        error: 'All fields are required',
-        details: 'firstName, lastName, email, age, and password are required'
-      });
-    }
-
-    // Check if email already exists
-    if (!mockDB.isEmailUnique(email)) {
-      return res.status(409).json({
-        error: 'Email already exists',
-        details: 'An account with this email address already exists'
-      });
-    }
-
-    // Create new user (now async - password will be hashed)
-    const newUser = await mockDB.createUser({ firstName, lastName, email, password, age });
-
-    // Create session
-    const token = mockDB.generateToken();
-    mockDB.createSession(newUser.id, token);
-
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = newUser;
-
-    res.status(201).json({
-      success: true,
-      message: 'User created successfully',
-      user: userWithoutPassword,
-      token
-    });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      error: 'Registration failed',
-      details: error.message
-    });
+// ─── User preferences — Supabase-backed ───
+const DEFAULT_PREFS = {
+  dietaryRestrictions: [],
+  allergies: [],
+  cuisinePreferences: [],
+  budgetLimit: 200,
+  householdSize: 1,
+  shoppingFrequency: 'Weekly',
+  preferredStores: [],
+  notificationSettings: {
+    emailNotifications: true,
+    pushNotifications: true,
+    expiryReminders: true,
+    shoppingReminders: true,
+    dealAlerts: false
+  },
+  privacySettings: {
+    shareDataWithPartners: false,
+    allowAnalytics: true,
+    publicProfile: false
   }
-});
+};
 
-app.post('/api/auth/login', async (req, res) => {
+app.get('/api/users/preferences', authenticateJWT, async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const userId = req.user.id;
 
-    // Validate required fields
-    if (!email || !password) {
-      return res.status(400).json({
-        error: 'Email and password are required'
-      });
-    }
-
-    // Authenticate user (now async - password will be compared with bcrypt)
-    const user = await mockDB.authenticateUser(email, password);
-
-    // Create session
-    const token = mockDB.generateToken();
-    mockDB.createSession(user.id, token);
-
-    // Update last login (now async due to potential password hashing)
-    await mockDB.updateUser(email, { lastLoginAt: new Date().toISOString() });
-
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user;
-
-    res.json({
-      success: true,
-      message: 'Login successful',
-      user: userWithoutPassword,
-      token
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(401).json({
-      error: 'Authentication failed',
-      details: error.message
-    });
-  }
-});
-
-app.get('/api/auth/me', async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({
-        error: 'No token provided',
-        details: 'Authorization header with Bearer token is required'
-      });
-    }
-
-    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-
-    // Use Supabase to verify token and get user
-    if (!supabase) {
-      return res.status(500).json({
-        error: 'Supabase not configured',
-        details: 'Please set SUPABASE_URL and SUPABASE_SERVICE_KEY in your .env file'
-      });
-    }
-
-    // Get user from token
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-
-    if (authError || !user) {
-      return res.status(401).json({
-        error: 'Invalid token',
-        details: 'Token is invalid or expired'
-      });
-    }
-
-    // Get user profile from Supabase
-    const { data: profile } = await supabase
-      .from('user_profiles')
+    const { data: prefs } = await supabase
+      .from('user_preferences')
       .select('*')
-      .eq('id', user.id)
+      .eq('user_id', userId)
       .single();
 
+    if (!prefs) {
+      // No preferences row yet — return defaults
+      return res.json({ preferences: { ...DEFAULT_PREFS, id: null, userId } });
+    }
+
     res.json({
-      id: user.id,
-      email: user.email,
-      firstName: profile?.first_name || user.user_metadata?.first_name || '',
-      lastName: profile?.last_name || user.user_metadata?.last_name || '',
-      age: profile?.age || user.user_metadata?.age || null,
-      phone: profile?.phone || null,
-      address: profile?.address || null,
-      city: profile?.city || null,
-      postalCode: profile?.postal_code || null,
-      country: profile?.country || null,
-      avatarUrl: profile?.avatar_url || null,
-      isVerified: user.email_confirmed_at != null,
-      role: user.role || 'user',
-      createdAt: user.created_at,
-      updatedAt: profile?.updated_at || user.updated_at
+      preferences: {
+        id: prefs.id,
+        userId: prefs.user_id,
+        dietaryRestrictions: prefs.dietary_restrictions || [],
+        allergies: prefs.allergies || [],
+        cuisinePreferences: prefs.cuisine_preferences || [],
+        budgetLimit: prefs.budget_weekly ? parseFloat(prefs.budget_weekly) : 200,
+        householdSize: prefs.household_size || 1,
+        shoppingFrequency: prefs.shopping_frequency || 'Weekly',
+        preferredStores: prefs.preferred_stores || [],
+        notificationSettings: {
+          emailNotifications: prefs.notification_settings?.emailNotifications ?? true,
+          pushNotifications: prefs.notification_settings?.pushNotifications ?? true,
+          expiryReminders: prefs.notification_settings?.expiryReminders ?? true,
+          shoppingReminders: prefs.notification_settings?.shoppingReminders ?? true,
+          dealAlerts: prefs.notification_settings?.dealAlerts ?? false
+        },
+        privacySettings: {
+          shareDataWithPartners: prefs.privacy_settings?.shareDataWithPartners ?? false,
+          allowAnalytics: prefs.privacy_settings?.allowAnalytics ?? true,
+          publicProfile: prefs.privacy_settings?.publicProfile ?? false
+        }
+      }
     });
   } catch (error) {
-    console.error('Auth me error:', error);
-    res.status(500).json({
-      error: 'Authentication check failed',
-      details: error.message
-    });
+    console.error('Get preferences error:', error);
+    res.status(500).json({ error: 'Failed to fetch preferences', details: error.message });
   }
 });
 
-app.post('/api/auth/logout', (req, res) => {
+app.put('/api/users/preferences', authenticateJWT, async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      const token = authHeader.substring(7);
-      mockDB.deleteSession(token);
+    const userId = req.user.id;
+    const p = req.body;
+
+    const row = {
+      user_id: userId,
+      dietary_restrictions: p.dietaryRestrictions || [],
+      allergies: p.allergies || [],
+      cuisine_preferences: p.cuisinePreferences || [],
+      budget_weekly: p.budgetLimit || null,
+      household_size: p.householdSize || 1,
+      shopping_frequency: p.shoppingFrequency || 'Weekly',
+      preferred_stores: p.preferredStores || [],
+      notification_settings: p.notificationSettings || DEFAULT_PREFS.notificationSettings,
+      privacy_settings: p.privacySettings || DEFAULT_PREFS.privacySettings,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data: upserted, error } = await supabase
+      .from('user_preferences')
+      .upsert(row, { onConflict: 'user_id' })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Update preferences error:', error);
+      return res.status(500).json({ error: 'Failed to update preferences', details: error.message });
     }
-    
+
     res.json({
       success: true,
-      message: 'Logout successful'
+      message: 'Preferences updated successfully',
+      preferences: {
+        id: upserted.id,
+        userId: upserted.user_id,
+        dietaryRestrictions: upserted.dietary_restrictions || [],
+        allergies: upserted.allergies || [],
+        cuisinePreferences: upserted.cuisine_preferences || [],
+        budgetLimit: upserted.budget_weekly ? parseFloat(upserted.budget_weekly) : 200,
+        householdSize: upserted.household_size || 1,
+        shoppingFrequency: upserted.shopping_frequency || 'Weekly',
+        preferredStores: upserted.preferred_stores || [],
+        notificationSettings: upserted.notification_settings || DEFAULT_PREFS.notificationSettings,
+        privacySettings: upserted.privacy_settings || DEFAULT_PREFS.privacySettings
+      }
     });
   } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({
-      error: 'Logout failed',
-      details: error.message
-    });
+    console.error('Update preferences error:', error);
+    res.status(500).json({ error: 'Failed to update preferences', details: error.message });
   }
-}); */
+});
 
-// Mock user stats endpoint
-app.get('/api/users/stats', (req, res) => {
-  res.json({
-    stats: {
-      totalSavings: 125.50,
-      wasteReduction: 35,
-      daysActive: 45,
-      recipesTried: 12,
-      itemsTracked: 89,
-      listsCompleted: 23,
-      avgWeeklySpend: 45.30,
-      favoriteCategories: ['Vegetables', 'Dairy', 'Meat'],
-      monthlyTrend: {
-        savings: [10.50, 15.20, 12.80, 18.90, 22.10, 25.50],
-        waste: [8, 6, 4, 3, 2, 1],
-        spending: [180, 165, 155, 145, 140, 135]
+// ─── User stats — real aggregation from Supabase ───
+app.get('/api/users/stats', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const now = new Date();
+
+    // Pantry items tracked
+    const { count: itemsTracked } = await supabase
+      .from('pantry_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    // Grocery lists completed
+    const { count: listsCompleted } = await supabase
+      .from('grocery_lists')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'completed');
+
+    // Total grocery lists
+    const { count: totalLists } = await supabase
+      .from('grocery_lists')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    // Waste logs — total wasted value
+    const { data: wasteLogs } = await supabase
+      .from('waste_logs')
+      .select('estimated_cost, created_at')
+      .eq('user_id', userId);
+
+    const totalWasteCost = (wasteLogs || []).reduce((s, w) => s + (parseFloat(w.estimated_cost) || 0), 0);
+    const wasteCount = (wasteLogs || []).length;
+
+    // Spending — sum of pantry item prices
+    const { data: allItems } = await supabase
+      .from('pantry_items')
+      .select('estimated_price, created_at')
+      .eq('user_id', userId);
+
+    const totalSpent = (allItems || []).reduce((s, i) => s + (parseFloat(i.estimated_price) || 0), 0);
+    const totalSavings = Math.max(0, totalSpent * 0.15 - totalWasteCost); // estimate: 15% saved by tracking
+
+    // Days active (since account creation)
+    const createdAt = req.user.created_at || now.toISOString();
+    const daysActive = Math.max(1, Math.ceil((now - new Date(createdAt)) / 86400000));
+
+    // Monthly spending trend (last 6 months)
+    const monthlySpending = [];
+    const monthlyWaste = [];
+    for (let m = 5; m >= 0; m--) {
+      const monthStart = new Date(now.getFullYear(), now.getMonth() - m, 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() - m + 1, 1);
+      const monthItems = (allItems || []).filter(i => {
+        const d = new Date(i.created_at);
+        return d >= monthStart && d < monthEnd;
+      });
+      monthlySpending.push(monthItems.reduce((s, i) => s + (parseFloat(i.estimated_price) || 0), 0));
+
+      const monthWaste = (wasteLogs || []).filter(w => {
+        const d = new Date(w.created_at);
+        return d >= monthStart && d < monthEnd;
+      });
+      monthlyWaste.push(monthWaste.length);
+    }
+
+    res.json({
+      stats: {
+        totalSavings: Math.round(totalSavings * 100) / 100,
+        wasteReduction: wasteCount > 0 ? Math.round(Math.max(0, 100 - (totalWasteCost / Math.max(totalSpent, 1)) * 100)) : 0,
+        daysActive,
+        recipesTried: 0, // no recipe tracking table yet
+        itemsTracked: itemsTracked || 0,
+        listsCompleted: listsCompleted || 0,
+        totalLists: totalLists || 0,
+        avgWeeklySpend: daysActive >= 7 ? Math.round((totalSpent / (daysActive / 7)) * 100) / 100 : totalSpent,
+        favoriteCategories: [],
+        monthlyTrend: {
+          savings: monthlySpending.map((s, i) => Math.max(0, Math.round((s * 0.15 - (monthlyWaste[i] * 2)) * 100) / 100)),
+          waste: monthlyWaste,
+          spending: monthlySpending.map(s => Math.round(s * 100) / 100)
+        }
       }
-    }
-  });
+    });
+  } catch (error) {
+    console.error('User stats error:', error);
+    res.status(500).json({ error: 'Failed to fetch stats', details: error.message });
+  }
 });
 
-// Mock update user profile endpoint
-app.put('/api/users/profile', (req, res) => {
-  const { name, email, avatar } = req.body;
-  res.json({
-    success: true,
-    message: 'Profile updated successfully',
-    user: {
-      id: '1',
-      name: name || 'John Doe',
-      email: email || 'john.doe@example.com',
-      avatar: avatar || 'https://ui-avatars.com/api/?name=John+Doe&background=random',
-      updatedAt: new Date().toISOString()
-    }
-  });
-});
-
-
+// API routes
+app.use('/api/auth', supabaseAuthRoutes);
 app.use('/api/groceries', groceryRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/ai', aiRoutes);
@@ -584,9 +634,6 @@ app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/meal-planner', mealPlannerRoutes);
 app.use('/api/waste', wasteRoutes);
 app.use('/api/households', householdRoutes);
-
-// GraphQL setup (disabled - using Supabase)
-// setupGraphQL(app);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -623,11 +670,6 @@ app.use('*', (req, res) => {
 // Start server
 async function startServer() {
   try {
-    // Connect to database - temporarily disabled
-    // await connectDB();
-    // console.log('✅ Database connected successfully');
-
-    // Start server
     app.listen(PORT, () => {
       console.log(`🚀 Nourish Neural server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
@@ -653,4 +695,4 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-startServer(); 
+startServer();

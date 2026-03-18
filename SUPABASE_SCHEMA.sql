@@ -754,6 +754,42 @@ CREATE POLICY "Users can delete own or household meal plans"
   );
 
 -- =====================================================
+-- LOYALTY CARDS TABLE
+-- =====================================================
+-- Persistent storage for user loyalty card accounts
+CREATE TABLE IF NOT EXISTS loyalty_cards (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  program_id TEXT NOT NULL,
+  card_number TEXT NOT NULL,
+  is_linked BOOLEAN DEFAULT TRUE,
+  linked_at TIMESTAMPTZ DEFAULT NOW(),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, program_id)
+);
+
+ALTER TABLE loyalty_cards ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own loyalty cards"
+  ON loyalty_cards FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own loyalty cards"
+  ON loyalty_cards FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own loyalty cards"
+  ON loyalty_cards FOR UPDATE
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own loyalty cards"
+  ON loyalty_cards FOR DELETE
+  USING (auth.uid() = user_id);
+
+CREATE INDEX IF NOT EXISTS idx_loyalty_cards_user_id ON loyalty_cards(user_id);
+
+-- =====================================================
 -- COMPLETION MESSAGE
 -- =====================================================
 -- Schema created successfully!

@@ -1,10 +1,9 @@
 /**
  * Loyalty Service
- * Handles loyalty program management and card storage
+ * Handles loyalty program management and card storage via Supabase
  */
 
-// In-memory storage for loyalty accounts (replace with database in production)
-const loyaltyAccounts = new Map(); // userId -> Array of accounts
+const { supabase } = require('../config/supabase');
 
 // Available UK loyalty programs
 const LOYALTY_PROGRAMS = [
@@ -112,7 +111,6 @@ const LOYALTY_PROGRAMS = [
 
 /**
  * Get all available loyalty programs
- * @returns {Array} - List of loyalty programs
  */
 function getPrograms() {
   return LOYALTY_PROGRAMS;
@@ -120,8 +118,6 @@ function getPrograms() {
 
 /**
  * Get a specific loyalty program by ID
- * @param {string} programId - Program ID
- * @returns {Object|null} - Program object or null
  */
 function getProgramById(programId) {
   return LOYALTY_PROGRAMS.find(p => p.id === programId) || null;
@@ -129,8 +125,6 @@ function getProgramById(programId) {
 
 /**
  * Mask card number for display
- * @param {string} cardNumber - Full card number
- * @returns {string} - Masked card number
  */
 function maskCardNumber(cardNumber) {
   if (!cardNumber || cardNumber.length < 4) return '****';
@@ -139,9 +133,6 @@ function maskCardNumber(cardNumber) {
 
 /**
  * Validate card number format
- * @param {string} programId - Program ID
- * @param {string} cardNumber - Card number to validate
- * @returns {{ valid: boolean, message?: string }}
  */
 function validateCardNumber(programId, cardNumber) {
   const cleanNumber = cardNumber.replace(/[\s-]/g, '');
@@ -177,13 +168,11 @@ function validateCardNumber(programId, cardNumber) {
     case 'lidl-plus':
     case 'aldi-app':
     case 'asda-rewards':
-      // These use phone numbers or emails, more flexible validation
       if (cleanNumber.length < 5) {
         return { valid: false, message: 'Please enter a valid identifier' };
       }
       break;
     default:
-      // For unknown programs, just check length
       if (cleanNumber.length < 4) {
         return { valid: false, message: 'Card number is too short' };
       }
@@ -193,71 +182,74 @@ function validateCardNumber(programId, cardNumber) {
 }
 
 /**
- * Get user's loyalty accounts
- * @param {string} userId - User ID
- * @returns {Array} - List of loyalty accounts
+ * Get user's loyalty accounts from Supabase
  */
-function getAccounts(userId) {
-  const accounts = loyaltyAccounts.get(userId) || [];
+async function getAccounts(userId) {
+  const { data, error } = await supabase
+    .from('loyalty_cards')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
 
-  // Add program details and mask card numbers
-  return accounts.map(account => ({
-    ...account,
-    program: getProgramById(account.programId),
-    maskedCardNumber: maskCardNumber(account.cardNumber)
+  if (error) throw error;
+
+  return (data || []).map(row => ({
+    id: row.id,
+    programId: row.program_id,
+    cardNumber: row.card_number,
+    isLinked: row.is_linked,
+    linkedAt: row.linked_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    program: getProgramById(row.program_id),
+    maskedCardNumber: maskCardNumber(row.card_number)
   }));
 }
 
 /**
- * Add a loyalty account
- * @param {string} userId - User ID
- * @param {string} programId - Program ID
- * @param {string} cardNumber - Card number
- * @returns {{ success: boolean, account?: Object, error?: string }}
+ * Add a loyalty account to Supabase
  */
-function addAccount(userId, programId, cardNumber) {
+async function addAccount(userId, programId, cardNumber) {
   const program = getProgramById(programId);
-
   if (!program) {
     return { success: false, error: 'Unknown loyalty program' };
   }
 
-  // Validate card number
   const validation = validateCardNumber(programId, cardNumber);
   if (!validation.valid) {
     return { success: false, error: validation.message };
   }
 
-  // Get or create user's accounts
-  if (!loyaltyAccounts.has(userId)) {
-    loyaltyAccounts.set(userId, []);
-  }
-
-  const userAccounts = loyaltyAccounts.get(userId);
-
-  // Check for duplicate
-  const existing = userAccounts.find(a => a.programId === programId);
-  if (existing) {
-    return { success: false, error: 'You already have this loyalty card linked' };
-  }
-
-  // Create new account
   const cleanNumber = cardNumber.replace(/[\s-]/g, '');
-  const account = {
-    id: `loyalty_${Date.now()}_${Math.random().toString(36).substring(7)}`,
-    programId,
-    cardNumber: cleanNumber,
-    isLinked: true,
-    linkedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString()
-  };
 
-  userAccounts.push(account);
+  const { data: account, error } = await supabase
+    .from('loyalty_cards')
+    .insert({
+      user_id: userId,
+      program_id: programId,
+      card_number: cleanNumber,
+      is_linked: true,
+      linked_at: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return { success: false, error: 'You already have this loyalty card linked' };
+    }
+    throw error;
+  }
 
   return {
     success: true,
     account: {
-      ...account,
+      id: account.id,
+      programId: account.program_id,
+      cardNumber: account.card_number,
+      isLinked: account.is_linked,
+      linkedAt: account.linked_at,
+      createdAt: account.created_at,
       program,
       maskedCardNumber: maskCardNumber(cleanNumber)
     }
@@ -265,75 +257,81 @@ function addAccount(userId, programId, cardNumber) {
 }
 
 /**
- * Remove a loyalty account
- * @param {string} userId - User ID
- * @param {string} accountId - Account ID
- * @returns {{ success: boolean, error?: string }}
+ * Remove a loyalty account from Supabase
  */
-function removeAccount(userId, accountId) {
-  if (!loyaltyAccounts.has(userId)) {
+async function removeAccount(userId, accountId) {
+  const { data, error } = await supabase
+    .from('loyalty_cards')
+    .delete()
+    .eq('id', accountId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error || !data) {
     return { success: false, error: 'Account not found' };
   }
 
-  const userAccounts = loyaltyAccounts.get(userId);
-  const index = userAccounts.findIndex(a => a.id === accountId);
-
-  if (index === -1) {
-    return { success: false, error: 'Account not found' };
-  }
-
-  userAccounts.splice(index, 1);
   return { success: true };
 }
 
 /**
- * Update a loyalty account
- * @param {string} userId - User ID
- * @param {string} accountId - Account ID
- * @param {Object} updates - Updates to apply
- * @returns {{ success: boolean, account?: Object, error?: string }}
+ * Update a loyalty account in Supabase
  */
-function updateAccount(userId, accountId, updates) {
-  if (!loyaltyAccounts.has(userId)) {
+async function updateAccount(userId, accountId, updates) {
+  // Fetch existing to get program_id for validation
+  const { data: existing, error: fetchError } = await supabase
+    .from('loyalty_cards')
+    .select('*')
+    .eq('id', accountId)
+    .eq('user_id', userId)
+    .single();
+
+  if (fetchError || !existing) {
     return { success: false, error: 'Account not found' };
   }
 
-  const userAccounts = loyaltyAccounts.get(userId);
-  const account = userAccounts.find(a => a.id === accountId);
+  const updateObj = { updated_at: new Date().toISOString() };
 
-  if (!account) {
-    return { success: false, error: 'Account not found' };
-  }
-
-  // If updating card number, validate it
   if (updates.cardNumber) {
-    const validation = validateCardNumber(account.programId, updates.cardNumber);
+    const validation = validateCardNumber(existing.program_id, updates.cardNumber);
     if (!validation.valid) {
       return { success: false, error: validation.message };
     }
-    account.cardNumber = updates.cardNumber.replace(/[\s-]/g, '');
+    updateObj.card_number = updates.cardNumber.replace(/[\s-]/g, '');
   }
 
-  account.updatedAt = new Date().toISOString();
+  const { data: updated, error } = await supabase
+    .from('loyalty_cards')
+    .update(updateObj)
+    .eq('id', accountId)
+    .eq('user_id', userId)
+    .select()
+    .single();
+
+  if (error) throw error;
 
   return {
     success: true,
     account: {
-      ...account,
-      program: getProgramById(account.programId),
-      maskedCardNumber: maskCardNumber(account.cardNumber)
+      id: updated.id,
+      programId: updated.program_id,
+      cardNumber: updated.card_number,
+      isLinked: updated.is_linked,
+      linkedAt: updated.linked_at,
+      createdAt: updated.created_at,
+      updatedAt: updated.updated_at,
+      program: getProgramById(updated.program_id),
+      maskedCardNumber: maskCardNumber(updated.card_number)
     }
   };
 }
 
 /**
- * Get user's loyalty programs by store
- * @param {string} userId - User ID
- * @param {string} storeName - Store name
- * @returns {Object|null} - Loyalty account or null
+ * Get user's loyalty card for a specific store
  */
-function getAccountByStore(userId, storeName) {
-  const accounts = getAccounts(userId);
+async function getAccountByStore(userId, storeName) {
+  const accounts = await getAccounts(userId);
   return accounts.find(a =>
     a.program?.store.toLowerCase() === storeName.toLowerCase()
   ) || null;

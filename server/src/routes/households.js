@@ -398,14 +398,15 @@ router.patch('/items/:id/move', async (req, res) => {
   try {
     const userId = req.user.id;
     const itemId = req.params.id;
-    const { scope, table } = req.body;
+    const { target, scope, table = 'pantry_items' } = req.body;
+    const finalTarget = target || scope;
 
     const allowedTables = ['pantry_items', 'grocery_lists', 'meal_plans'];
     if (!allowedTables.includes(table)) {
       return res.status(400).json({ error: 'Invalid table' });
     }
-    if (!['personal', 'household'].includes(scope)) {
-      return res.status(400).json({ error: 'Scope must be "personal" or "household"' });
+    if (!['personal', 'household'].includes(finalTarget)) {
+      return res.status(400).json({ error: 'Target must be "personal" or "household"' });
     }
 
     // Verify the item belongs to this user
@@ -422,7 +423,7 @@ router.patch('/items/:id/move', async (req, res) => {
 
     let newHouseholdId = null;
 
-    if (scope === 'household') {
+    if (finalTarget === 'household') {
       const membership = await getUserMembership(userId);
       if (!membership) {
         return res.status(400).json({ error: 'You are not in a household' });
@@ -441,7 +442,7 @@ router.patch('/items/:id/move', async (req, res) => {
     }
 
     res.json({
-      message: scope === 'household'
+      message: finalTarget === 'household'
         ? 'Item moved to household'
         : 'Item moved to personal'
     });

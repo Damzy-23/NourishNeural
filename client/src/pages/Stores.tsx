@@ -122,6 +122,7 @@ export default function Stores() {
   const { user } = useAuth()
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [searchLocation, setSearchLocation] = useState('')
+  const [committedSearch, setCommittedSearch] = useState('')
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [locationError, setLocationError] = useState<string | null>(null)
   const [showFilters, setShowFilters] = useState(false)
@@ -138,79 +139,112 @@ export default function Stores() {
 
   // Get user's location
   useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          })
-          setLocationError(null)
-        },
-        (error) => {
-          console.log('Location access denied:', error)
-          setLocationError('Location access denied. Please enable location permissions to find nearby stores.')
-        }
-      )
-    } else {
+    if (!navigator.geolocation) {
       setLocationError('Geolocation is not supported by this browser.')
+      return
     }
+
+    const onSuccess = (position: GeolocationPosition) => {
+      setUserLocation({
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      })
+      setLocationError(null)
+    }
+
+    const onError = (error: GeolocationPositionError) => {
+      if (error.code === 1) {
+        setLocationError('Location permission denied. Allow location access in your browser settings, then refresh.')
+      } else if (error.code === 2) {
+        // POSITION_UNAVAILABLE — retry without high accuracy
+        navigator.geolocation.getCurrentPosition(
+          onSuccess,
+          () => {
+            setLocationError(
+              'Could not determine your location. Check that Windows Location Services is on (Settings > Privacy & security > Location), then refresh. You can also search by postcode below.'
+            )
+          },
+          { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 }
+        )
+        return
+      } else {
+        setLocationError('Location request timed out. Try searching by postcode instead.')
+      }
+    }
+
+    navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    })
   }, [])
 
-  // Fetch stores
+  // Fetch stores — stable query key using primitives only
   const { data: storesResponse, isLoading } = useQuery(
-    ['stores', { location: userLocation, search: searchLocation, filters }],
+    [
+      'stores',
+      userLocation?.lat ?? null,
+      userLocation?.lng ?? null,
+      committedSearch,
+      filters.chain,
+      filters.category,
+      filters.priceLevel,
+      filters.features.join(','),
+      filters.radius,
+      filters.sortBy
+    ],
     () => {
       const params = new URLSearchParams()
-      
+
       if (userLocation) {
         params.append('lat', userLocation.lat.toString())
         params.append('lng', userLocation.lng.toString())
       }
-      
-      if (searchLocation) {
-        params.append('location', searchLocation)
+
+      if (committedSearch) {
+        params.append('location', committedSearch)
       }
-      
+
       if (filters.chain !== 'All Chains') {
         params.append('chain', filters.chain)
       }
-      
+
       if (filters.category !== 'All Categories') {
         params.append('category', filters.category)
       }
-      
+
       if (filters.priceLevel > 0) {
         params.append('priceLevel', filters.priceLevel.toString())
       }
-      
+
       if (filters.features.length > 0) {
         params.append('features', filters.features.join(','))
       }
-      
+
       params.append('radius', filters.radius.toString())
       params.append('sortBy', filters.sortBy)
-      
+
       const queryString = params.toString()
       return apiService.get(`/api/stores${queryString ? `?${queryString}` : ''}`)
     },
     {
       enabled: !!user,
+      staleTime: 60000,
+      keepPreviousData: true,
+      refetchOnWindowFocus: false,
     }
   )
 
   const stores: Store[] = (storesResponse as any)?.stores || []
 
   const handleLocationSearch = () => {
-    // Trigger search with the entered location
-    // The query will automatically refetch when searchLocation changes
+    setCommittedSearch(searchLocation.trim())
   }
 
   const handleUseMyLocation = () => {
     if (userLocation) {
-      // Clear manual search and use GPS coordinates
       setSearchLocation('')
-      // The query will automatically refetch with userLocation
+      setCommittedSearch('')
     }
   }
 
@@ -301,44 +335,46 @@ export default function Stores() {
 
   const renderStoreCard = (store: Store) => {
      const openStatus = getOpenStatus(store)
-     
+
      return (
       <motion.div
         key={store.id}
-        className="card"
+        className="card overflow-hidden"
         variants={fadeUp}
         whileHover={{ y: -6, boxShadow: '0 32px 55px -35px rgba(37,99,235,0.35)' }}
       >
+        {/* Open/Closed status banner */}
+        <div className={`px-4 py-1.5 text-xs font-bold text-center ${
+          openStatus.isOpen === true
+            ? 'bg-green-500 text-white'
+            : openStatus.isOpen === false
+              ? 'bg-red-500 text-white'
+              : 'bg-neutral-200 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300'
+        }`}>
+          {openStatus.isOpen === true ? `Open — ${openStatus.message}` :
+           openStatus.isOpen === false ? `Closed — ${openStatus.message}` : 'Hours unknown'}
+        </div>
+
         {store.imageUrl && (
-          <div className="h-48 bg-cover bg-center rounded-t-lg" 
+          <div className="h-48 bg-cover bg-center"
                style={{ backgroundImage: `url(${store.imageUrl})` }} />
         )}
-        
+
         <div className="card-header">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <h3 className="card-title text-lg">{store.name}</h3>
               <p className="text-sm text-neutral-600 dark:text-neutral-400">{store.chain}</p>
             </div>
-            <div className="flex items-center space-x-2">
-              {store.rating && (
-                <div className="flex items-center space-x-1">
-                  <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                  <span className="text-sm font-medium">{store.rating.toFixed(1)}</span>
-                </div>
-              )}
-              <span className={`badge ${
-                openStatus.isOpen === true ? 'bg-primary-100 text-primary-800' :
-                openStatus.isOpen === false ? 'bg-red-100 text-red-800' :
-                'bg-neutral-100 text-neutral-800'
-              }`}>
-                {openStatus.isOpen === true ? 'Open' : 
-                 openStatus.isOpen === false ? 'Closed' : 'Unknown'}
-              </span>
-            </div>
+            {store.rating && (
+              <div className="flex items-center space-x-1">
+                <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                <span className="text-sm font-medium">{store.rating.toFixed(1)}</span>
+              </div>
+            )}
           </div>
         </div>
-        
+
         <div className="card-content">
           {/* Address */}
           <div className="flex items-start space-x-2 mb-3">
@@ -348,7 +384,7 @@ export default function Stores() {
               <p>{store.address.city}, {store.address.postcode}</p>
             </div>
           </div>
-          
+
           {/* Distance and Travel */}
           {store.distance && (
             <div className="flex items-center justify-between mb-3">
@@ -368,29 +404,20 @@ export default function Stores() {
               </div>
             </div>
           )}
-          
-          {/* Opening Hours */}
-          <div className="flex items-center space-x-2 mb-3">
-            <Clock className="h-4 w-4 text-neutral-500 dark:text-neutral-400" />
-            <span className="text-sm text-neutral-600 dark:text-neutral-400">{openStatus.message}</span>
-          </div>
-          
+
           {/* Services */}
-          <div className="flex items-center space-x-2 mb-3">
-            <span className="text-sm text-neutral-600 dark:text-neutral-400">Services:</span>
-            <div className="flex space-x-2">
-              {store.services.deliveryAvailable && (
-                <span className="badge badge-outline text-xs">Delivery</span>
-              )}
-              {store.services.clickAndCollect && (
-                <span className="badge badge-outline text-xs">Click & Collect</span>
-              )}
-              {store.services.loyaltyProgram && (
-                <span className="badge badge-outline text-xs">{store.services.loyaltyProgram}</span>
-              )}
-            </div>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {store.services.deliveryAvailable && (
+              <span className="badge badge-outline text-xs">Delivery</span>
+            )}
+            {store.services.clickAndCollect && (
+              <span className="badge badge-outline text-xs">Click & Collect</span>
+            )}
+            {store.services.loyaltyProgram && (
+              <span className="badge badge-outline text-xs">{store.services.loyaltyProgram}</span>
+            )}
           </div>
-          
+
           {/* Features */}
           {store.features && store.features.length > 0 && (
             <div className="mb-3">
@@ -408,32 +435,30 @@ export default function Stores() {
               </div>
             </div>
           )}
-          
-          {/* Actions */}
+
+          {/* Actions — Directions is primary */}
           <div className="flex space-x-2 pt-3 border-t border-neutral-200 dark:border-neutral-700">
-            {store.contact.phone && (
-              <button 
-                className="btn btn-outline btn-sm flex-1"
-                onClick={() => handleCallStore(store.contact.phone)}
-              >
-                <Phone className="h-4 w-4 mr-1" />
-                Call
-              </button>
-            )}
-            <button 
-              className="btn btn-outline btn-sm flex-1"
+            <button
+              className="btn btn-primary btn-sm flex-1"
               onClick={() => handleGetDirections(store)}
             >
               <Navigation className="h-4 w-4 mr-1" />
               Directions
             </button>
+            {store.contact.phone && (
+              <button
+                className="btn btn-outline btn-sm"
+                onClick={() => handleCallStore(store.contact.phone)}
+              >
+                <Phone className="h-4 w-4" />
+              </button>
+            )}
             {store.contact.website && (
-              <button 
-                className="btn btn-outline btn-sm flex-1"
+              <button
+                className="btn btn-outline btn-sm"
                 onClick={() => handleVisitWebsite(store.contact.website)}
               >
-                <Smartphone className="h-4 w-4 mr-1" />
-                Website
+                <Smartphone className="h-4 w-4" />
               </button>
             )}
           </div>
@@ -529,8 +554,15 @@ export default function Stores() {
               )}
               
               <div className="flex space-x-2 mt-3">
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => handleGetDirections(store)}
+                >
+                  <Navigation className="h-4 w-4 mr-1" />
+                  Directions
+                </button>
                 {store.contact.phone && (
-                  <button 
+                  <button
                     className="btn btn-outline btn-sm"
                     onClick={() => handleCallStore(store.contact.phone)}
                   >
@@ -538,15 +570,8 @@ export default function Stores() {
                     Call
                   </button>
                 )}
-                <button 
-                  className="btn btn-outline btn-sm"
-                  onClick={() => handleGetDirections(store)}
-                >
-                  <Navigation className="h-4 w-4 mr-1" />
-                  Directions
-                </button>
                 {store.contact.website && (
-                  <button 
+                  <button
                     className="btn btn-outline btn-sm"
                     onClick={() => handleVisitWebsite(store.contact.website)}
                   >
@@ -684,7 +709,10 @@ export default function Stores() {
           transition={{ duration: 0.45 }}
         >
           <div className="card-content">
-            <div className="flex space-x-3">
+            <div className="flex space-x-3 items-center">
+              <div className="hidden sm:flex h-11 w-11 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 items-center justify-center flex-shrink-0">
+                <MapPin className="h-5 w-5 text-white" />
+              </div>
               <div className="flex-1">
                 <div className="relative">
                   <Search className="h-4 w-4 absolute left-3 top-3 text-neutral-400" />
@@ -692,6 +720,7 @@ export default function Stores() {
                     type="text"
                     value={searchLocation}
                     onChange={(e) => setSearchLocation(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleLocationSearch() }}
                     placeholder="Enter city, postcode, or address..."
                     className="input pl-10"
                   />
@@ -870,15 +899,14 @@ export default function Stores() {
             initial="hidden"
             animate="visible"
           >
-            <motion.div className="flex items-center justify-between" variants={fadeUp}>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                Found {stores.length} store{stores.length !== 1 ? 's' : ''}
-              </p>
+            <motion.div className="flex items-center space-x-2 mb-1" variants={fadeUp}>
+              <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Results</h2>
+              <span className="badge badge-primary">{stores.length}</span>
             </motion.div>
-            
+
             {viewMode === 'grid' ? (
               <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start"
                 variants={staggerContainer}
               >
                 {stores.map(renderStoreCard)}

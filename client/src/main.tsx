@@ -6,6 +6,7 @@ import { HelmetProvider } from 'react-helmet-async'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from './hooks/useAuth'
 import { ThemeProvider } from './contexts/ThemeContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import App from './App.tsx'
 import './index.css'
 
@@ -27,6 +28,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <ThemeProvider>
           <AuthProvider>
             <BrowserRouter>
+              <ErrorBoundary>
               <App />
               <Toaster
               position="top-right"
@@ -52,6 +54,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 },
               }}
               />
+            </ErrorBoundary>
             </BrowserRouter>
           </AuthProvider>
         </ThemeProvider>

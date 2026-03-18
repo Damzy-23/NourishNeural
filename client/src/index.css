@@ -146,6 +146,20 @@
   .shadow-medium {
     box-shadow: 0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
+
+  .card-compact {
+    @apply p-3 rounded-lg;
+  }
+
+  .border-gradient-top {
+    border-top: 3px solid transparent;
+    border-image: linear-gradient(to right, #10b981, #059669) 1;
+  }
+
+  .border-gradient-top-amber {
+    border-top: 3px solid transparent;
+    border-image: linear-gradient(to right, #f59e0b, #ea580c) 1;
+  }
 }
 
 /* Custom scrollbar */

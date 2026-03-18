@@ -15,6 +15,7 @@ import {
   CalendarDays
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useExpiryAlerts } from '../hooks/useExpiryAlerts'
 import { useTheme } from '../contexts/ThemeContext'
 import { cn } from '../utils/cn'
 
@@ -34,6 +35,7 @@ export default function Layout() {
   const { theme, toggleTheme } = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
+  useExpiryAlerts()
 
   const handleLogout = async () => {
     try {

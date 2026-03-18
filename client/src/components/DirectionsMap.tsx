@@ -85,6 +85,11 @@ export default function DirectionsMap({
   const [showTrafficLayer, setShowTrafficLayer] = useState(true)
   const [apiKeyMissing, setApiKeyMissing] = useState(false)
   const [mapReady, setMapReady] = useState(false)
+  const [journeyActive, setJourneyActive] = useState(false)
+  const [currentStepIndex, setCurrentStepIndex] = useState(0)
+  const [livePosition, setLivePosition] = useState<{ lat: number; lng: number } | null>(null)
+  const liveMarkerRef = useRef<L.Marker | null>(null)
+  const watchIdRef = useRef<number | null>(null)
 
   const currentRoute = allRoutes[travelMode]
 
@@ -442,6 +447,112 @@ export default function DirectionsMap({
     setTimeout(() => mapInstanceRef.current?.invalidateSize(), 300)
   }
 
+  // Start/stop live journey tracking
+  const startJourney = () => {
+    if (!navigator.geolocation || !currentRoute) return
+
+    setJourneyActive(true)
+    setCurrentStepIndex(0)
+    setShowInstructions(true)
+
+    const liveIcon = L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="width:24px;height:24px;background:#3B82F6;border:3px solid white;border-radius:50%;box-shadow:0 0 12px rgba(59,130,246,0.7);animation:pulse 1.5s infinite;"></div>`,
+      iconSize: [24, 24],
+      iconAnchor: [12, 12],
+    })
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords
+        setLivePosition({ lat: latitude, lng: longitude })
+
+        // Update or create live marker
+        if (liveMarkerRef.current) {
+          liveMarkerRef.current.setLatLng([latitude, longitude])
+        } else if (mapInstanceRef.current) {
+          liveMarkerRef.current = L.marker([latitude, longitude], { icon: liveIcon, zIndexOffset: 1000 })
+            .addTo(mapInstanceRef.current)
+        }
+
+        // Centre map on current position
+        mapInstanceRef.current?.panTo([latitude, longitude], { animate: true })
+
+        // Advance step based on proximity to instruction waypoints
+        if (currentRoute?.instructions) {
+          const geometry = currentRoute.geometry
+          if (geometry && geometry.length > 0) {
+            // Find the closest point on the route
+            let minDist = Infinity
+            let closestIdx = 0
+            geometry.forEach(([lat, lng], idx) => {
+              const d = Math.sqrt((lat - latitude) ** 2 + (lng - longitude) ** 2)
+              if (d < minDist) { minDist = d; closestIdx = idx }
+            })
+
+            // Map route progress to instruction step
+            const progress = closestIdx / geometry.length
+            const newStep = Math.min(
+              Math.floor(progress * currentRoute.instructions.length),
+              currentRoute.instructions.length - 1
+            )
+            if (newStep > currentStepIndex) {
+              setCurrentStepIndex(newStep)
+            }
+
+            // Check if arrived (within ~50m of destination)
+            const destDist = Math.sqrt(
+              (latitude - destination.lat) ** 2 + (longitude - destination.lng) ** 2
+            )
+            if (destDist < 0.0005) { // roughly 50m
+              stopJourney()
+            }
+          }
+        }
+      },
+      (err) => {
+        console.error('Journey tracking error:', err)
+      },
+      { enableHighAccuracy: true, maximumAge: 3000, timeout: 10000 }
+    )
+
+    watchIdRef.current = watchId
+  }
+
+  const stopJourney = () => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current)
+      watchIdRef.current = null
+    }
+    if (liveMarkerRef.current) {
+      liveMarkerRef.current.remove()
+      liveMarkerRef.current = null
+    }
+    setJourneyActive(false)
+    setLivePosition(null)
+    setCurrentStepIndex(0)
+
+    // Re-fit to full route
+    if (mapInstanceRef.current) {
+      const bounds = L.latLngBounds([
+        [userLocation.lat, userLocation.lng],
+        [destination.lat, destination.lng]
+      ])
+      mapInstanceRef.current.fitBounds(bounds, { padding: [60, 60] })
+    }
+  }
+
+  // Clean up watch on unmount or close
+  useEffect(() => {
+    if (!isOpen && journeyActive) stopJourney()
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current)
+        watchIdRef.current = null
+      }
+    }
+  }, [isOpen])
+
   const getModeIcon = (mode: TravelMode) => {
     const icons = { car: Car, bicycle: Bike, pedestrian: Footprints }
     return icons[mode]
@@ -654,8 +765,20 @@ export default function DirectionsMap({
                   >
                     <ol className="space-y-2">
                       {currentRoute.instructions.map((inst, index) => (
-                        <li key={index} className="flex items-start space-x-3 text-sm text-neutral-600 dark:text-neutral-400">
-                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 flex items-center justify-center text-xs font-medium">
+                        <li key={index} className={`flex items-start space-x-3 text-sm ${
+                          journeyActive && index === currentStepIndex
+                            ? 'text-primary-700 dark:text-primary-300 font-medium bg-primary-50 dark:bg-primary-900/20 -mx-2 px-2 py-1 rounded-lg'
+                            : journeyActive && index < currentStepIndex
+                              ? 'text-neutral-400 dark:text-neutral-600 line-through'
+                              : 'text-neutral-600 dark:text-neutral-400'
+                        }`}>
+                          <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+                            journeyActive && index === currentStepIndex
+                              ? 'bg-primary-500 text-white'
+                              : journeyActive && index < currentStepIndex
+                                ? 'bg-neutral-200 dark:bg-neutral-700 text-neutral-400'
+                                : 'bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400'
+                          }`}>
                             {index + 1}
                           </span>
                           <div className="flex-1">
@@ -673,6 +796,35 @@ export default function DirectionsMap({
             </motion.div>
           </div>
 
+          {/* Active journey banner */}
+          {journeyActive && currentRoute?.instructions && (
+            <div className="px-4 py-3 bg-primary-500 text-white border-t border-primary-600">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-bold">
+                    {currentStepIndex + 1}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">
+                      {currentRoute.instructions[currentStepIndex]?.instruction || 'Follow the route'}
+                    </p>
+                    {currentRoute.instructions[currentStepIndex]?.distance > 0 && (
+                      <p className="text-sm text-white/70">
+                        {formatDistance(currentRoute.instructions[currentStepIndex].distance)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={stopJourney}
+                  className="flex-shrink-0 ml-3 px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-lg text-sm font-medium transition-colors"
+                >
+                  End
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Footer */}
           <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/50">
             <p className="text-xs text-neutral-500 dark:text-neutral-400">
@@ -680,6 +832,24 @@ export default function DirectionsMap({
             </p>
             <div className="flex items-center space-x-2">
               <button onClick={onClose} className="btn btn-outline btn-sm">Close</button>
+              {currentRoute && !journeyActive && (
+                <button
+                  onClick={startJourney}
+                  className="btn btn-sm bg-green-500 hover:bg-green-600 text-white border-0"
+                >
+                  <Navigation className="h-4 w-4 mr-1" />
+                  Start Journey
+                </button>
+              )}
+              {journeyActive && (
+                <button
+                  onClick={stopJourney}
+                  className="btn btn-sm bg-red-500 hover:bg-red-600 text-white border-0"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Stop Journey
+                </button>
+              )}
               <button
                 onClick={() => {
                   const mode = travelMode === 'car' ? 'driving' : travelMode === 'bicycle' ? 'bicycling' : 'walking'

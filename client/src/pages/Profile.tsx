@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from 'react-query'
 import { motion } from 'framer-motion'
 import {
   User,
-  Settings,
+  ShoppingCart,
   Save,
   Edit,
   Camera,
@@ -168,13 +168,6 @@ export default function Profile() {
     }
   }, [user, refetchProfile])
 
-  // Debug: Log user data
-  useEffect(() => {
-    console.log('Profile Page - User Data:', user)
-    console.log('Profile Page - Profile Response:', profileResponse)
-    console.log('Profile Page - Profile Form:', profileForm)
-  }, [user, profileResponse, profileForm])
-
   // Fetch user preferences
   useQuery(
     ['user-preferences'],
@@ -230,6 +223,11 @@ export default function Profile() {
         setCardNumber('')
         setSaveSuccess(true)
         setTimeout(() => setSaveSuccess(false), 3000)
+      },
+      onError: (error: any) => {
+        const msg = error?.response?.data?.message || error.message
+        console.error('Add loyalty card failed:', msg)
+        alert(msg)
       },
     }
   )
@@ -518,14 +516,14 @@ export default function Profile() {
           viewport={{ once: true, amount: 0.3 }}
         >
           {[
-            { key: 'lists', label: 'Grocery Lists', value: stats.totalLists || 0, Icon: Settings, color: 'text-blue-500' },
-            { key: 'pantry', label: 'Pantry Items', value: stats.totalPantryItems || 0, Icon: User, color: 'text-green-500' },
-            { key: 'saved', label: 'Money Saved', value: `£${stats.moneySaved || 0}`, Icon: DollarSign, color: 'text-yellow-500' },
-            { key: 'member', label: 'Member Since', value: profile.createdAt ? new Date(profile.createdAt).getFullYear() : 'New', Icon: Heart, color: 'text-red-500' }
-          ].map(({ key, label, value, Icon, color }, index) => (
+            { key: 'lists', label: 'Grocery Lists', value: stats.totalLists || 0, Icon: ShoppingCart, color: 'text-blue-500', border: 'border-l-4 border-l-blue-500' },
+            { key: 'pantry', label: 'Pantry Items', value: stats.totalPantryItems || 0, Icon: User, color: 'text-emerald-500', border: 'border-l-4 border-l-emerald-500' },
+            { key: 'saved', label: 'Money Saved', value: `£${stats.moneySaved || 0}`, Icon: DollarSign, color: 'text-amber-500', border: 'border-l-4 border-l-amber-500' },
+            { key: 'member', label: 'Member Since', value: profile.createdAt ? new Date(profile.createdAt).getFullYear() : 'New', Icon: Heart, color: 'text-red-500', border: 'border-l-4 border-l-red-500' }
+          ].map(({ key, label, value, Icon, color, border }, index) => (
             <motion.div
               key={key}
-              className="card"
+              className={`card ${border}`}
               variants={fadeUp}
               transition={{ duration: 0.45, delay: index * 0.05 }}
               whileHover={{ y: -6, boxShadow: '0 28px 55px -35px rgba(14,165,233,0.3)' }}
@@ -563,8 +561,8 @@ export default function Profile() {
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
                         className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id
-                            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
-                            : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
+                          ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                          : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                           }`}
                         whileHover={{ x: 4 }}
                       >
@@ -1101,14 +1099,16 @@ export default function Profile() {
               <motion.div
                 variants={fadeUp}
                 initial="hidden"
-                animate="show"
-                className="bg-white dark:bg-neutral-800 rounded-2xl p-8 shadow-sm border border-neutral-200 dark:border-neutral-700"
+                animate="visible"
+                className="card"
               >
-                <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
-                  <Home className="h-5 w-5 mr-2 text-primary-600 dark:text-primary-400" />
-                  Household
-                </h2>
-
+                <div className="card-header">
+                  <h2 className="card-title flex items-center">
+                    <Home className="h-5 w-5 mr-2 text-primary-600 dark:text-primary-400" />
+                    Household
+                  </h2>
+                </div>
+                <div className="card-content">
                 {!isMember ? (
                   /* No household — Create or Join */
                   <div className="space-y-8">
@@ -1169,8 +1169,8 @@ export default function Profile() {
                     {(createHouseholdMutation.isError || joinHouseholdMutation.isError) && (
                       <p className="text-red-500 text-sm text-center">
                         {(createHouseholdMutation.error as any)?.response?.data?.error ||
-                         (joinHouseholdMutation.error as any)?.response?.data?.error ||
-                         'Something went wrong. Please try again.'}
+                          (joinHouseholdMutation.error as any)?.response?.data?.error ||
+                          'Something went wrong. Please try again.'}
                       </p>
                     )}
                   </div>
@@ -1357,6 +1357,7 @@ export default function Profile() {
                     )}
                   </div>
                 )}
+                </div>
               </motion.div>
             )}
           </div>
@@ -1397,8 +1398,8 @@ export default function Profile() {
                         key={program.id}
                         onClick={() => setSelectedProgram(program.id)}
                         className={`p-3 rounded-lg border-2 text-left transition-all ${selectedProgram === program.id
-                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                            : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                          : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300'
                           }`}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}

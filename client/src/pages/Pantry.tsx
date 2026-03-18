@@ -12,8 +12,6 @@ import {
   AlertTriangle,
   Search,
   Archive,
-  ArrowUpDown,
-  Filter,
   ScanLine,
   Brain,
   ChevronDown,
@@ -25,7 +23,9 @@ import {
   ShoppingBag,
   Receipt,
   Home,
-  Users
+  Users,
+  Camera,
+  Loader2
 } from 'lucide-react'
 import SmartWasteDashboard from '../components/SmartWasteDashboard'
 import BarcodeScanner from '../components/BarcodeScanner'
@@ -176,6 +176,41 @@ export default function Pantry() {
     recommendations: string[]
   } | null>(null)
   const [checkingItemRisk, setCheckingItemRisk] = useState(false)
+  const [classifyingImage, setClassifyingImage] = useState(false)
+  const [classificationResult, setClassificationResult] = useState<{
+    top_category: string
+    top_confidence: number
+    recommended_storage: string
+    predictions: { category: string; confidence: number }[]
+  } | null>(null)
+
+  // Handle food image classification
+  const handleFoodImageUpload = async (file: File) => {
+    setClassifyingImage(true)
+    setClassificationResult(null)
+    try {
+      const result = await apiService.upload<{
+        success: boolean
+        data: {
+          top_category: string
+          top_confidence: number
+          recommended_storage: string
+          predictions: { category: string; confidence: number }[]
+        }
+      }>('/api/ml/classify-image', file)
+      const data = (result as any).data
+      if (data) {
+        setClassificationResult(data)
+        setNewItemForm(prev => ({ ...prev, category: data.top_category }))
+        toast.success(`Detected: ${data.top_category} (${Math.round(data.top_confidence * 100)}% confidence)`)
+      }
+    } catch (err: any) {
+      console.error('Image classification failed:', err)
+      toast.error('Could not classify image. Try entering the category manually.')
+    } finally {
+      setClassifyingImage(false)
+    }
+  }
 
   // Fetch pantry items from API
   const { data: pantryData, isLoading: itemsLoading } = useQuery(
@@ -801,7 +836,8 @@ export default function Pantry() {
               subtitle: 'Pantry inventory',
               Icon: Package,
               iconColor: 'text-blue-500',
-              valueClass: 'text-neutral-900'
+              valueClass: 'text-neutral-900',
+              borderColor: 'border-l-emerald-500'
             },
             {
               key: 'total-value',
@@ -810,7 +846,8 @@ export default function Pantry() {
               subtitle: 'Estimated replacement cost',
               Icon: DollarSign,
               iconColor: 'text-green-500',
-              valueClass: 'text-neutral-900'
+              valueClass: 'text-neutral-900',
+              borderColor: 'border-l-blue-500'
             },
             {
               key: 'expiring-soon',
@@ -819,7 +856,8 @@ export default function Pantry() {
               subtitle: 'Action within 3 days',
               Icon: AlertTriangle,
               iconColor: 'text-orange-500',
-              valueClass: 'text-orange-600'
+              valueClass: 'text-orange-600',
+              borderColor: 'border-l-amber-500'
             },
             {
               key: 'low-stock',
@@ -828,12 +866,13 @@ export default function Pantry() {
               subtitle: 'Items below threshold',
               Icon: Archive,
               iconColor: 'text-red-500',
-              valueClass: 'text-red-600'
+              valueClass: 'text-red-600',
+              borderColor: 'border-l-red-500'
             }
-          ].map(({ key, title, value, subtitle, Icon, iconColor, valueClass }, index) => (
+          ].map(({ key, title, value, subtitle, Icon, iconColor, valueClass, borderColor }, index) => (
             <motion.div
               key={key}
-              className="card"
+              className={`card border-l-4 ${borderColor}`}
               variants={fadeUp}
               transition={{ duration: 0.45, delay: index * 0.05 }}
               whileHover={{ y: -6, boxShadow: '0 28px 55px -35px rgba(14,165,233,0.3)' }}
@@ -854,7 +893,7 @@ export default function Pantry() {
 
         {/* AI Waste Prevention Dashboard Toggle */}
         <motion.div
-          className="card cursor-pointer"
+          className={`card cursor-pointer ${showWasteDashboard ? 'bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-emerald-300 dark:border-emerald-700' : ''}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
@@ -864,7 +903,7 @@ export default function Pantry() {
           <div className="card-content">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center shadow-lg">
+                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-lg ${showWasteDashboard ? 'bg-gradient-to-br from-emerald-500 to-teal-500' : 'bg-gradient-to-br from-red-500 to-orange-500'}`}>
                   <Brain className="h-5 w-5 text-white" />
                 </div>
                 <div>
@@ -877,7 +916,7 @@ export default function Pantry() {
                 </div>
               </div>
               <div className="flex items-center space-x-2">
-                <span className="px-2 py-1 bg-red-100 text-red-600 text-xs font-medium rounded-full">
+                <span className={`px-2 py-1 text-xs font-medium rounded-full ${showWasteDashboard ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-600'}`}>
                   SMART
                 </span>
                 {showWasteDashboard ? (
@@ -909,23 +948,49 @@ export default function Pantry() {
           )}
         </AnimatePresence>
 
-        {/* Create Item Form */}
+        {/* Create Item Form — collapsible panel */}
+        <AnimatePresence>
         {showCreateForm && (
           <motion.div
-            className="card"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            className="card overflow-hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
           >
             <div className="card-header">
               <div className="flex items-center justify-between">
                 <h2 className="card-title">Add New Pantry Item</h2>
-                <button
-                  onClick={() => { setShowCreateForm(false); setItemRiskPreview(null) }}
-                  className="btn btn-ghost btn-sm"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <label
+                    className={`btn btn-outline btn-sm cursor-pointer ${classifyingImage ? 'opacity-50 pointer-events-none' : ''}`}
+                    title="Snap a photo to auto-detect food category"
+                  >
+                    {classifyingImage ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                    ) : (
+                      <Camera className="h-4 w-4 mr-1" />
+                    )}
+                    {classifyingImage ? 'Classifying...' : 'Snap Food'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      capture="environment"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) handleFoodImageUpload(file)
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                  <button
+                    onClick={() => { setShowCreateForm(false); setItemRiskPreview(null); setClassificationResult(null) }}
+                    className="btn btn-ghost btn-sm"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
             <div className="card-content space-y-4">
@@ -953,17 +1018,28 @@ export default function Pantry() {
                     className="input"
                   >
                     <option value="General">General</option>
-                    <option value="Fruits">Fruits</option>
-                    <option value="Vegetables">Vegetables</option>
-                    <option value="Meat">Meat</option>
-                    <option value="Dairy">Dairy</option>
-                    <option value="Grains">Grains</option>
-                    <option value="Canned Goods">Canned Goods</option>
-                    <option value="Frozen">Frozen</option>
-                    <option value="Condiments">Condiments</option>
-                    <option value="Snacks">Snacks</option>
+                    <option value="Bakery">Bakery</option>
                     <option value="Beverages">Beverages</option>
+                    <option value="Canned Goods">Canned Goods</option>
+                    <option value="Condiments">Condiments</option>
+                    <option value="Dairy">Dairy</option>
+                    <option value="Eggs">Eggs</option>
+                    <option value="Fish">Fish</option>
+                    <option value="Frozen">Frozen</option>
+                    <option value="Fruits">Fruits</option>
+                    <option value="Grains">Grains</option>
+                    <option value="Herbs">Herbs</option>
+                    <option value="Meat">Meat</option>
+                    <option value="Pantry">Pantry</option>
+                    <option value="Snacks">Snacks</option>
+                    <option value="Vegetables">Vegetables</option>
                   </select>
+                  {classificationResult && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                      AI detected: {classificationResult.top_category} ({Math.round(classificationResult.top_confidence * 100)}% confidence)
+                      {classificationResult.recommended_storage && ` · Store in ${classificationResult.recommended_storage}`}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1115,6 +1191,7 @@ export default function Pantry() {
             </div>
           </motion.div>
         )}
+        </AnimatePresence>
 
         {/* Filters and Search */}
         <motion.div
@@ -1125,96 +1202,70 @@ export default function Pantry() {
           transition={{ duration: 0.45 }}
         >
           <div className="card-content">
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <Search className="h-4 w-4 inline mr-1" />
-                  Search Items
-                </label>
-                <div className="relative">
-                  <Search className="h-4 w-4 absolute left-3 top-3 text-neutral-400" />
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="input pl-10"
-                    placeholder="Search by name..."
-                  />
-                </div>
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="relative min-w-[180px] flex-1">
+                <Search className="h-4 w-4 absolute left-3 top-3 text-neutral-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="input pl-10"
+                  placeholder="Search items..."
+                />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <Package className="h-4 w-4 inline mr-1" />
-                  Category
-                </label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="input"
-                >
-                  <option value="all">All Categories</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="input w-auto min-w-[140px]"
+              >
+                <option value="all">All Categories</option>
+                {categories.map(category => (
+                  <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <Filter className="h-4 w-4 inline mr-1" />
-                  Filter by Status
-                </label>
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="input"
-                >
-                  <option value="all">All Items</option>
-                  <option value="expiring">Expiring Soon</option>
-                  <option value="expired">Expired</option>
-                  <option value="lowStock">Low Stock</option>
-                  <option value="highRisk">High Waste Risk</option>
-                </select>
-              </div>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="input w-auto min-w-[140px]"
+              >
+                <option value="all">All Items</option>
+                <option value="expiring">Expiring Soon</option>
+                <option value="expired">Expired</option>
+                <option value="lowStock">Low Stock</option>
+                <option value="highRisk">High Waste Risk</option>
+              </select>
 
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                  <ArrowUpDown className="h-4 w-4 inline mr-1" />
-                  Sort By
-                </label>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'expiry' | 'price' | 'wasteRisk')}
-                  className="input"
-                >
-                  <option value="date">Newest First</option>
-                  <option value="name">Name (A-Z)</option>
-                  <option value="expiry">Expiry Date</option>
-                  <option value="price">Highest Price</option>
-                  <option value="wasteRisk">Highest Waste Risk</option>
-                </select>
-              </div>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'expiry' | 'price' | 'wasteRisk')}
+                className="input w-auto min-w-[140px]"
+              >
+                <option value="date">Newest First</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="expiry">Expiry Date</option>
+                <option value="price">Highest Price</option>
+                <option value="wasteRisk">Highest Waste Risk</option>
+              </select>
 
-              <div className="flex items-end">
-                <motion.button
-                  onClick={() => {
-                    setSearchTerm('')
-                    setSelectedCategory('all')
-                    setFilterType('all')
-                    setSortBy('date')
-                  }}
-                  className="btn btn-outline w-full"
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  Clear Filters
-                </motion.button>
-              </div>
+              <motion.button
+                onClick={() => {
+                  setSearchTerm('')
+                  setSelectedCategory('all')
+                  setFilterType('all')
+                  setSortBy('date')
+                }}
+                className="btn btn-outline btn-sm"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                Clear
+              </motion.button>
             </div>
 
             {/* Results Count */}
-            <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+            <div className="mt-3 pt-3 border-t border-neutral-200 dark:border-neutral-700">
               <p className="text-sm text-neutral-600 dark:text-neutral-400">
                 Showing <span className="font-semibold text-neutral-900 dark:text-neutral-100">{filteredItems.length}</span> of{' '}
                 <span className="font-semibold text-neutral-900 dark:text-neutral-100">{pantryItems.length}</span> items
@@ -1289,11 +1340,13 @@ export default function Pantry() {
                   whileHover={{ y: -4 }}
                 >
                   <div className={`
-                    card overflow-hidden transition-all duration-300
-                    ${expiryStatus === 'expired' ? 'ring-2 ring-red-400 dark:ring-red-500' : ''}
-                    ${expiryStatus === 'expiring' ? 'ring-2 ring-orange-400 dark:ring-orange-500' : ''}
-                    ${wasteRisk === 'very-high' ? 'bg-gradient-to-br from-red-100 to-white dark:from-red-950/50 dark:to-neutral-800' :
-                      wasteRisk === 'high' ? 'bg-gradient-to-br from-red-50 to-white dark:from-red-950/30 dark:to-neutral-800' : ''}
+                    card overflow-hidden transition-all duration-300 border-l-4
+                    ${wasteRisk === 'very-high' ? 'border-l-red-600 ring-2 ring-red-400 dark:ring-red-500 bg-gradient-to-br from-red-100 to-white dark:from-red-950/50 dark:to-neutral-800' :
+                      wasteRisk === 'high' ? 'border-l-orange-500 bg-gradient-to-br from-red-50 to-white dark:from-red-950/30 dark:to-neutral-800' :
+                      wasteRisk === 'medium' ? 'border-l-amber-400' :
+                      'border-l-green-400'}
+                    ${expiryStatus === 'expired' && wasteRisk !== 'very-high' ? 'ring-2 ring-red-400 dark:ring-red-500' : ''}
+                    ${expiryStatus === 'expiring' && wasteRisk !== 'very-high' && wasteRisk !== 'high' ? 'ring-2 ring-orange-400 dark:ring-orange-500' : ''}
                   `}>
                     {/* Category Header with Icon */}
                     <div className={`

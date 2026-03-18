@@ -1,0 +1,15 @@
+{
+  "classes": [
+    "Bakery",
+    "Dairy",
+    "Eggs",
+    "Fish",
+    "General",
+    "Meat",
+    "Pantry",
+    "Vegetables"
+  ],
+  "num_classes": 8,
+  "dataset": "Food-11 (mapped to NourishNeural categories)",
+  "test_accuracy": 0.9492082461906185
+}

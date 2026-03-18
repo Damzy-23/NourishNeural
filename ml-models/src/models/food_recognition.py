@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class UKFoodClassifier(nn.Module):
     """MobileNetV3-Large UK food classifier (must match training architecture)"""
 
-    def __init__(self, num_classes: int = 200, pretrained: bool = False):
+    def __init__(self, num_classes: int = 8, pretrained: bool = False):
         super().__init__()
         self.backbone = mobilenet_v3_large(weights=None)
         feature_dim = 960
@@ -64,7 +64,7 @@ class FoodRecognitionModel:
     STORAGE_TYPES = ['fridge', 'freezer', 'pantry', 'room', 'special']
     SUPERMARKETS = ['tesco', 'sainsburys', 'asda', 'morrisons', 'aldi', 'lidl']
 
-    def __init__(self, num_classes: int = 200, model_path: Optional[str] = None):
+    def __init__(self, num_classes: int = 8, model_path: Optional[str] = None):
         self.num_classes = num_classes
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model = None

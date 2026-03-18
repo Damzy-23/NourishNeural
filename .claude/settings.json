@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"/c/Users/damzy/OneDrive/Documents/NourishNeural\" diff --name-only HEAD~5..HEAD)",
+      "Bash(git -C \"/c/Users/damzy/OneDrive/Documents/NourishNeural\" diff HEAD -- server/src/routes/supabase-groceries.js)",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "Bash(ollama list:*)",
+      "Bash(ollama create:*)",
+      "Bash(xargs:*)",
+      "Bash(sort:*)"
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const { authenticateJWT } = require('../middleware/supabaseAuth');
 const loyaltyService = require('../services/loyaltyService');
 
 /**
@@ -62,13 +63,10 @@ router.get('/programs/:id', (req, res) => {
  * @desc Get user's loyalty accounts
  * @access Private
  */
-router.get('/accounts', (req, res) => {
+router.get('/accounts', authenticateJWT, async (req, res) => {
   try {
-    // Get user ID from auth header
-    const authHeader = req.headers.authorization;
-    const userId = authHeader ? authHeader.replace('Bearer ', '').substring(0, 20) : 'anonymous';
-
-    const accounts = loyaltyService.getAccounts(userId);
+    const userId = req.user.id;
+    const accounts = await loyaltyService.getAccounts(userId);
 
     res.json({
       success: true,
@@ -91,7 +89,7 @@ router.get('/accounts', (req, res) => {
  * @desc Add a loyalty account
  * @access Private
  */
-router.post('/accounts', (req, res) => {
+router.post('/accounts', authenticateJWT, async (req, res) => {
   try {
     const { programId, cardNumber } = req.body;
 
@@ -102,11 +100,8 @@ router.post('/accounts', (req, res) => {
       });
     }
 
-    // Get user ID from auth header
-    const authHeader = req.headers.authorization;
-    const userId = authHeader ? authHeader.replace('Bearer ', '').substring(0, 20) : 'anonymous';
-
-    const result = loyaltyService.addAccount(userId, programId, cardNumber);
+    const userId = req.user.id;
+    const result = await loyaltyService.addAccount(userId, programId, cardNumber);
 
     if (!result.success) {
       return res.status(400).json({
@@ -134,16 +129,13 @@ router.post('/accounts', (req, res) => {
  * @desc Update a loyalty account
  * @access Private
  */
-router.put('/accounts/:id', (req, res) => {
+router.put('/accounts/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+    const userId = req.user.id;
 
-    // Get user ID from auth header
-    const authHeader = req.headers.authorization;
-    const userId = authHeader ? authHeader.replace('Bearer ', '').substring(0, 20) : 'anonymous';
-
-    const result = loyaltyService.updateAccount(userId, id, updates);
+    const result = await loyaltyService.updateAccount(userId, id, updates);
 
     if (!result.success) {
       return res.status(400).json({
@@ -171,15 +163,12 @@ router.put('/accounts/:id', (req, res) => {
  * @desc Remove a loyalty account
  * @access Private
  */
-router.delete('/accounts/:id', (req, res) => {
+router.delete('/accounts/:id', authenticateJWT, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
-    // Get user ID from auth header
-    const authHeader = req.headers.authorization;
-    const userId = authHeader ? authHeader.replace('Bearer ', '').substring(0, 20) : 'anonymous';
-
-    const result = loyaltyService.removeAccount(userId, id);
+    const result = await loyaltyService.removeAccount(userId, id);
 
     if (!result.success) {
       return res.status(404).json({
@@ -237,15 +226,12 @@ router.post('/validate', (req, res) => {
  * @desc Get user's loyalty card for a specific store
  * @access Private
  */
-router.get('/store/:storeName', (req, res) => {
+router.get('/store/:storeName', authenticateJWT, async (req, res) => {
   try {
     const { storeName } = req.params;
+    const userId = req.user.id;
 
-    // Get user ID from auth header
-    const authHeader = req.headers.authorization;
-    const userId = authHeader ? authHeader.replace('Bearer ', '').substring(0, 20) : 'anonymous';
-
-    const account = loyaltyService.getAccountByStore(userId, storeName);
+    const account = await loyaltyService.getAccountByStore(userId, storeName);
 
     res.json({
       success: true,

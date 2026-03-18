@@ -18,7 +18,7 @@ const getApiBaseUrl = () => {
 // Create axios instance
 const api: AxiosInstance = axios.create({
   baseURL: getApiBaseUrl(),
-  timeout: 30000,
+  timeout: 120000, // Increased to 120s for local LLM cold starts
   headers: {
     'Content-Type': 'application/json',
   },
@@ -117,8 +117,8 @@ export const apiService = {
   },
 
   // POST request
-  post: async <T>(url: string, data?: any): Promise<T> => {
-    const response = await api.post(url, data)
+  post: async <T>(url: string, data?: any, config?: { timeout?: number }): Promise<T> => {
+    const response = await api.post(url, data, config)
     return response.data
   },
 

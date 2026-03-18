@@ -1,10 +1,54 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png'],
+      manifest: false, // using public/manifest.json
+      workbox: {
+        // Cache pages and API responses
+        runtimeCaching: [
+          {
+            // Cache API data (pantry, groceries, etc.) — network-first, fall back to cache
+            urlPattern: /\/api\/(pantry|groceries|meal-planner|waste|dashboard|users)\b/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-data',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 }, // 1 hour
+              networkTimeoutSeconds: 10, // fall back to cache after 10s
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
+            // Cache static assets — cache-first
+            urlPattern: /\.(js|css|woff2?|png|jpg|svg)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'static-assets',
+              expiration: { maxEntries: 100, maxAgeSeconds: 30 * 24 * 60 * 60 } // 30 days
+            }
+          },
+          {
+            // Cache Google Fonts
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts',
+              expiration: { maxEntries: 10, maxAgeSeconds: 365 * 24 * 60 * 60 }
+            }
+          }
+        ],
+        // Pre-cache the app shell
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}']
+      }
+    })
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -12,13 +56,9 @@ export default defineConfig({
   },
   server: {
     port: 3050,
-    strictPort: true, // Don't try the next available port if 3050 is taken
+    strictPort: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-      },
-      '/graphql': {
         target: 'http://localhost:5000',
         changeOrigin: true,
       },
@@ -45,4 +85,4 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
   },
-}) 
+})
