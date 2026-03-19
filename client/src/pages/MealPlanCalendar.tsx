@@ -121,6 +121,7 @@ export default function MealPlanCalendar() {
   const [shoppingList, setShoppingList] = useState<{ name: string; quantity: number }[]>([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [isGenShoppingList, setIsGenShoppingList] = useState(false)
+  const [isAddingToGrocery, setIsAddingToGrocery] = useState(false)
 
   // Build array of 7 date strings for current week
   const weekDates = Array.from({ length: 7 }, (_, i) => toDateStr(addDays(weekStart, i)))
@@ -280,6 +281,29 @@ export default function MealPlanCalendar() {
       toast.error('Failed to generate shopping list')
     } finally {
       setIsGenShoppingList(false)
+    }
+  }
+
+  async function handleAddToGroceryList() {
+    if (shoppingList.length === 0) return
+    setIsAddingToGrocery(true)
+    try {
+      const items = shoppingList.map(item => ({
+        name: item.name,
+        quantity: item.quantity || 1,
+        unit: 'pieces',
+        category: 'General'
+      }))
+      await apiService.post('/api/groceries', {
+        name: `Meal Plan — ${formatWeekRange(weekStart)}`,
+        items
+      })
+      toast.success(`${items.length} ingredients added to grocery list`)
+      setShowShoppingList(false)
+    } catch {
+      toast.error('Failed to create grocery list')
+    } finally {
+      setIsAddingToGrocery(false)
     }
   }
 
@@ -604,16 +628,33 @@ export default function MealPlanCalendar() {
                   <p className="text-sm text-neutral-500 dark:text-neutral-400">All ingredients are in your pantry!</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {shoppingList.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-700/50 border border-neutral-100 dark:border-neutral-700">
-                      <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{item.name}</span>
-                      {item.quantity > 1 && (
-                        <span className="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 rounded-full">×{item.quantity}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <>
+                  <div className="space-y-2">
+                    {shoppingList.map((item, idx) => (
+                      <div key={idx} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-700/50 border border-neutral-100 dark:border-neutral-700">
+                        <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{item.name}</span>
+                        {item.quantity > 1 && (
+                          <span className="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 rounded-full">×{item.quantity}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={handleAddToGroceryList}
+                    disabled={isAddingToGrocery}
+                    className="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center space-x-2"
+                  >
+                    {isAddingToGrocery ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <ShoppingCart className="w-4 h-4" />
+                        <span>Add All to Grocery List</span>
+                      </>
+                    )}
+                  </button>
+                </>
               )}
             </motion.div>
           </motion.div>

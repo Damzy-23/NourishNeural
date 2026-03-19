@@ -342,15 +342,16 @@ router.post('/:id/items', authenticateJWT, async (req, res) => {
 
 // ─────────────────────────────────────────────
 // PATCH /api/groceries/:listId/items/:itemId/toggle  — toggle is_checked
+// When checked → auto-add item to pantry
 // ─────────────────────────────────────────────
 router.patch('/:listId/items/:itemId/toggle', authenticateJWT, async (req, res) => {
     try {
         const userId = req.user.id;
 
-        // Verify list ownership
+        // Verify list ownership and get household_id
         const { data: list, error: listError } = await supabase
             .from('grocery_lists')
-            .select('id')
+            .select('id, household_id')
             .eq('id', req.params.listId)
             .eq('user_id', userId)
             .single();
@@ -359,10 +360,10 @@ router.patch('/:listId/items/:itemId/toggle', authenticateJWT, async (req, res) 
             return res.status(404).json({ success: false, error: 'Grocery list not found' });
         }
 
-        // Get current checked state
+        // Get current item with full details
         const { data: existing, error: fetchError } = await supabase
             .from('grocery_list_items')
-            .select('id, is_checked')
+            .select('*')
             .eq('id', req.params.itemId)
             .eq('list_id', req.params.listId)
             .single();
@@ -371,23 +372,78 @@ router.patch('/:listId/items/:itemId/toggle', authenticateJWT, async (req, res) 
             return res.status(404).json({ success: false, error: 'Item not found' });
         }
 
+        const newCheckedState = !existing.is_checked;
+
         const { data: item, error: updateError } = await supabase
             .from('grocery_list_items')
-            .update({ is_checked: !existing.is_checked, updated_at: new Date().toISOString() })
+            .update({ is_checked: newCheckedState, updated_at: new Date().toISOString() })
             .eq('id', req.params.itemId)
             .select()
             .single();
 
         if (updateError) throw updateError;
 
+        // Auto-add to pantry when item is checked (purchased)
+        let addedToPantry = false;
+        if (newCheckedState) {
+            try {
+                // Check if item already exists in pantry (by name, same scope)
+                let pantryQuery = supabase
+                    .from('pantry_items')
+                    .select('id, quantity')
+                    .ilike('name', existing.name)
+                    .eq('is_archived', false);
+
+                if (list.household_id) {
+                    pantryQuery = pantryQuery.eq('household_id', list.household_id);
+                } else {
+                    pantryQuery = pantryQuery.eq('user_id', userId).is('household_id', null);
+                }
+
+                const { data: existingPantry } = await pantryQuery.maybeSingle();
+
+                if (existingPantry) {
+                    // Update quantity of existing pantry item
+                    await supabase
+                        .from('pantry_items')
+                        .update({
+                            quantity: existingPantry.quantity + (existing.quantity || 1),
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', existingPantry.id);
+                } else {
+                    // Create new pantry item
+                    await supabase
+                        .from('pantry_items')
+                        .insert({
+                            user_id: userId,
+                            name: existing.name,
+                            quantity: existing.quantity || 1,
+                            unit: existing.unit || 'pieces',
+                            category: existing.category || 'General',
+                            purchase_date: new Date().toISOString().split('T')[0],
+                            estimated_price: existing.estimated_price || null,
+                            household_id: list.household_id || null,
+                            is_archived: false
+                        });
+                }
+                addedToPantry = true;
+            } catch (pantryErr) {
+                console.error('Auto-add to pantry failed (non-blocking):', pantryErr.message);
+            }
+        }
+
         res.json({
             success: true,
-            message: 'Item status updated successfully',
+            message: newCheckedState
+                ? (addedToPantry ? 'Item purchased — added to pantry' : 'Item checked off')
+                : 'Item unchecked',
             item: {
                 id: item.id,
                 name: item.name,
                 isChecked: item.is_checked
-            }
+            },
+            addedToPantry
         });
     } catch (error) {
         console.error('Error toggling grocery item:', error);

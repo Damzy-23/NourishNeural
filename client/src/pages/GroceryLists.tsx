@@ -24,6 +24,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useHousehold } from '../hooks/useHousehold'
 import { fadeUp } from '../utils/motion'
 import jsPDF from 'jspdf'
+import toast from 'react-hot-toast'
 
 interface GroceryItem {
   id: string
@@ -122,13 +123,17 @@ export default function GroceryLists() {
     }
   )
 
-  // Toggle item checked mutation
+  // Toggle item checked mutation — auto-adds to pantry when purchased
   const toggleItemMutation = useMutation(
     ({ listId, itemId }: { listId: string; itemId: string }) =>
       apiService.patch(`/api/groceries/${listId}/items/${itemId}/toggle`),
     {
-      onSuccess: () => {
+      onSuccess: (data: any) => {
         queryClient.invalidateQueries(['grocery-lists'])
+        if (data?.addedToPantry) {
+          queryClient.invalidateQueries(['pantry'])
+          toast.success(`${data.item?.name || 'Item'} added to pantry`, { icon: '🥫' })
+        }
       },
     }
   )
