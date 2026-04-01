@@ -443,6 +443,7 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
     const userId = req.user.id;
     const itemId = req.params.id;
     const hardDelete = req.query.hard === 'true';
+    const reason = req.query.reason;
 
     // Check if item exists and user can access it
     const { data: existingItem, error: fetchError } = await supabase
@@ -460,6 +461,18 @@ router.delete('/:id', authenticateJWT, async (req, res) => {
 
     if (!(await canAccessItem(userId, existingItem))) {
       return res.status(404).json({ error: 'Pantry item not found' });
+    }
+
+    if (reason === 'consumed') {
+      await supabase.from('consumption_logs').insert({
+        user_id: existingItem.user_id,
+        household_id: existingItem.household_id,
+        name: existingItem.name,
+        category: existingItem.category,
+        quantity: existingItem.quantity,
+        unit: existingItem.unit,
+        price: existingItem.actual_price || existingItem.estimated_price
+      });
     }
 
     if (hardDelete) {
@@ -525,6 +538,17 @@ router.post('/:id/consume', authenticateJWT, async (req, res) => {
     }
 
     const newQuantity = parseFloat(item.quantity) - parseFloat(amount);
+
+    // Record consumption event
+    await supabase.from('consumption_logs').insert({
+      user_id: item.user_id,
+      household_id: item.household_id,
+      name: item.name,
+      category: item.category,
+      quantity: parseFloat(amount),
+      unit: item.unit,
+      price: item.actual_price || item.estimated_price
+    });
 
     if (newQuantity <= 0) {
       // Archive item if quantity reaches 0

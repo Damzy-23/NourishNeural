@@ -20,7 +20,7 @@ export default function TermsOfService() {
               <div className="flex items-center space-x-3">
                 <Link to="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-                    <img src="/favicon.svg" alt="Nourish Neural" className="h-8 w-8" />
+                    <img src="/logo.png" alt="Nourish Neural" className="h-8 w-8" />
                   </div>
                   <span className="text-xl font-bold text-neutral-900 dark:text-neutral-100">Nourish Neural</span>
                 </Link>

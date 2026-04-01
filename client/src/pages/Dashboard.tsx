@@ -19,16 +19,18 @@ import {
   Search,
   Activity,
   Sparkles,
-  ChevronRight,
   TrendingDown,
   TrendingUp,
   Minus,
-  Trash2
+  Trash2,
+  ArrowRight
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import SmartFoodClassifier from '../components/SmartFoodClassifier'
+import SustainabilityWidget from '../components/SustainabilityWidget'
 import { fadeUp, staggerContainer } from '../utils/motion'
+import { cn } from '../utils/cn'
 
 const MotionLink = motion(Link)
 
@@ -63,9 +65,10 @@ interface DashboardStats {
 interface QuickAction {
   id: string
   title: string
-  description: string
+  subtitle: string
   icon: any
-  bgClass: string
+  color: string
+  iconBg: string
   link: string
 }
 
@@ -73,33 +76,37 @@ const quickActions: QuickAction[] = [
   {
     id: 'new-list',
     title: 'New List',
-    description: 'Start a grocery list',
+    subtitle: 'Grocery list',
     icon: Plus,
-    bgClass: 'bg-blue-500',
+    color: 'text-blue-600 dark:text-blue-400',
+    iconBg: 'bg-blue-50 dark:bg-blue-900/20',
     link: '/app/grocery-lists'
   },
   {
     id: 'add-pantry',
-    title: 'Add Pantry',
-    description: 'Track a food item',
+    title: 'Add Item',
+    subtitle: 'Track food',
     icon: Package,
-    bgClass: 'bg-emerald-500',
+    color: 'text-primary-600 dark:text-primary-400',
+    iconBg: 'bg-primary-50 dark:bg-primary-900/20',
     link: '/app/pantry'
   },
   {
     id: 'find-stores',
-    title: 'Find Stores',
-    description: 'Nearby shops',
+    title: 'Stores',
+    subtitle: 'Nearby shops',
     icon: MapPin,
-    bgClass: 'bg-purple-500',
+    color: 'text-accent-600 dark:text-accent-400',
+    iconBg: 'bg-accent-50 dark:bg-accent-900/20',
     link: '/app/stores'
   },
   {
     id: 'ai-chat',
-    title: 'Nurexa AI',
-    description: 'Cooking advice',
+    title: 'Nurexa',
+    subtitle: 'AI assistant',
     icon: Zap,
-    bgClass: 'bg-orange-500',
+    color: 'text-amber-600 dark:text-amber-400',
+    iconBg: 'bg-amber-50 dark:bg-amber-900/20',
     link: '/app/ai-assistant'
   }
 ]
@@ -143,50 +150,51 @@ function WasteAnalyticsSection() {
         : 'Stable'
 
   return (
-    <motion.section
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
+      className="card overflow-hidden"
     >
-      <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 p-5 border-gradient-top-amber">
+      <div className="border-l-4 border-l-accent-500 p-5">
         <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
-              <Trash2 className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-accent-50 dark:bg-accent-900/20 flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-accent-600 dark:text-accent-400" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Food Waste Tracker</h2>
-              <p className="text-sm text-neutral-600 dark:text-neutral-400">This month's waste overview</p>
+              <h2 className="text-lg font-display text-neutral-900 dark:text-neutral-100">Food Waste Tracker</h2>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">This month's overview</p>
             </div>
           </div>
           {forecast?.trend && forecast.trend !== 'insufficient_data' && (
-            <div className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-neutral-50 dark:bg-neutral-700/50 ${trendColor}`}>
-              {(() => { const Icon = trendIcon; return <Icon className="w-4 h-4" /> })()}
-              <span className="text-xs font-bold">{trendLabel}</span>
+            <div className={cn('flex items-center gap-1.5 px-3 py-1 rounded-full bg-neutral-50 dark:bg-neutral-700/50', trendColor)}>
+              {(() => { const Icon = trendIcon; return <Icon className="w-3.5 h-3.5" /> })()}
+              <span className="text-xs font-semibold">{trendLabel}</span>
             </div>
           )}
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-          <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Items Wasted</p>
-            <p className="text-2xl font-black text-neutral-900 dark:text-neutral-100">{stats?.summary?.totalItems || 0}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="p-3 rounded-xl bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800/30">
+            <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">Items Wasted</p>
+            <p className="text-2xl font-display text-neutral-900 dark:text-neutral-100">{stats?.summary?.totalItems || 0}</p>
           </div>
-          <div className="p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Money Lost</p>
-            <p className="text-2xl font-black text-neutral-900 dark:text-neutral-100">
+          <div className="p-3 rounded-xl bg-orange-50 dark:bg-orange-900/10 border border-orange-100 dark:border-orange-800/30">
+            <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">Money Lost</p>
+            <p className="text-2xl font-display text-neutral-900 dark:text-neutral-100">
               £{(stats?.summary?.totalLoss || 0).toFixed(2)}
             </p>
           </div>
-          <div className="p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Top Wasted</p>
-            <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100 truncate">
+          <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-800/30">
+            <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">Top Wasted</p>
+            <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
               {stats?.summary?.mostWastedCategory || 'N/A'}
             </p>
           </div>
-          <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Main Reason</p>
-            <p className="text-sm font-bold text-neutral-900 dark:text-neutral-100 capitalize truncate">
+          <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-800/30">
+            <p className="text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">Main Reason</p>
+            <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 capitalize truncate">
               {stats?.summary?.mostCommonReason || 'N/A'}
             </p>
           </div>
@@ -194,11 +202,11 @@ function WasteAnalyticsSection() {
 
         {/* AI Insight */}
         {forecast?.insight && forecast.trend !== 'insufficient_data' && (
-          <div className="p-4 rounded-lg bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border border-purple-200 dark:border-purple-800">
-            <div className="flex items-start space-x-2">
-              <Sparkles className="w-4 h-4 text-purple-500 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+          <div className="mt-4 p-3 rounded-xl bg-primary-50/50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-800/30">
+            <div className="flex items-start gap-2">
+              <Sparkles className="w-4 h-4 text-primary-500 mt-0.5 flex-shrink-0" />
               <div>
-                <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{forecast.insight}</p>
+                <p className="text-sm text-neutral-700 dark:text-neutral-300">{forecast.insight}</p>
                 {forecast?.tips && forecast.tips.length > 0 && (
                   <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                     Tip: {forecast.tips[0]}
@@ -217,7 +225,7 @@ function WasteAnalyticsSection() {
           </div>
         )}
       </div>
-    </motion.section>
+    </motion.div>
   )
 }
 
@@ -226,22 +234,16 @@ export default function Dashboard() {
   const [selectedPeriod] = useState<'week' | 'month' | 'year'>('month')
   const [sidebarTab, setSidebarTab] = useState<'goals' | 'today'>('goals')
 
-  // Fetch dashboard data
   const { data: dashboardResponse, isLoading } = useQuery(
     ['dashboard', selectedPeriod],
     () => apiService.get(`/api/dashboard?period=${selectedPeriod}`),
-    {
-      enabled: !!user,
-    }
+    { enabled: !!user }
   )
 
-  // Fetch recommendations (available for future use)
   useQuery(
     ['recommendations'],
     () => apiService.get('/api/dashboard/recommendations'),
-    {
-      enabled: !!user,
-    }
+    { enabled: !!user }
   )
 
   const stats: DashboardStats = (dashboardResponse as any)?.stats || {
@@ -260,7 +262,7 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
+      <div className="flex items-center justify-center py-20">
         <div className="loading-dots">
           <div></div>
           <div></div>
@@ -270,33 +272,35 @@ export default function Dashboard() {
     )
   }
 
-  // Stat cards with hardcoded Tailwind classes (fixes JIT compilation)
   const metricCards = [
     {
       label: 'Active Lists',
       value: stats.groceryLists.active,
       total: stats.groceryLists.total,
       icon: ShoppingCart,
-      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+      borderClass: 'border-l-4 border-l-blue-400',
+      iconBg: 'bg-blue-50 dark:bg-blue-900/20',
       iconColor: 'text-blue-600 dark:text-blue-400',
       trend: null as string | null
     },
     {
       label: 'Pantry Items',
       value: stats.pantry.totalItems,
-      subtitle: `£${stats.pantry.totalValue.toFixed(2)}`,
+      subtitle: `£${stats.pantry.totalValue.toFixed(2)} value`,
       icon: Package,
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
-      iconColor: 'text-emerald-600 dark:text-emerald-400',
+      borderClass: 'border-l-4 border-l-primary-400',
+      iconBg: 'bg-primary-50 dark:bg-primary-900/20',
+      iconColor: 'text-primary-600 dark:text-primary-400',
       trend: null as string | null
     },
     {
       label: 'This Month',
       value: `£${stats.spending.thisMonth.toFixed(2)}`,
-      subtitle: stats.spending.trend === 'up' ? '↑ vs last' : stats.spending.trend === 'down' ? '↓ vs last' : '— stable',
+      subtitle: stats.spending.trend === 'up' ? 'Up vs last month' : stats.spending.trend === 'down' ? 'Down vs last month' : 'Stable',
       icon: DollarSign,
-      iconBg: 'bg-green-100 dark:bg-green-900/30',
-      iconColor: 'text-green-600 dark:text-green-400',
+      borderClass: 'border-l-4 border-l-emerald-400',
+      iconBg: 'bg-emerald-50 dark:bg-emerald-900/20',
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
       trend: stats.spending.trend
     },
     {
@@ -304,8 +308,9 @@ export default function Dashboard() {
       value: stats.pantry.expiringSoon,
       subtitle: `${stats.pantry.lowStock} low stock`,
       icon: AlertTriangle,
-      iconBg: stats.pantry.expiringSoon > 0 ? 'bg-red-100 dark:bg-red-900/30' : 'bg-neutral-100 dark:bg-neutral-700',
-      iconColor: stats.pantry.expiringSoon > 0 ? 'text-red-600 dark:text-red-400' : 'text-neutral-600 dark:text-neutral-400',
+      borderClass: stats.pantry.expiringSoon > 0 ? 'border-l-4 border-l-red-400' : 'border-l-4 border-l-neutral-300 dark:border-l-neutral-600',
+      iconBg: stats.pantry.expiringSoon > 0 ? 'bg-red-50 dark:bg-red-900/20' : 'bg-neutral-50 dark:bg-neutral-700/50',
+      iconColor: stats.pantry.expiringSoon > 0 ? 'text-red-600 dark:text-red-400' : 'text-neutral-500 dark:text-neutral-400',
       trend: null as string | null
     }
   ]
@@ -316,145 +321,137 @@ export default function Dashboard() {
         <title>Dashboard - Nourish Neural</title>
       </Helmet>
 
-      <div className="relative min-h-screen pb-16">
-        {/* Background blobs */}
-        <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-blue-50/30 via-white to-primary-50/20 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800" />
-        <motion.div
-          className="pointer-events-none fixed top-20 right-[-8%] h-64 w-64 rounded-full bg-primary-200/30 blur-3xl"
-          animate={{ y: [0, 18, 0], opacity: [0.25, 0.45, 0.25] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="pointer-events-none fixed bottom-20 left-[-6%] h-56 w-56 rounded-full bg-accent-200/25 blur-3xl"
-          animate={{ y: [0, -14, 0], opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-        />
+      <div className="relative">
+        {/* Subtle warm background accents */}
+        <div className="pointer-events-none fixed inset-0 overflow-hidden">
+          <div className="absolute top-[-10%] right-[-5%] h-96 w-96 rounded-full bg-primary-200/20 dark:bg-primary-800/10 blur-[100px]" />
+          <div className="absolute bottom-[-5%] left-[-8%] h-80 w-80 rounded-full bg-accent-200/15 dark:bg-accent-800/10 blur-[100px]" />
+        </div>
 
-        <div className="relative space-y-6">
-          {/* Glass-card hero header */}
+        <div className="relative space-y-4 md:space-y-6">
+          {/* Hero greeting */}
           <motion.div
-            className="relative overflow-hidden"
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col md:flex-row md:items-end md:justify-between gap-1 md:gap-2"
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl" />
-            <div className="relative glass-card rounded-3xl p-8 md:p-10 border border-neutral-200/60 backdrop-blur-sm">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-black text-neutral-900 dark:text-neutral-100 mb-1">
-                    {getGreeting()}, <span className="gradient-text">{(user as any)?.firstName || 'there'}</span>
-                  </h1>
-                  <p className="text-neutral-600 dark:text-neutral-400">
-                    {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-                  </p>
-                </div>
-              </div>
+            <div>
+              <p className="text-xs md:text-sm font-medium text-neutral-500 dark:text-neutral-400 mb-0.5 md:mb-1">
+                {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </p>
+              <h1 className="text-2xl md:text-4xl font-display text-neutral-900 dark:text-neutral-100">
+                {getGreeting()}, <span className="gradient-text">{(user as any)?.firstName || 'there'}</span>
+              </h1>
             </div>
+            <p className="text-xs md:text-sm text-neutral-500 dark:text-neutral-400 pb-1 hidden md:block">
+              Your kitchen at a glance
+            </p>
           </motion.div>
 
-          {/* Key Metrics Row */}
+          {/* Metrics — horizontal scroll on mobile, grid on desktop */}
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+            className="flex md:grid md:grid-cols-4 gap-2.5 md:gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory md:snap-none"
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
           >
-            {metricCards.map((metric, index) => (
-              <motion.div
-                key={metric.label}
-                variants={fadeUp}
-                transition={{ delay: index * 0.05 }}
-              >
-                <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-200 dark:border-neutral-700 p-5 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={`w-10 h-10 rounded-xl ${metric.iconBg} flex items-center justify-center`}>
-                      <metric.icon className={`w-5 h-5 ${metric.iconColor}`} />
+            {metricCards.map((metric, i) => (
+              <motion.div key={metric.label} variants={fadeUp} transition={{ delay: i * 0.05 }} className="min-w-[140px] md:min-w-0 snap-start">
+                <div className={cn('card p-3 md:p-4', metric.borderClass)}>
+                  <div className="flex items-center justify-between mb-2 md:mb-3">
+                    <div className={cn('w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center', metric.iconBg)}>
+                      <metric.icon className={cn('w-4 h-4 md:w-[18px] md:h-[18px]', metric.iconColor)} />
                     </div>
                     {metric.trend && metric.trend !== 'stable' && (
-                      <div className={`text-xs font-semibold ${metric.trend === 'up' ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                      <span className={cn('text-xs font-semibold', metric.trend === 'up' ? 'text-red-500' : 'text-green-500')}>
                         {metric.trend === 'up' ? '↑' : '↓'}
-                      </div>
+                      </span>
                     )}
                   </div>
-                  <p className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-1">{metric.label}</p>
-                  <p className="text-2xl font-black text-neutral-900 dark:text-neutral-100">
+                  <p className="text-[10px] md:text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-0.5">
+                    {metric.label}
+                  </p>
+                  <p className="text-xl md:text-2xl font-display text-neutral-900 dark:text-neutral-100">
                     {metric.value}
-                    {metric.total !== undefined && <span className="text-lg text-neutral-400 dark:text-neutral-500 font-bold ml-1">/ {metric.total}</span>}
+                    {metric.total !== undefined && (
+                      <span className="text-sm md:text-base text-neutral-400 dark:text-neutral-500 ml-1">/ {metric.total}</span>
+                    )}
                   </p>
                   {metric.subtitle && (
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">{metric.subtitle}</p>
+                    <p className="text-[10px] md:text-xs text-neutral-500 dark:text-neutral-400 mt-0.5 md:mt-1">{metric.subtitle}</p>
                   )}
                 </div>
               </motion.div>
             ))}
           </motion.div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column - 2/3 width */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* Quick Actions — icon-forward cards */}
-              <motion.section
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Quick Actions</h2>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                  {quickActions.map((action) => {
-                    const Icon = action.icon
-                    return (
-                      <MotionLink
-                        key={action.id}
-                        to={action.link}
-                        className="group"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-4 hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-md transition-all text-center">
-                          <div className={`w-12 h-12 ${action.bgClass} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:shadow-lg transition-shadow`}>
-                            <Icon className="w-6 h-6 text-white" />
-                          </div>
-                          <p className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm">{action.title}</p>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{action.description}</p>
-                        </div>
-                      </MotionLink>
-                    )
-                  })}
-                </div>
-              </motion.section>
+          {/* Quick Actions — scrollable row on mobile, flex-wrap on desktop */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="flex gap-2 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap snap-x snap-mandatory md:snap-none"
+          >
+            {quickActions.map((action) => {
+              const Icon = action.icon
+              return (
+                <MotionLink
+                  key={action.id}
+                  to={action.link}
+                  className="flex items-center gap-2 md:gap-2.5 px-3 md:px-4 py-2 md:py-2.5 rounded-xl bg-white dark:bg-neutral-800 border border-neutral-200/80 dark:border-neutral-700/60 shadow-sm hover:shadow-md transition-all shrink-0 snap-start active:scale-95 md:active:scale-100"
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', action.iconBg)}>
+                    <Icon className={cn('w-4 h-4', action.color)} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-neutral-800 dark:text-neutral-100 leading-tight whitespace-nowrap">{action.title}</p>
+                    <p className="text-[11px] text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{action.subtitle}</p>
+                  </div>
+                </MotionLink>
+              )
+            })}
+          </motion.div>
 
-              {/* Waste Analytics — moved up */}
+          {/* Main Content Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+            {/* Left Column — 2/3 */}
+            <div className="lg:col-span-2 space-y-4 md:space-y-6">
+              {/* Waste Analytics */}
               <WasteAnalyticsSection />
 
-              {/* AI Intelligence — gradient border wrapper */}
-              <motion.section
+              {/* Gamified Sustainability Summary */}
+              <SustainabilityWidget scope="personal" />
+
+              {/* AI Intelligence */}
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
+                className="card overflow-hidden"
               >
-                <div className="border-gradient-top rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 p-5">
+                <div className="border-l-4 border-l-primary-500 p-5">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
                         <Sparkles className="w-4 h-4 text-white" />
                       </div>
-                      <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">AI Intelligence</h2>
+                      <div>
+                        <h2 className="text-lg font-display text-neutral-900 dark:text-neutral-100">AI Intelligence</h2>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">Powered by local neural models</p>
+                      </div>
                     </div>
-                    <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-full">Beta</span>
+                    <span className="badge badge-primary text-[10px] font-semibold uppercase tracking-wider">Beta</span>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Food Classifier */}
-                    <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 p-4">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                          <Search className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <h3 className="font-bold text-neutral-900 dark:text-neutral-100">Food Classifier</h3>
+                    <div className="rounded-xl bg-cream-50 dark:bg-neutral-700/30 border border-neutral-200/60 dark:border-neutral-600/40 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Search className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                        <h3 className="font-semibold text-sm text-neutral-800 dark:text-neutral-100">Food Classifier</h3>
                       </div>
                       <SmartFoodClassifier
                         placeholder="Enter food name..."
@@ -463,209 +460,204 @@ export default function Dashboard() {
                     </div>
 
                     {/* AI Status */}
-                    <div className="rounded-xl border border-neutral-200 dark:border-neutral-700 p-4">
-                      <div className="flex items-center space-x-2 mb-4">
-                        <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                          <Activity className="w-4 h-4 text-green-600 dark:text-green-400" />
-                        </div>
-                        <h3 className="font-bold text-neutral-900 dark:text-neutral-100">Service Status</h3>
+                    <div className="rounded-xl bg-cream-50 dark:bg-neutral-700/30 border border-neutral-200/60 dark:border-neutral-600/40 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Activity className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                        <h3 className="font-semibold text-sm text-neutral-800 dark:text-neutral-100">Service Status</h3>
                       </div>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Neural Models</span>
-                          <div className="flex items-center space-x-1.5">
-                            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                            <span className="text-xs font-bold text-green-600 dark:text-green-400">Online</span>
+                      <div className="space-y-2.5">
+                        <div className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-neutral-800 border border-primary-100 dark:border-primary-800/30">
+                          <span className="text-sm text-neutral-700 dark:text-neutral-300">Neural Models</span>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                            <span className="text-xs font-semibold text-green-600 dark:text-green-400">Online</span>
                           </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-600">
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Accuracy</p>
-                            <p className="text-xl font-black text-neutral-900 dark:text-neutral-100">97%</p>
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <div className="p-2.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-600/40">
+                            <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider mb-0.5">Accuracy</p>
+                            <p className="text-xl font-display text-neutral-900 dark:text-neutral-100">97%</p>
                           </div>
-                          <div className="p-3 rounded-lg bg-neutral-50 dark:bg-neutral-700/50 border border-neutral-200 dark:border-neutral-600">
-                            <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-1">Response</p>
-                            <p className="text-xl font-black text-neutral-900 dark:text-neutral-100">420ms</p>
+                          <div className="p-2.5 rounded-lg bg-white dark:bg-neutral-800 border border-neutral-200/60 dark:border-neutral-600/40">
+                            <p className="text-[10px] font-medium text-neutral-500 uppercase tracking-wider mb-0.5">Response</p>
+                            <p className="text-xl font-display text-neutral-900 dark:text-neutral-100">420ms</p>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </motion.section>
+              </motion.div>
 
               {/* Recent Activity */}
               {stats.activity.recentLists.length > 0 && (
-                <motion.section
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
                 >
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Recent Lists</h2>
-                    <Link to="/app/grocery-lists" className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center">
-                      View all <ChevronRight className="w-4 h-4 ml-1" />
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-lg font-display text-neutral-900 dark:text-neutral-100">Recent Lists</h2>
+                    <Link to="/app/grocery-lists" className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 flex items-center gap-1">
+                      View all <ArrowRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>
-                  <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 divide-y divide-neutral-200 dark:divide-neutral-700">
+                  <div className="card divide-y divide-neutral-100 dark:divide-neutral-700/50">
                     {stats.activity.recentLists.slice(0, 3).map((list: any) => (
-                      <div key={list.id} className="p-4 hover:bg-neutral-50 dark:hover:bg-neutral-700/50 transition-colors">
+                      <div key={list.id} className="p-4 hover:bg-neutral-50 dark:hover:bg-neutral-700/30 transition-colors first:rounded-t-2xl last:rounded-b-2xl">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                              <ShoppingCart className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                              <ShoppingCart className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             </div>
                             <div>
-                              <p className="font-semibold text-neutral-900 dark:text-neutral-100">{list.name}</p>
-                              <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                                {list.items?.length || 0} items • {list.progress || 0}% complete
+                              <p className="font-medium text-sm text-neutral-800 dark:text-neutral-100">{list.name}</p>
+                              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                                {list.items?.length || 0} items · {list.progress || 0}% complete
                               </p>
                             </div>
                           </div>
                           {list.status === 'completed' && (
-                            <CheckCircle className="w-5 h-5 text-green-500 dark:text-green-400" />
+                            <CheckCircle className="w-4 h-4 text-green-500" />
                           )}
                         </div>
                       </div>
                     ))}
                   </div>
-                </motion.section>
+                </motion.div>
               )}
             </div>
 
-            {/* Right Column - 1/3 width */}
-            <div className="space-y-6">
-              {/* Combined Goals & Today card with tab toggle */}
-              <motion.section
-                initial={{ opacity: 0, x: 20 }}
+            {/* Right Column — 1/3 */}
+            <div className="space-y-4 md:space-y-6">
+              {/* Goals & Today */}
+              <motion.div
+                initial={{ opacity: 0, x: 15 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
+                className="card p-5"
               >
-                <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5">
-                  {/* Tab toggle */}
-                  <div className="flex bg-neutral-100 dark:bg-neutral-700 rounded-lg p-1 mb-5">
-                    <button
-                      onClick={() => setSidebarTab('goals')}
-                      className={`flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 text-sm font-medium rounded-md transition-all ${
-                        sidebarTab === 'goals'
-                          ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                          : 'text-neutral-600 dark:text-neutral-400'
-                      }`}
-                    >
-                      <Target className="w-4 h-4" />
-                      <span>Weekly Goals</span>
-                    </button>
-                    <button
-                      onClick={() => setSidebarTab('today')}
-                      className={`flex-1 flex items-center justify-center space-x-1.5 px-3 py-2 text-sm font-medium rounded-md transition-all ${
-                        sidebarTab === 'today'
-                          ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                          : 'text-neutral-600 dark:text-neutral-400'
-                      }`}
-                    >
-                      <Clock className="w-4 h-4" />
-                      <span>Today</span>
-                    </button>
-                  </div>
-
-                  {sidebarTab === 'goals' ? (
-                    <div className="space-y-4">
-                      {[
-                        { label: 'Shopping lists', current: 2, target: 3, barClass: 'from-emerald-500 to-emerald-600' },
-                        { label: 'Expiry checks', current: 5, target: 8, barClass: 'from-blue-500 to-blue-600' },
-                        { label: 'New recipes', current: 1, target: 2, barClass: 'from-orange-500 to-orange-600' }
-                      ].map((goal) => {
-                        const pct = Math.round((goal.current / goal.target) * 100)
-                        return (
-                          <div key={goal.label}>
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{goal.label}</span>
-                              <span className="text-xs font-bold text-neutral-500 dark:text-neutral-400">{pct}%</span>
-                            </div>
-                            <div className="w-full bg-neutral-100 dark:bg-neutral-700 rounded-full h-2.5">
-                              <motion.div
-                                className={`bg-gradient-to-r ${goal.barClass} h-2.5 rounded-full`}
-                                initial={{ width: 0 }}
-                                animate={{ width: `${pct}%` }}
-                                transition={{ duration: 1, delay: 0.3 }}
-                              />
-                            </div>
-                            <div className="flex justify-end mt-1">
-                              <span className="text-xs text-neutral-500 dark:text-neutral-400">{goal.current}/{goal.target}</span>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <CheckCircle className="w-4 h-4 text-green-500 dark:text-green-400" />
-                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Tasks done</span>
-                        </div>
-                        <span className="font-bold text-neutral-900 dark:text-neutral-100">{stats.activity.completedTasks}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Time saved</span>
-                        </div>
-                        <span className="font-bold text-neutral-900 dark:text-neutral-100">2.5h</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Heart className="w-4 h-4 text-red-500 dark:text-red-400" />
-                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">Money saved</span>
-                        </div>
-                        <span className="font-bold text-neutral-900 dark:text-neutral-100">£{stats.spending.saved.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  )}
+                {/* Tab toggle */}
+                <div className="flex bg-neutral-100 dark:bg-neutral-700/50 rounded-lg p-0.5 mb-5">
+                  <button
+                    onClick={() => setSidebarTab('goals')}
+                    className={cn(
+                      'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-all',
+                      sidebarTab === 'goals'
+                        ? 'bg-white dark:bg-neutral-600 text-primary-700 dark:text-primary-300 shadow-sm'
+                        : 'text-neutral-500 dark:text-neutral-400'
+                    )}
+                  >
+                    <Target className="w-3.5 h-3.5" />
+                    Goals
+                  </button>
+                  <button
+                    onClick={() => setSidebarTab('today')}
+                    className={cn(
+                      'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-md transition-all',
+                      sidebarTab === 'today'
+                        ? 'bg-white dark:bg-neutral-600 text-primary-700 dark:text-primary-300 shadow-sm'
+                        : 'text-neutral-500 dark:text-neutral-400'
+                    )}
+                  >
+                    <Clock className="w-3.5 h-3.5" />
+                    Today
+                  </button>
                 </div>
-              </motion.section>
+
+                {sidebarTab === 'goals' ? (
+                  <div className="space-y-4">
+                    {[
+                      { label: 'Shopping lists', current: 2, target: 3, barColor: 'bg-primary-500' },
+                      { label: 'Expiry checks', current: 5, target: 8, barColor: 'bg-blue-500' },
+                      { label: 'New recipes', current: 1, target: 2, barColor: 'bg-accent-500' }
+                    ].map((goal) => {
+                      const pct = Math.round((goal.current / goal.target) * 100)
+                      return (
+                        <div key={goal.label}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-sm text-neutral-700 dark:text-neutral-300">{goal.label}</span>
+                            <span className="text-xs font-mono text-neutral-500 dark:text-neutral-400">{goal.current}/{goal.target}</span>
+                          </div>
+                          <div className="w-full bg-neutral-100 dark:bg-neutral-700 rounded-full h-2">
+                            <motion.div
+                              className={cn('h-2 rounded-full', goal.barColor)}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${pct}%` }}
+                              transition={{ duration: 0.8, delay: 0.3 }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300">Tasks done</span>
+                      </div>
+                      <span className="font-display text-lg text-neutral-900 dark:text-neutral-100">{stats.activity.completedTasks}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300">Time saved</span>
+                      </div>
+                      <span className="font-display text-lg text-neutral-900 dark:text-neutral-100">2.5h</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Heart className="w-4 h-4 text-red-500" />
+                        <span className="text-sm text-neutral-700 dark:text-neutral-300">Money saved</span>
+                      </div>
+                      <span className="font-display text-lg text-neutral-900 dark:text-neutral-100">£{stats.spending.saved.toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
 
               {/* Pantry Breakdown */}
-              <motion.section
-                initial={{ opacity: 0, x: 20 }}
+              <motion.div
+                initial={{ opacity: 0, x: 15 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
+                className="card p-5"
               >
-                <div className="bg-white dark:bg-neutral-800 rounded-xl border border-neutral-200 dark:border-neutral-700 p-5">
-                  <div className="flex items-center space-x-2 mb-5">
-                    <BarChart3 className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                    <h3 className="font-bold text-neutral-900 dark:text-neutral-100">Pantry Mix</h3>
-                  </div>
-                  {Object.keys(stats.pantry.categories).length > 0 ? (
-                    <div className="space-y-3">
-                      {Object.entries(stats.pantry.categories)
-                        .sort(([,a], [,b]) => b - a)
-                        .slice(0, 5)
-                        .map(([category, count]) => (
+                <div className="flex items-center gap-2 mb-4">
+                  <BarChart3 className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                  <h3 className="font-display text-neutral-900 dark:text-neutral-100">Pantry Mix</h3>
+                </div>
+                {Object.keys(stats.pantry.categories).length > 0 ? (
+                  <div className="space-y-2.5">
+                    {Object.entries(stats.pantry.categories)
+                      .sort(([, a], [, b]) => b - a)
+                      .slice(0, 5)
+                      .map(([category, count]) => (
                         <div key={category} className="flex items-center justify-between">
-                          <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{category}</span>
-                          <div className="flex items-center space-x-2">
+                          <span className="text-sm text-neutral-600 dark:text-neutral-400">{category}</span>
+                          <div className="flex items-center gap-2">
                             <div className="w-16 bg-neutral-100 dark:bg-neutral-700 rounded-full h-1.5">
                               <motion.div
-                                className="bg-gradient-to-r from-purple-500 to-blue-500 h-1.5 rounded-full"
+                                className="bg-primary-500 h-1.5 rounded-full"
                                 initial={{ width: 0 }}
                                 animate={{ width: `${(count / stats.pantry.totalItems) * 100}%` }}
-                                transition={{ duration: 1, delay: 0.2 }}
+                                transition={{ duration: 0.8, delay: 0.2 }}
                               />
                             </div>
-                            <span className="text-sm font-bold text-neutral-900 dark:text-neutral-100 w-6 text-right">{count}</span>
+                            <span className="text-sm font-mono font-medium text-neutral-800 dark:text-neutral-200 w-5 text-right">{count}</span>
                           </div>
                         </div>
                       ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-6">
-                      <Package className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mx-auto mb-2" />
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400">No items yet</p>
-                    </div>
-                  )}
-                </div>
-              </motion.section>
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <Package className="w-8 h-8 text-neutral-300 dark:text-neutral-600 mx-auto mb-2" />
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">No items yet</p>
+                  </div>
+                )}
+              </motion.div>
             </div>
           </div>
         </div>

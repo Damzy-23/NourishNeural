@@ -36,6 +36,7 @@ import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
 import { useHousehold } from '../hooks/useHousehold'
 import toast from 'react-hot-toast'
+import VoiceInputButton from '../components/VoiceInputButton'
 
 interface PantryItem {
   id: string
@@ -701,132 +702,111 @@ export default function Pantry() {
         )}
       </AnimatePresence>
 
-      <div className="relative space-y-8 pb-12">
-        <motion.div
-          className="pointer-events-none absolute -top-20 right-[-12%] h-64 w-64 rounded-full bg-primary-200/40 blur-3xl"
-          animate={{ y: [0, 18, 0], opacity: [0.35, 0.6, 0.35] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="pointer-events-none absolute -bottom-24 left-[-10%] h-72 w-72 rounded-full bg-accent-200/35 blur-3xl"
-          animate={{ y: [0, -16, 0], opacity: [0.3, 0.55, 0.3] }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-        />
+      <div className="relative space-y-3 md:space-y-6 pb-12">
+        {/* Subtle background accents */}
+        <div className="pointer-events-none fixed inset-0 overflow-hidden">
+          <div className="absolute top-[-10%] right-[-5%] h-96 w-96 rounded-full bg-primary-200/20 dark:bg-primary-800/10 blur-[100px]" />
+          <div className="absolute bottom-[-5%] left-[-8%] h-80 w-80 rounded-full bg-accent-200/15 dark:bg-accent-800/10 blur-[100px]" />
+        </div>
 
         {/* Header */}
         <motion.div
-          className="relative overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
+          className="relative flex flex-col gap-4"
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: 0.5 }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
-          <div className="relative glass-card rounded-3xl p-8 md:p-10 border border-neutral-200/60 backdrop-blur-sm">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <motion.div
-                  className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg shadow-primary-500/30"
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ duration: 0.6, delay: 0.2, type: 'spring' }}
-                >
-                  <Package className="h-7 w-7 text-white" />
-                </motion.div>
-                <div>
-                  <motion.h1
-                    className="text-3xl md:text-4xl font-bold gradient-text"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+            <div>
+              <h1 className="text-xl md:text-4xl font-display text-neutral-900 dark:text-neutral-100">
+                Neural <span className="gradient-text">Pantry</span>
+              </h1>
+              <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+                Track and optimize your food inventory with AI-powered insights
+              </p>
+            </div>
+
+            <div className="flex overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap snap-x snap-mandatory md:snap-none items-center gap-2">
+              {/* Scope Toggle */}
+              {isMember && (
+                <div className="flex shrink-0 snap-start bg-neutral-100 dark:bg-neutral-700/50 rounded-lg p-0.5">
+                  <button
+                    onClick={() => setScope('personal')}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all active:scale-95 ${
+                      scope === 'personal'
+                        ? 'bg-white dark:bg-neutral-600 text-primary-700 dark:text-primary-300 shadow-sm'
+                        : 'text-neutral-500 dark:text-neutral-400'
+                    }`}
                   >
-                    Neural Pantry
-                  </motion.h1>
-                  <motion.p
-                    className="mt-1 text-neutral-600 dark:text-neutral-400 text-sm md:text-base"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: 0.4 }}
+                    Personal
+                  </button>
+                  <button
+                    onClick={() => setScope('household')}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all active:scale-95 ${
+                      scope === 'household'
+                        ? 'bg-white dark:bg-neutral-600 text-primary-700 dark:text-primary-300 shadow-sm'
+                        : 'text-neutral-500 dark:text-neutral-400'
+                    }`}
                   >
-                    Track and optimize your pantry inventory with AI-powered insights
-                  </motion.p>
+                    Household
+                  </button>
                 </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                {/* Scope Toggle */}
-                {isMember && (
-                  <div className="flex bg-neutral-100 dark:bg-neutral-700 rounded-lg p-1">
-                    <button
-                      onClick={() => setScope('personal')}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        scope === 'personal'
-                          ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                          : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
-                      }`}
-                    >
-                      Personal
-                    </button>
-                    <button
-                      onClick={() => setScope('household')}
-                      className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
-                        scope === 'household'
-                          ? 'bg-white dark:bg-neutral-600 text-primary-600 dark:text-primary-400 shadow-sm'
-                          : 'text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200'
-                      }`}
-                    >
-                      Household
-                    </button>
-                  </div>
-                )}
-              </div>
-              <div className="flex space-x-3">
-                <motion.button
-                  onClick={() => setShowReceiptScanner(true)}
-                  className="btn btn-outline shadow-md hover:shadow-lg hidden md:flex"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Receipt className="h-4 w-4 mr-2" />
-                  Scan Receipt
-                </motion.button>
-                <motion.button
-                  onClick={() => setShowScanner(true)}
-                  className="btn btn-outline shadow-md hover:shadow-lg"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <ScanLine className="h-4 w-4 mr-2" />
-                  Scan
-                </motion.button>
-                <motion.button
-                  onClick={() => setShowCreateForm(true)}
-                  className="btn btn-primary shadow-lg hover:shadow-xl"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                  whileHover={{ y: -2, boxShadow: '0 24px 45px -20px rgba(14,165,233,0.6)' }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Item
-                </motion.button>
-              </div>
+              )}
+
+              <motion.button
+                onClick={() => setShowReceiptScanner(true)}
+                className="btn btn-outline hidden md:flex shrink-0 snap-start active:scale-95"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Receipt className="h-4 w-4 mr-2" />
+                Scan Receipt
+              </motion.button>
+              <motion.button
+                onClick={() => setShowScanner(true)}
+                className="btn btn-outline shrink-0 snap-start active:scale-95"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <ScanLine className="h-4 w-4 mr-2" />
+                Scan
+              </motion.button>
+              <motion.button
+                onClick={() => setShowCreateForm(true)}
+                className="btn btn-primary shrink-0 snap-start active:scale-95"
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.97 }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Item
+              </motion.button>
+              <VoiceInputButton
+                context="pantry"
+                onCommand={async (cmd) => {
+                  try {
+                    await apiService.post('/api/pantry', {
+                      name: cmd.item,
+                      quantity: cmd.quantity,
+                      unit: cmd.unit,
+                      category: 'General',
+                    })
+                    queryClient.invalidateQueries(['pantry'])
+                    toast.success(`Added ${cmd.item} to pantry`)
+                  } catch {
+                    toast.error('Failed to add item')
+                  }
+                }}
+              />
             </div>
           </div>
         </motion.div>
 
         {/* Statistics Cards */}
-        <motion.section
-          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+        <motion.div
+          className="flex overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 lg:grid-cols-4 gap-2.5 md:gap-3 snap-x snap-mandatory md:snap-none"
           variants={staggerContainer}
           initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
+          animate="visible"
         >
           {[
             {
@@ -835,94 +815,91 @@ export default function Pantry() {
               value: stats.totalItems,
               subtitle: 'Pantry inventory',
               Icon: Package,
-              iconColor: 'text-blue-500',
-              valueClass: 'text-neutral-900',
-              borderColor: 'border-l-emerald-500'
+              iconBg: 'bg-primary-50 dark:bg-primary-900/20',
+              iconColor: 'text-primary-600 dark:text-primary-400',
+              borderColor: 'border-l-4 border-l-primary-400'
             },
             {
               key: 'total-value',
               title: 'Total Value',
               value: `£${stats.totalValue.toFixed(2)}`,
-              subtitle: 'Estimated replacement cost',
+              subtitle: 'Replacement cost',
               Icon: DollarSign,
-              iconColor: 'text-green-500',
-              valueClass: 'text-neutral-900',
-              borderColor: 'border-l-blue-500'
+              iconBg: 'bg-emerald-50 dark:bg-emerald-900/20',
+              iconColor: 'text-emerald-600 dark:text-emerald-400',
+              borderColor: 'border-l-4 border-l-emerald-400'
             },
             {
               key: 'expiring-soon',
               title: 'Expiring Soon',
               value: stats.expiringSoon,
-              subtitle: 'Action within 3 days',
+              subtitle: 'Within 3 days',
               Icon: AlertTriangle,
-              iconColor: 'text-orange-500',
-              valueClass: 'text-orange-600',
-              borderColor: 'border-l-amber-500'
+              iconBg: 'bg-amber-50 dark:bg-amber-900/20',
+              iconColor: 'text-amber-600 dark:text-amber-400',
+              borderColor: 'border-l-4 border-l-amber-400'
             },
             {
               key: 'low-stock',
               title: 'Low Stock',
               value: stats.lowStock,
-              subtitle: 'Items below threshold',
+              subtitle: 'Below threshold',
               Icon: Archive,
-              iconColor: 'text-red-500',
-              valueClass: 'text-red-600',
-              borderColor: 'border-l-red-500'
+              iconBg: 'bg-red-50 dark:bg-red-900/20',
+              iconColor: 'text-red-600 dark:text-red-400',
+              borderColor: 'border-l-4 border-l-red-400'
             }
-          ].map(({ key, title, value, subtitle, Icon, iconColor, valueClass, borderColor }, index) => (
+          ].map(({ key, title, value, subtitle, Icon, iconBg, iconColor, borderColor }, index) => (
             <motion.div
               key={key}
-              className={`card border-l-4 ${borderColor}`}
               variants={fadeUp}
-              transition={{ duration: 0.45, delay: index * 0.05 }}
-              whileHover={{ y: -6, boxShadow: '0 28px 55px -35px rgba(14,165,233,0.3)' }}
+              transition={{ delay: index * 0.05 }}
+              className="min-w-[130px] md:min-w-0 shrink-0 md:shrink snap-start"
             >
-              <div className="card-content">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">{title}</p>
-                    <p className={`text-2xl font-bold ${valueClass} dark:text-neutral-100`}>{value}</p>
-                    <p className="text-xs text-neutral-500 dark:text-neutral-400">{subtitle}</p>
+              <div className={`card p-3 md:p-4 ${borderColor}`}>
+                <div className="flex items-center justify-between mb-2 md:mb-3">
+                  <div className={`w-8 h-8 md:w-9 md:h-9 rounded-lg flex items-center justify-center ${iconBg}`}>
+                    <Icon className={`w-4 h-4 md:w-[18px] md:h-[18px] ${iconColor}`} />
                   </div>
-                  <Icon className={`h-8 w-8 ${iconColor}`} />
                 </div>
+                <p className="text-[10px] md:text-[11px] font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-0.5">{title}</p>
+                <p className="text-xl md:text-2xl font-display text-neutral-900 dark:text-neutral-100">{value}</p>
+                <p className="text-[10px] md:text-xs text-neutral-500 dark:text-neutral-400 mt-1">{subtitle}</p>
               </div>
             </motion.div>
           ))}
-        </motion.section>
+        </motion.div>
 
         {/* AI Waste Prevention Dashboard Toggle */}
         <motion.div
-          className={`card cursor-pointer ${showWasteDashboard ? 'bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-emerald-300 dark:border-emerald-700' : ''}`}
-          initial={{ opacity: 0, y: 20 }}
+          className={`card cursor-pointer overflow-hidden active:scale-[0.98] transition-transform ${showWasteDashboard ? 'border-primary-300 dark:border-primary-700' : ''}`}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.4 }}
           onClick={() => setShowWasteDashboard(!showWasteDashboard)}
           whileHover={{ y: -2 }}
         >
-          <div className="card-content">
+          <div className={`border-l-4 ${showWasteDashboard ? 'border-l-primary-500' : 'border-l-accent-500'} p-4`}>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center shadow-lg ${showWasteDashboard ? 'bg-gradient-to-br from-emerald-500 to-teal-500' : 'bg-gradient-to-br from-red-500 to-orange-500'}`}>
-                  <Brain className="h-5 w-5 text-white" />
+              <div className="flex items-center gap-3">
+                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${showWasteDashboard ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-accent-50 dark:bg-accent-900/20'}`}>
+                  <Brain className={`h-[18px] w-[18px] ${showWasteDashboard ? 'text-primary-600 dark:text-primary-400' : 'text-accent-600 dark:text-accent-400'}`} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-neutral-900 dark:text-neutral-100">
-                    AI Waste Prevention Dashboard
+                  <h3 className="font-semibold text-sm text-neutral-800 dark:text-neutral-100">
+                    AI Waste Prevention
                   </h3>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                    Analyze waste risk and get AI recommendations for your pantry items
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Analyze waste risk and get AI recommendations
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${showWasteDashboard ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-600'}`}>
-                  SMART
-                </span>
+              <div className="flex items-center gap-2">
+                <span className="badge badge-primary text-[10px] font-semibold uppercase tracking-wider">Smart</span>
                 {showWasteDashboard ? (
-                  <ChevronUp className="h-5 w-5 text-neutral-400" />
+                  <ChevronUp className="h-4 w-4 text-neutral-400" />
                 ) : (
-                  <ChevronDown className="h-5 w-5 text-neutral-400" />
+                  <ChevronDown className="h-4 w-4 text-neutral-400" />
                 )}
               </div>
             </div>
@@ -1202,14 +1179,14 @@ export default function Pantry() {
           transition={{ duration: 0.45 }}
         >
           <div className="card-content">
-            <div className="flex flex-wrap gap-2 items-center">
-              <div className="relative min-w-[180px] flex-1">
-                <Search className="h-4 w-4 absolute left-3 top-3 text-neutral-400" />
+            <div className="flex flex-wrap gap-1.5 md:gap-2 items-center">
+              <div className="relative min-w-[140px] md:min-w-[180px] flex-1">
+                <Search className="h-4 w-4 absolute left-2.5 top-2.5 md:left-3 md:top-3 text-neutral-400" />
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input pl-10"
+                  className="input pl-9 md:pl-10 text-sm py-2 md:py-2.5"
                   placeholder="Search items..."
                 />
               </div>
@@ -1217,7 +1194,7 @@ export default function Pantry() {
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="input w-auto min-w-[140px]"
+                className="input w-auto min-w-[110px] md:min-w-[140px] text-sm py-2 md:py-2.5"
               >
                 <option value="all">All Categories</option>
                 {categories.map(category => (
@@ -1228,7 +1205,7 @@ export default function Pantry() {
               <select
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="input w-auto min-w-[140px]"
+                className="input w-auto min-w-[110px] md:min-w-[140px] text-sm py-2 md:py-2.5"
               >
                 <option value="all">All Items</option>
                 <option value="expiring">Expiring Soon</option>
@@ -1240,7 +1217,7 @@ export default function Pantry() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as 'name' | 'date' | 'expiry' | 'price' | 'wasteRisk')}
-                className="input w-auto min-w-[140px]"
+                className="input w-auto min-w-[110px] md:min-w-[140px] text-sm py-2 md:py-2.5"
               >
                 <option value="date">Newest First</option>
                 <option value="name">Name (A-Z)</option>
@@ -1256,7 +1233,7 @@ export default function Pantry() {
                   setFilterType('all')
                   setSortBy('date')
                 }}
-                className="btn btn-outline btn-sm"
+                className="btn btn-outline btn-sm active:scale-95"
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.97 }}
               >
@@ -1321,7 +1298,7 @@ export default function Pantry() {
           </motion.div>
         ) : (
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 md:gap-4"
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
@@ -1350,7 +1327,7 @@ export default function Pantry() {
                   `}>
                     {/* Category Header with Icon */}
                     <div className={`
-                      px-4 py-2 flex items-center justify-between border-b
+                      px-3 md:px-4 py-2 flex items-center justify-between border-b
                       ${wasteRisk === 'very-high' ? 'bg-red-200/60 dark:bg-red-900/30 border-red-300 dark:border-red-700' :
                         wasteRisk === 'high' ? 'bg-red-100/50 dark:bg-red-900/20 border-red-200 dark:border-red-800' :
                         wasteRisk === 'medium' ? 'bg-yellow-100/50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800' :
@@ -1376,10 +1353,10 @@ export default function Pantry() {
                     </div>
 
                     {/* Main Content */}
-                    <div className="p-4">
+                    <div className="p-3 md:p-4">
                       {/* Item Name & Brand */}
-                      <div className="mb-3">
-                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-base leading-tight line-clamp-2">
+                      <div className="mb-2 md:mb-3">
+                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 text-sm md:text-base leading-tight line-clamp-2">
                           {item.name}
                         </h3>
                         {item.brand && (
@@ -1390,7 +1367,7 @@ export default function Pantry() {
                       </div>
 
                       {/* Quantity & Price Row */}
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center justify-between mb-2 md:mb-3">
                         <div className="flex items-center gap-1.5">
                           <ShoppingBag className="h-4 w-4 text-primary-500" />
                           <span className="font-medium text-neutral-900 dark:text-neutral-100">
@@ -1407,7 +1384,7 @@ export default function Pantry() {
 
                       {/* Expiry Info */}
                       <div className={`
-                        flex items-center gap-2 p-2 rounded-lg mb-3
+                        flex items-center gap-2 p-1.5 md:p-2 rounded-lg mb-2 md:mb-3
                         ${expiryStatus === 'expired' ? 'bg-red-100 dark:bg-red-900/30' :
                           expiryStatus === 'expiring' ? 'bg-orange-100 dark:bg-orange-900/30' :
                             'bg-neutral-100 dark:bg-neutral-700/50'}
@@ -1419,7 +1396,7 @@ export default function Pantry() {
                       </div>
 
                       {/* Purchase Date */}
-                      <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 mb-3">
+                      <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400 mb-2 md:mb-3">
                         <Calendar className="h-3.5 w-3.5" />
                         <span>Purchased: {new Date(getPurchaseDate(item)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                       </div>
@@ -1434,14 +1411,14 @@ export default function Pantry() {
                     </div>
 
                     {/* Action Buttons Footer */}
-                    <div className="px-4 py-3 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800/30">
+                    <div className="px-3 md:px-4 py-2.5 md:py-3 border-t border-neutral-200 dark:border-neutral-700 bg-neutral-50/50 dark:bg-neutral-800/30">
                       <div className="flex items-center justify-between gap-2">
                         <motion.button
                           onClick={() => {
                             setShowConsumeModal(item.id)
                             setConsumeAmount(1)
                           }}
-                          className="flex-1 btn btn-sm bg-green-500 hover:bg-green-600 text-white border-0"
+                          className="flex-1 btn btn-sm bg-green-500 hover:bg-green-600 text-white border-0 active:scale-95"
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
@@ -1450,7 +1427,7 @@ export default function Pantry() {
                         </motion.button>
                         <motion.button
                           onClick={() => setEditingItem(item)}
-                          className="btn btn-sm btn-outline"
+                          className="btn btn-sm btn-outline active:scale-95"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >
@@ -1462,7 +1439,7 @@ export default function Pantry() {
                               itemId: item.id,
                               target: item.household_id ? 'personal' : 'household'
                             })}
-                            className="btn btn-sm btn-outline"
+                            className="btn btn-sm btn-outline active:scale-95"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             title={item.household_id ? 'Move to Personal' : 'Share with Household'}
@@ -1477,7 +1454,7 @@ export default function Pantry() {
                               deleteItemMutation.mutate(item.id)
                             }
                           }}
-                          className="btn btn-sm btn-ghost text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30"
+                          className="btn btn-sm btn-ghost text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 active:scale-95"
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                         >

@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react'
+import { useState, useEffect, createContext, useContext, useCallback, useRef } from 'react'
 import { useQuery, useQueryClient } from 'react-query'
 import { setAuthToken, removeAuthToken, apiService } from '../services/api'
 
@@ -63,14 +63,58 @@ interface AuthContextType {
   refreshHousehold: () => void
 }
 
+const TOKEN_KEY = 'nourish_neural_token'
+const REFRESH_KEY = 'nourish_neural_refresh_token'
+const USER_KEY = 'pantrypal_user'
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+/**
+ * Try to refresh the access token using the stored refresh token.
+ * Returns the new access token or null if refresh failed.
+ */
+async function tryRefreshToken(): Promise<string | null> {
+  const refreshToken = localStorage.getItem(REFRESH_KEY)
+  if (!refreshToken) return null
+
+  try {
+    const response = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    })
+
+    if (!response.ok) return null
+
+    const data = await response.json()
+    if (data.token) {
+      // Persist the new tokens
+      localStorage.setItem(TOKEN_KEY, data.token)
+      if (data.refresh_token) {
+        localStorage.setItem(REFRESH_KEY, data.refresh_token)
+      }
+      return data.token
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(localStorage.getItem('nourish_neural_token'))
-  // Initialize user as null - we'll fetch fresh data from server
-  const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(localStorage.getItem(TOKEN_KEY))
+  const [user, setUser] = useState<User | null>(() => {
+    // Hydrate user from localStorage immediately so the UI doesn't flash
+    try {
+      const cached = localStorage.getItem(USER_KEY)
+      return cached ? JSON.parse(cached) : null
+    } catch {
+      return null
+    }
+  })
   const [preferences, setPreferences] = useState<UserPreferences | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const refreshAttempted = useRef(false)
 
   const queryClient = useQueryClient()
 
@@ -83,7 +127,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token])
 
-  // Fetch user data when token exists - always fetch fresh data from server
+  // Clear all auth state
+  const clearAuth = useCallback(() => {
+    setToken(null)
+    setUser(null)
+    setPreferences(null)
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem(REFRESH_KEY)
+    localStorage.removeItem(USER_KEY)
+    removeAuthToken()
+    queryClient.clear()
+  }, [queryClient])
+
+  // Fetch user data when token exists
   const { isLoading: userLoading } = useQuery(
     ['user', token],
     async () => {
@@ -101,22 +157,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return response.json()
     },
     {
-      enabled: !!token, // Always fetch when token exists to get fresh data
+      enabled: !!token,
       retry: false,
-      staleTime: 0, // Always fetch fresh data
+      staleTime: 5 * 60 * 1000, // 5 min — no need to re-fetch on every render
+      cacheTime: 10 * 60 * 1000,
       onSuccess: (data: any) => {
-        // Update user data from API
+        refreshAttempted.current = false
         setUser(data)
-        // Also update localStorage for offline access
-        localStorage.setItem('pantrypal_user', JSON.stringify(data))
+        localStorage.setItem(USER_KEY, JSON.stringify(data))
       },
-      onError: () => {
-        // Token is invalid, clear it
-        setToken(null)
-        localStorage.removeItem('nourish_neural_token')
-        localStorage.removeItem('pantrypal_user')
-        setUser(null)
-        setPreferences(null)
+      onError: async () => {
+        // Token might be expired — try refreshing once
+        if (!refreshAttempted.current) {
+          refreshAttempted.current = true
+          const newToken = await tryRefreshToken()
+          if (newToken) {
+            setToken(newToken)
+            setAuthToken(newToken)
+            // react-query will re-run the query because `token` changed
+            return
+          }
+        }
+        // Refresh also failed — truly logged out
+        clearAuth()
       }
     }
   )
@@ -160,29 +223,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [token, userLoading, prefsLoading])
 
-  // Debug: Log auth state
-  useEffect(() => {
-    console.log('Auth Context - Token:', token)
-    console.log('Auth Context - User:', user)
-    console.log('Auth Context - Is Authenticated:', !!token && !!user)
-    console.log('Auth Context - LocalStorage User:', localStorage.getItem('pantrypal_user'))
-  }, [token, user])
-
   const login = (newToken: string, userData?: User) => {
+    refreshAttempted.current = false
     setToken(newToken)
-    localStorage.setItem('nourish_neural_token', newToken)
-    // If user data is provided, set it immediately to avoid race condition
+    localStorage.setItem(TOKEN_KEY, newToken)
     if (userData) {
       setUser(userData)
-      localStorage.setItem('pantrypal_user', JSON.stringify(userData))
+      localStorage.setItem(USER_KEY, JSON.stringify(userData))
     }
-    // Clear any cached data except user
     queryClient.invalidateQueries(['preferences'])
   }
 
   const logout = async () => {
     try {
-      // Call logout API if token exists
       if (token) {
         await fetch('/api/auth/logout', {
           method: 'POST',
@@ -195,15 +248,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout API call failed:', error)
     } finally {
-      // Always clear local data regardless of API call result
-      setToken(null)
-      setUser(null)
-      setPreferences(null)
-      localStorage.removeItem('nourish_neural_token')
-      localStorage.removeItem('pantrypal_user')
-      removeAuthToken()
-      // Clear all cached data
-      queryClient.clear()
+      clearAuth()
     }
   }
 
@@ -211,8 +256,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       const updatedUser = { ...user, ...userData }
       setUser(updatedUser)
-      // Update localStorage with new user data
-      localStorage.setItem('pantrypal_user', JSON.stringify(updatedUser))
+      localStorage.setItem(USER_KEY, JSON.stringify(updatedUser))
     }
   }
 
@@ -250,23 +294,16 @@ export function useAuth() {
   return context
 }
 
-// Hook for checking if user has specific role
 export function useRole(requiredRole: string | string[]) {
   const { user } = useAuth()
-
   if (!user) return false
-
   const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole]
   return roles.includes(user.role)
 }
 
-// Hook for checking if user has permission
 export function usePermission(permission: string) {
   const { user } = useAuth()
-
   if (!user) return false
-
-  // Simple permission system - can be expanded
   switch (permission) {
     case 'admin':
       return user.role === 'admin'
@@ -277,4 +314,4 @@ export function usePermission(permission: string) {
     default:
       return false
   }
-} 
+}

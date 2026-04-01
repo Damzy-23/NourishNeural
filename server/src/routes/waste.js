@@ -492,4 +492,166 @@ Base predictions on the actual pattern in the data. The "week" dates should cont
     }
 });
 
+// =========================================================================
+// Waste Alerts — Predictive ML alerts for pantry items at risk
+// =========================================================================
+
+/**
+ * GET /api/waste/alerts
+ * Get all undismissed waste alerts for the authenticated user
+ */
+router.get('/alerts', authenticateJWT, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { data: alerts, error } = await supabase
+            .from('waste_alerts')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('is_dismissed', false)
+            .order('created_at', { ascending: false })
+            .limit(30);
+
+        if (error) throw error;
+        res.json({ alerts: alerts || [] });
+    } catch (error) {
+        console.error('Error fetching waste alerts:', error);
+        res.status(500).json({ error: 'Failed to fetch alerts', details: error.message });
+    }
+});
+
+/**
+ * PATCH /api/waste/alerts/:id/dismiss
+ * Dismiss a waste alert
+ */
+router.patch('/alerts/:id/dismiss', authenticateJWT, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        const { error } = await supabase
+            .from('waste_alerts')
+            .update({ is_dismissed: true })
+            .eq('id', id)
+            .eq('user_id', userId);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Error dismissing alert:', error);
+        res.status(500).json({ error: 'Failed to dismiss alert', details: error.message });
+    }
+});
+
+/**
+ * POST /api/waste/alerts/scan
+ * Scan all pantry items and generate waste alerts using ML predictions or rule-based fallback
+ */
+router.post('/alerts/scan', authenticateJWT, async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        // Fetch non-archived pantry items
+        const { data: items, error: itemsError } = await supabase
+            .from('pantry_items')
+            .select('id, name, category, quantity, unit, expiry_date, purchase_date')
+            .eq('user_id', userId)
+            .eq('is_archived', false);
+
+        if (itemsError) throw itemsError;
+        if (!items || items.length === 0) {
+            return res.json({ message: 'No pantry items to scan', alertsCreated: 0 });
+        }
+
+        // Shelf life heuristics (days) — used for rule-based prediction
+        const SHELF_LIFE = {
+            'Dairy': 7, 'Meat': 5, 'Fish': 3, 'Seafood': 3, 'Bakery': 5,
+            'Fruits': 7, 'Vegetables': 10, 'Deli': 5, 'Prepared': 3,
+            'Frozen': 90, 'Canned': 365, 'Grains': 180, 'Snacks': 90,
+            'Beverages': 30, 'Condiments': 180, 'General': 14
+        };
+
+        let alertsCreated = 0;
+        const now = new Date();
+
+        for (const item of items) {
+            // Calculate days since purchase and days until expiry
+            const purchaseDate = item.purchase_date ? new Date(item.purchase_date) : null;
+            const expiryDate = item.expiry_date ? new Date(item.expiry_date) : null;
+            const daysSincePurchase = purchaseDate ? Math.floor((now - purchaseDate) / 86400000) : null;
+            const daysUntilExpiry = expiryDate ? Math.ceil((expiryDate - now) / 86400000) : null;
+
+            // Rule-based waste probability
+            let wasteProbability = 0.2;
+            let riskLevel = 'low';
+            let predictedDaysLeft = 14;
+
+            if (daysUntilExpiry !== null) {
+                predictedDaysLeft = Math.max(0, daysUntilExpiry);
+                if (daysUntilExpiry <= 0) {
+                    wasteProbability = 0.95;
+                    riskLevel = 'high';
+                } else if (daysUntilExpiry <= 2) {
+                    wasteProbability = 0.8;
+                    riskLevel = 'high';
+                } else if (daysUntilExpiry <= 5) {
+                    wasteProbability = 0.5;
+                    riskLevel = 'medium';
+                }
+            } else if (daysSincePurchase !== null) {
+                const shelfLife = SHELF_LIFE[item.category] || SHELF_LIFE['General'];
+                const ratio = daysSincePurchase / shelfLife;
+                predictedDaysLeft = Math.max(0, Math.round(shelfLife - daysSincePurchase));
+                if (ratio >= 1) {
+                    wasteProbability = 0.9;
+                    riskLevel = 'high';
+                } else if (ratio >= 0.7) {
+                    wasteProbability = 0.6;
+                    riskLevel = 'medium';
+                } else if (ratio >= 0.5) {
+                    wasteProbability = 0.3;
+                    riskLevel = 'low';
+                }
+            }
+
+            // Only alert on medium or high risk
+            if (wasteProbability < 0.5) continue;
+
+            // Check if alert already exists for this item (avoid duplicates)
+            const { data: existing } = await supabase
+                .from('waste_alerts')
+                .select('id')
+                .eq('pantry_item_id', item.id)
+                .eq('is_dismissed', false)
+                .maybeSingle();
+
+            if (existing) continue;
+
+            // Create alert
+            const suggestion = riskLevel === 'high'
+                ? `Use ${item.name} today — try adding it to tonight's meal`
+                : `Plan to use ${item.name} in the next couple of days`;
+
+            const { error: insertError } = await supabase
+                .from('waste_alerts')
+                .insert({
+                    user_id: userId,
+                    pantry_item_id: item.id,
+                    item_name: item.name,
+                    risk_level: riskLevel,
+                    waste_probability: wasteProbability,
+                    predicted_days_left: predictedDaysLeft,
+                    alert_type: daysUntilExpiry !== null && daysUntilExpiry <= 2 ? 'expiry_imminent' : 'waste_risk',
+                    suggestion
+                });
+
+            if (!insertError) alertsCreated++;
+        }
+
+        res.json({ message: `Scan complete`, alertsCreated, totalItems: items.length });
+    } catch (error) {
+        console.error('Error scanning pantry for alerts:', error);
+        res.status(500).json({ error: 'Failed to scan pantry', details: error.message });
+    }
+});
+
 module.exports = router;

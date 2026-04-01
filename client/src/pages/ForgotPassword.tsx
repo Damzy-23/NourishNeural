@@ -110,7 +110,7 @@ export default function ForgotPassword() {
               transition={{ duration: 0.6 }}
             >
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
-                <img src="/favicon.svg" alt="Nourish Neural" className="h-16 w-16" />
+                <img src="/logo.png" alt="Nourish Neural" className="h-16 w-16" />
               </div>
               <span className="text-4xl font-bold gradient-text">Nourish Neural</span>
             </motion.div>

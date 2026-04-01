@@ -475,7 +475,7 @@ export default function Profile() {
         <title>Profile - Nourish Neural</title>
       </Helmet>
 
-      <div className="relative space-y-8 pb-12">
+      <div className="relative space-y-4 md:space-y-8 pb-12">
         <motion.div
           className="pointer-events-none absolute -top-24 right-[-12%] h-72 w-72 rounded-full bg-primary-200/35 blur-3xl"
           animate={{ y: [0, 18, 0], opacity: [0.35, 0.6, 0.35] }}
@@ -495,11 +495,11 @@ export default function Profile() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
-          <div className="relative glass-card rounded-3xl p-8">
+          <div className="relative glass-card rounded-3xl p-4 md:p-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-4xl font-bold gradient-text mb-2">Profile</h1>
-                <p className="text-lg text-neutral-600 dark:text-neutral-400">
+                <h1 className="text-xl md:text-4xl font-bold gradient-text mb-1 md:mb-2">Profile</h1>
+                <p className="text-sm md:text-lg text-neutral-600 dark:text-neutral-400">
                   Manage your account settings and preferences
                 </p>
               </div>
@@ -509,7 +509,7 @@ export default function Profile() {
 
         {/* User Stats Cards */}
         <motion.section
-          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+          className="flex md:grid md:grid-cols-4 gap-2.5 md:gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0"
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
@@ -523,7 +523,7 @@ export default function Profile() {
           ].map(({ key, label, value, Icon, color, border }, index) => (
             <motion.div
               key={key}
-              className={`card ${border}`}
+              className={`card ${border} min-w-[140px] md:min-w-0 shrink-0 snap-start`}
               variants={fadeUp}
               transition={{ duration: 0.45, delay: index * 0.05 }}
               whileHover={{ y: -6, boxShadow: '0 28px 55px -35px rgba(14,165,233,0.3)' }}
@@ -542,7 +542,7 @@ export default function Profile() {
         </motion.section>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
           {/* Sidebar Navigation */}
           <div className="lg:col-span-1">
             <motion.div
@@ -553,14 +553,14 @@ export default function Profile() {
               transition={{ duration: 0.45 }}
             >
               <div className="card-content">
-                <nav className="space-y-1">
+                <nav className="flex overflow-x-auto scrollbar-hide md:flex-col gap-1.5 md:gap-1 -mx-4 px-4 md:mx-0 md:px-0">
                   {tabs.map((tab) => {
                     const Icon = tab.icon
                     return (
                       <motion.button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id
+                        className={`shrink-0 whitespace-nowrap w-auto md:w-full flex items-center space-x-2 md:space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id
                           ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                           : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                           }`}
@@ -601,15 +601,15 @@ export default function Profile() {
                     </motion.button>
                   </div>
                 </div>
-                <div className="card-content space-y-6">
+                <div className="card-content space-y-4 md:space-y-6">
                   {/* Avatar */}
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-3 md:space-x-4">
                     <div className="relative">
-                      <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                      <div className="w-14 h-14 md:w-20 md:h-20 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
                         {user?.avatarUrl ? (
-                          <img src={user.avatarUrl} alt="Avatar" className="w-20 h-20 rounded-full object-cover" />
+                          <img src={user.avatarUrl} alt="Avatar" className="w-14 h-14 md:w-20 md:h-20 rounded-full object-cover" />
                         ) : (
-                          <User className="h-8 w-8 text-primary-600 dark:text-primary-400" />
+                          <User className="h-6 w-6 md:h-8 md:w-8 text-primary-600 dark:text-primary-400" />
                         )}
                       </div>
                       {isEditing && (
@@ -629,9 +629,9 @@ export default function Profile() {
                   </div>
 
                   {/* Form Fields */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Full Name
                       </label>
                       <input
@@ -644,7 +644,7 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Email
                       </label>
                       <input
@@ -657,7 +657,7 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Phone
                       </label>
                       <input
@@ -670,7 +670,7 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Age
                       </label>
                       <input
@@ -685,7 +685,7 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Country
                       </label>
                       <input
@@ -698,7 +698,7 @@ export default function Profile() {
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Address
                       </label>
                       <input
@@ -711,7 +711,7 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         City
                       </label>
                       <input
@@ -724,7 +724,7 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Postal Code
                       </label>
                       <input
@@ -791,7 +791,7 @@ export default function Profile() {
                 </div>
                 <div className="card-content space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                       Dietary Restrictions
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -810,7 +810,7 @@ export default function Profile() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                       Cuisine Preferences
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -830,7 +830,7 @@ export default function Profile() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Household Size
                       </label>
                       <input
@@ -844,7 +844,7 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Shopping Frequency
                       </label>
                       <select
@@ -859,7 +859,7 @@ export default function Profile() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                      <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                         Budget Limit (£/month)
                       </label>
                       <input
@@ -1389,7 +1389,7 @@ export default function Profile() {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                     Select Loyalty Program
                   </label>
                   <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
@@ -1427,7 +1427,7 @@ export default function Profile() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                    <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                       Card Number
                     </label>
                     <input

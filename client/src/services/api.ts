@@ -1,18 +1,26 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios'
 import toast from 'react-hot-toast'
 
-// Determine API base URL
 const getApiBaseUrl = () => {
   // Check for environment variable first
   if ((import.meta as any).env?.VITE_API_URL) {
     return (import.meta as any).env.VITE_API_URL
   }
-  // In production, use relative URL for Vercel serverless functions
-  if ((import.meta as any).env?.PROD) {
-    return ''  // Will use relative paths like /api/...
+
+  // Capacitor native app (running inside APK/IPA)
+  if (typeof (window as any)?.Capacitor !== 'undefined' &&
+    (window as any)?.Capacitor?.isNativePlatform?.() === true) {
+    // Native mobile apps need the hardcoded IP of your PC since they aren't hosted on the dev server.
+    // *NOTE*: Your PC Firewall must allow incoming connections on port 5000 for this to work.
+    return 'http://10.167.101.234:5000'
   }
-  // Default to localhost in development
-  return 'http://localhost:5000'
+
+  // Web Browser (Localhost or Phone accessing via local IP 10.167.101.234:3050)
+  // By returning an empty string, Axios uses relative paths: e.g. /api/auth/me
+  // 1. The Phone requests http://10.167.101.234:3050/api/auth/me
+  // 2. Vite Dev Server receives the request (because we know it's allowed through Firewall).
+  // 3. Vite proxies it internally to localhost:5000, completely bypassing external firewall checks!
+  return ''
 }
 
 // Create axios instance

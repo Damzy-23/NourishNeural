@@ -181,6 +181,160 @@ For each recipe, provide:
   }
 });
 
+// ─────────────────────────────────────────────
+// POST /api/ai/recommend — Smart recipe recommendations from pantry
+// Fetches pantry items, prioritises expiring ones, returns ranked recipes
+// ─────────────────────────────────────────────
+router.post('/recommend', authenticateJWT, aiRateLimit, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // 1. Fetch all non-archived pantry items
+    const { data: pantryItems, error: pantryError } = await supabase
+      .from('pantry_items')
+      .select('name, category, quantity, unit, expiry_date')
+      .eq('user_id', userId)
+      .eq('is_archived', false)
+      .order('expiry_date', { ascending: true, nullsFirst: false });
+
+    if (pantryError) throw pantryError;
+
+    if (!pantryItems || pantryItems.length === 0) {
+      return res.json({
+        recipes: [],
+        message: 'Your pantry is empty. Add some items first!',
+        pantryUsed: [],
+        expiringItems: []
+      });
+    }
+
+    // 2. Identify items expiring within 5 days
+    const now = new Date();
+    const cutoff = new Date();
+    cutoff.setDate(now.getDate() + 5);
+
+    const expiringItems = pantryItems.filter(item => {
+      if (!item.expiry_date) return false;
+      const expiry = new Date(item.expiry_date);
+      return expiry <= cutoff && expiry >= now;
+    });
+
+    const allNames = pantryItems.map(i => i.name);
+    const expiringNames = expiringItems.map(i => i.name);
+
+    // 3. Try LLM-powered recommendations
+    try {
+      const expiryContext = expiringNames.length > 0
+        ? `\nURGENT — these items expire within 5 days and MUST be used first: ${expiringNames.join(', ')}.`
+        : '';
+
+      const prompt = `The user has these ingredients in their pantry: ${allNames.join(', ')}.${expiryContext}
+
+Suggest 5 practical UK-friendly recipes ranked by how many pantry items they use. Prioritise recipes that use up the expiring items.
+
+For each recipe return a JSON object with:
+- name: recipe name
+- description: one-sentence description
+- uses: array of pantry ingredients this recipe uses
+- missing: array of ingredients needed but NOT in the pantry
+- usesExpiring: array of expiring items this recipe uses up
+- prepTime: estimated prep time in minutes
+- difficulty: "easy", "medium", or "hard"
+
+Respond ONLY with a valid JSON array, no markdown.`;
+
+      const completion = await openai.chat.completions.create({
+        model: getModelName(),
+        messages: [
+          { role: 'system', content: 'You are a UK recipe expert focused on reducing food waste. Respond ONLY with valid JSON, no markdown fences.' },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 800,
+        temperature: 0.7
+      });
+
+      const raw = completion.choices[0].message.content.trim();
+      const jsonStr = raw.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim();
+      const llmRecipes = JSON.parse(jsonStr);
+
+      if (Array.isArray(llmRecipes) && llmRecipes.length > 0) {
+        return res.json({
+          recipes: llmRecipes.slice(0, 5),
+          source: 'ai',
+          pantryUsed: allNames,
+          expiringItems: expiringNames
+        });
+      }
+    } catch (llmError) {
+      console.warn('Smart recipe LLM failed, using fallback:', llmError.message);
+    }
+
+    // 4. Fallback: ingredient-matching against recipe database
+    const recipeDB = [
+      { name: 'Creamy Mushroom & Spinach Chicken', description: 'A rich, one-pan weeknight dinner.', ingredients: ['chicken', 'spinach', 'mushrooms', 'cream', 'garlic'], prepTime: 25, difficulty: 'easy' },
+      { name: 'Vegetable Stir Fry', description: 'Quick and colourful with a soy-ginger sauce.', ingredients: ['peppers', 'mushrooms', 'carrots', 'soy sauce', 'noodles'], prepTime: 15, difficulty: 'easy' },
+      { name: 'Omelette', description: 'Simple, protein-packed, endlessly customisable.', ingredients: ['eggs', 'cheese', 'spinach', 'mushrooms'], prepTime: 10, difficulty: 'easy' },
+      { name: 'Pasta Bolognese', description: 'Classic Italian comfort food.', ingredients: ['pasta', 'beef', 'tomato', 'onion', 'garlic'], prepTime: 35, difficulty: 'medium' },
+      { name: 'Chicken Salad', description: 'Light, fresh, and great for lunch.', ingredients: ['chicken', 'lettuce', 'tomatoes', 'cucumber', 'olive oil'], prepTime: 15, difficulty: 'easy' },
+      { name: 'Banana Smoothie', description: 'Thick and filling breakfast smoothie.', ingredients: ['banana', 'milk', 'yogurt', 'honey'], prepTime: 5, difficulty: 'easy' },
+      { name: 'Tomato Soup', description: 'Warming, simple, and perfect with crusty bread.', ingredients: ['tomatoes', 'onion', 'garlic', 'stock', 'cream'], prepTime: 30, difficulty: 'easy' },
+      { name: 'Egg Fried Rice', description: 'A brilliant way to use up leftover rice.', ingredients: ['rice', 'eggs', 'soy sauce', 'spring onions', 'peas'], prepTime: 15, difficulty: 'easy' },
+      { name: 'Grilled Cheese Sandwich', description: 'Melty, golden, five-minute comfort food.', ingredients: ['bread', 'cheese', 'butter'], prepTime: 5, difficulty: 'easy' },
+      { name: 'Fish Pie', description: 'A British classic with a creamy mashed potato topping.', ingredients: ['fish', 'potatoes', 'milk', 'cheese', 'peas'], prepTime: 45, difficulty: 'medium' },
+      { name: 'Shepherd\'s Pie', description: 'Hearty lamb mince topped with creamy mash.', ingredients: ['lamb', 'potatoes', 'carrots', 'onion', 'peas'], prepTime: 50, difficulty: 'medium' },
+      { name: 'Chicken Curry', description: 'Fragrant, warming, and perfect with rice.', ingredients: ['chicken', 'onion', 'garlic', 'tomatoes', 'rice', 'cream'], prepTime: 35, difficulty: 'medium' },
+      { name: 'Bean Chilli', description: 'Spicy, filling, and completely plant-based.', ingredients: ['beans', 'tomatoes', 'onion', 'peppers', 'rice'], prepTime: 30, difficulty: 'easy' },
+      { name: 'Tuna Pasta Bake', description: 'Cheesy, creamy, and ready in 30 minutes.', ingredients: ['tuna', 'pasta', 'cheese', 'cream', 'sweetcorn'], prepTime: 30, difficulty: 'easy' },
+      { name: 'French Toast', description: 'Sweet, golden, and great for using up stale bread.', ingredients: ['bread', 'eggs', 'milk', 'butter', 'sugar'], prepTime: 10, difficulty: 'easy' }
+    ];
+
+    const pantryLower = allNames.map(n => n.toLowerCase());
+    const expiringLower = expiringNames.map(n => n.toLowerCase());
+
+    const scored = recipeDB.map(r => {
+      const uses = r.ingredients.filter(ing =>
+        pantryLower.some(p => p.includes(ing) || ing.includes(p))
+      );
+      const missing = r.ingredients.filter(ing =>
+        !pantryLower.some(p => p.includes(ing) || ing.includes(p))
+      );
+      const usesExpiring = r.ingredients.filter(ing =>
+        expiringLower.some(e => e.includes(ing) || ing.includes(e))
+      );
+
+      // Score: expiring matches worth 3x, regular matches worth 1x
+      const score = (usesExpiring.length * 3) + uses.length;
+
+      return {
+        name: r.name,
+        description: r.description,
+        uses,
+        missing,
+        usesExpiring,
+        prepTime: r.prepTime,
+        difficulty: r.difficulty,
+        matchPercent: Math.round((uses.length / r.ingredients.length) * 100),
+        _score: score
+      };
+    })
+    .filter(r => r.uses.length > 0)
+    .sort((a, b) => b._score - a._score)
+    .slice(0, 5)
+    .map(({ _score, ...r }) => r);
+
+    res.json({
+      recipes: scored,
+      source: 'database',
+      pantryUsed: allNames,
+      expiringItems: expiringNames
+    });
+
+  } catch (error) {
+    console.error('Smart recipe recommendation error:', error);
+    res.status(500).json({ error: 'Failed to generate recommendations', details: error.message });
+  }
+});
+
 // Nutrition analysis
 router.post('/nutrition', optionalAuth, aiRateLimit, async (req, res) => {
   try {
@@ -879,6 +1033,95 @@ const AGENT_TOOLS = {
           }
         });
       });
+    }
+  },
+
+  get_household_nutrition: {
+    description: 'Get dietary restrictions, allergies, and macro targets for the user and their household members. Use when personalising recipe suggestions or when user mentions dietary needs.',
+    parameters: '{}',
+    execute: async (params, userId) => {
+      // Get user's household
+      const { data: membership } = await supabase
+        .from('household_members')
+        .select('household_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      let profiles = [];
+      if (membership?.household_id) {
+        const { data } = await supabase
+          .from('nutrition_profiles')
+          .select('dietary_type, allergies, intolerances, disliked_ingredients, calorie_target, protein_target, carb_target, fat_target')
+          .eq('household_id', membership.household_id);
+        profiles = data || [];
+      }
+
+      // Also get user's own profile if not in household
+      if (profiles.length === 0) {
+        const { data } = await supabase
+          .from('nutrition_profiles')
+          .select('dietary_type, allergies, intolerances, disliked_ingredients, calorie_target, protein_target, carb_target, fat_target')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (data) profiles = [data];
+      }
+
+      if (profiles.length === 0) return { note: 'No nutrition profiles set up yet' };
+
+      // Merge all restrictions
+      const allAllergies = [...new Set(profiles.flatMap(p => p.allergies || []))];
+      const allIntolerances = [...new Set(profiles.flatMap(p => p.intolerances || []))];
+      const allDisliked = [...new Set(profiles.flatMap(p => p.disliked_ingredients || []))];
+      const dietaryTypes = [...new Set(profiles.map(p => p.dietary_type).filter(Boolean))];
+
+      return {
+        household_size: profiles.length,
+        dietary_types: dietaryTypes,
+        allergies: allAllergies,
+        intolerances: allIntolerances,
+        disliked_ingredients: allDisliked,
+        note: allAllergies.length > 0 ? `IMPORTANT: Avoid ${allAllergies.join(', ')} due to allergies` : undefined
+      };
+    }
+  },
+
+  check_carbon_footprint: {
+    description: 'Get the user\'s food carbon footprint from their pantry. Use when user asks about sustainability, environmental impact, or carbon footprint.',
+    parameters: '{}',
+    execute: async (params, userId) => {
+      const { data: items } = await supabase
+        .from('pantry_items')
+        .select('name, category, quantity, carbon_score')
+        .eq('user_id', userId)
+        .eq('is_archived', false);
+
+      if (!items || items.length === 0) return { note: 'No pantry items to analyse' };
+
+      // Look up carbon scores from reference table
+      const { data: refs } = await supabase.from('carbon_reference').select('item_name, co2_per_kg, category');
+
+      let totalCo2 = 0;
+      const itemScores = [];
+      for (const item of items) {
+        let co2 = item.carbon_score;
+        if (!co2 && refs) {
+          const match = refs.find(r => item.name.toLowerCase().includes(r.item_name.toLowerCase()) || r.item_name.toLowerCase().includes(item.name.toLowerCase()));
+          co2 = match ? match.co2_per_kg * (item.quantity || 1) : null;
+        }
+        if (co2) {
+          totalCo2 += co2;
+          itemScores.push({ name: item.name, co2: Math.round(co2 * 10) / 10 });
+        }
+      }
+
+      itemScores.sort((a, b) => b.co2 - a.co2);
+      return {
+        total_co2_kg: Math.round(totalCo2 * 10) / 10,
+        item_count: items.length,
+        top_impact_items: itemScores.slice(0, 5),
+        rating: totalCo2 < 10 ? 'low' : totalCo2 < 30 ? 'medium' : 'high',
+        tip: totalCo2 > 20 ? 'Consider swapping beef for chicken or plant-based protein to cut your footprint significantly.' : 'Your footprint looks reasonable — keep it up!'
+      };
     }
   },
 

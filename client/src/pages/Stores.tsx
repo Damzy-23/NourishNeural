@@ -339,7 +339,7 @@ export default function Stores() {
      return (
       <motion.div
         key={store.id}
-        className="card overflow-hidden"
+        className="card overflow-hidden active:scale-[0.98]"
         variants={fadeUp}
         whileHover={{ y: -6, boxShadow: '0 32px 55px -35px rgba(37,99,235,0.35)' }}
       >
@@ -406,15 +406,15 @@ export default function Stores() {
           )}
 
           {/* Services */}
-          <div className="flex flex-wrap gap-1.5 mb-3">
+          <div className="flex flex-wrap gap-1 md:gap-1.5 mb-3">
             {store.services.deliveryAvailable && (
-              <span className="badge badge-outline text-xs">Delivery</span>
+              <span className="badge badge-outline text-[10px] md:text-xs">Delivery</span>
             )}
             {store.services.clickAndCollect && (
-              <span className="badge badge-outline text-xs">Click & Collect</span>
+              <span className="badge badge-outline text-[10px] md:text-xs">Click & Collect</span>
             )}
             {store.services.loyaltyProgram && (
-              <span className="badge badge-outline text-xs">{store.services.loyaltyProgram}</span>
+              <span className="badge badge-outline text-[10px] md:text-xs">{store.services.loyaltyProgram}</span>
             )}
           </div>
 
@@ -423,12 +423,12 @@ export default function Stores() {
             <div className="mb-3">
               <div className="flex flex-wrap gap-1">
                 {store.features.slice(0, 4).map((feature) => (
-                  <span key={feature} className="badge badge-outline text-xs">
+                  <span key={feature} className="badge badge-outline text-[10px] md:text-xs">
                     {feature}
                   </span>
                 ))}
                 {store.features.length > 4 && (
-                  <span className="badge badge-outline text-xs">
+                  <span className="badge badge-outline text-[10px] md:text-xs">
                     +{store.features.length - 4} more
                   </span>
                 )}
@@ -439,7 +439,7 @@ export default function Stores() {
           {/* Actions — Directions is primary */}
           <div className="flex space-x-2 pt-3 border-t border-neutral-200 dark:border-neutral-700">
             <button
-              className="btn btn-primary btn-sm flex-1"
+              className="btn btn-primary btn-sm flex-1 min-h-[40px] active:scale-95"
               onClick={() => handleGetDirections(store)}
             >
               <Navigation className="h-4 w-4 mr-1" />
@@ -447,7 +447,7 @@ export default function Stores() {
             </button>
             {store.contact.phone && (
               <button
-                className="btn btn-outline btn-sm"
+                className="btn btn-outline btn-sm min-h-[40px] min-w-[40px] active:scale-95"
                 onClick={() => handleCallStore(store.contact.phone)}
               >
                 <Phone className="h-4 w-4" />
@@ -455,7 +455,7 @@ export default function Stores() {
             )}
             {store.contact.website && (
               <button
-                className="btn btn-outline btn-sm"
+                className="btn btn-outline btn-sm min-h-[40px] min-w-[40px] active:scale-95"
                 onClick={() => handleVisitWebsite(store.contact.website)}
               >
                 <Smartphone className="h-4 w-4" />
@@ -473,7 +473,7 @@ export default function Stores() {
     return (
       <motion.div
         key={store.id}
-        className="card"
+        className="card active:scale-[0.98]"
         variants={fadeUp}
         whileHover={{ y: -4, boxShadow: '0 26px 50px -30px rgba(37,99,235,0.28)' }}
       >
@@ -531,10 +531,10 @@ export default function Stores() {
                     <span className="text-neutral-600 dark:text-neutral-400">Services:</span>
                     <div className="flex space-x-1">
                       {store.services.deliveryAvailable && (
-                        <span className="badge badge-outline text-xs">Delivery</span>
+                        <span className="badge badge-outline text-[10px] md:text-xs">Delivery</span>
                       )}
                       {store.services.clickAndCollect && (
-                        <span className="badge badge-outline text-xs">Click & Collect</span>
+                        <span className="badge badge-outline text-[10px] md:text-xs">Click & Collect</span>
                       )}
                     </div>
                   </div>
@@ -545,7 +545,7 @@ export default function Stores() {
                 <div className="mt-2">
                   <div className="flex flex-wrap gap-1">
                     {store.features.slice(0, 6).map((feature) => (
-                      <span key={feature} className="badge badge-outline text-xs">
+                      <span key={feature} className="badge badge-outline text-[10px] md:text-xs">
                         {feature}
                       </span>
                     ))}
@@ -555,7 +555,7 @@ export default function Stores() {
               
               <div className="flex space-x-2 mt-3">
                 <button
-                  className="btn btn-primary btn-sm"
+                  className="btn btn-primary btn-sm min-h-[40px] active:scale-95"
                   onClick={() => handleGetDirections(store)}
                 >
                   <Navigation className="h-4 w-4 mr-1" />
@@ -563,7 +563,7 @@ export default function Stores() {
                 </button>
                 {store.contact.phone && (
                   <button
-                    className="btn btn-outline btn-sm"
+                    className="btn btn-outline btn-sm min-h-[40px] active:scale-95"
                     onClick={() => handleCallStore(store.contact.phone)}
                   >
                     <Phone className="h-4 w-4 mr-1" />
@@ -572,7 +572,7 @@ export default function Stores() {
                 )}
                 {store.contact.website && (
                   <button
-                    className="btn btn-outline btn-sm"
+                    className="btn btn-outline btn-sm min-h-[40px] active:scale-95"
                     onClick={() => handleVisitWebsite(store.contact.website)}
                   >
                     <Smartphone className="h-4 w-4 mr-1" />
@@ -605,97 +605,59 @@ export default function Stores() {
         <title>Stores - Nourish Neural</title>
       </Helmet>
 
-      <div className="relative space-y-8 pb-12">
-        <motion.div
-          className="pointer-events-none absolute -top-28 left-[-12%] h-72 w-72 rounded-full bg-primary-200/35 blur-3xl"
-          animate={{ y: [0, 20, 0], opacity: [0.35, 0.6, 0.35] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="pointer-events-none absolute -bottom-32 right-[-15%] h-80 w-80 rounded-full bg-accent-200/30 blur-3xl"
-          animate={{ y: [0, -18, 0], opacity: [0.3, 0.55, 0.3] }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-        />
- 
+      <div className="relative space-y-3 md:space-y-6 pb-12">
+        {/* Subtle background accents */}
+        <div className="pointer-events-none fixed inset-0 overflow-hidden">
+          <div className="absolute top-[-10%] right-[-5%] h-96 w-96 rounded-full bg-primary-200/20 dark:bg-primary-800/10 blur-[100px]" />
+          <div className="absolute bottom-[-5%] left-[-8%] h-80 w-80 rounded-full bg-accent-200/15 dark:bg-accent-800/10 blur-[100px]" />
+        </div>
+
         {/* Header */}
         <motion.div
-          className="relative overflow-hidden"
-          initial={{ opacity: 0, y: 20 }}
+          className="relative flex flex-col md:flex-row md:items-end md:justify-between gap-3"
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
+          transition={{ duration: 0.5 }}
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
-          <div className="relative glass-card rounded-3xl p-8 md:p-10 border border-neutral-200/60 backdrop-blur-sm">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <motion.div
-                  className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg shadow-primary-500/30"
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ duration: 0.6, delay: 0.2, type: 'spring' }}
-                >
-                  <MapPin className="h-7 w-7 text-white" />
-                </motion.div>
-                <div>
-                  <motion.h1
-                    className="text-3xl md:text-4xl font-bold gradient-text"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: 0.3 }}
-                  >
-                    Store Atlas
-                  </motion.h1>
-                  <motion.p
-                    className="mt-1 text-neutral-600 dark:text-neutral-400 text-sm md:text-base"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: 0.4 }}
-                  >
-                    Compare store assortments, hours, and pricing across your area
-                  </motion.p>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <motion.button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="btn btn-outline shadow-md hover:shadow-lg"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.97 }}
-                >
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filters
-                </motion.button>
-                <motion.div
-                  className="flex border-2 border-neutral-300 rounded-xl overflow-hidden shadow-sm"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.6, delay: 0.6 }}
-                >
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`px-3 py-2 transition-all duration-200 ${
-                      viewMode === 'grid'
-                        ? 'bg-primary-500 text-white shadow-inner'
-                        : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
-                    }`}
-                  >
-                    <Grid className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`px-3 py-2 transition-all duration-200 ${
-                      viewMode === 'list'
-                        ? 'bg-primary-500 text-white shadow-inner'
-                        : 'text-neutral-600 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700'
-                    }`}
-                  >
-                    <List className="h-4 w-4" />
-                  </button>
-                </motion.div>
-              </div>
+          <div>
+            <h1 className="text-xl md:text-4xl font-display text-neutral-900 dark:text-neutral-100">
+              Store <span className="gradient-text">Atlas</span>
+            </h1>
+            <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
+              Compare store assortments, hours, and pricing across your area
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <motion.button
+              onClick={() => setShowFilters(!showFilters)}
+              className="btn btn-outline active:scale-95"
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <Filter className="h-4 w-4 mr-2" />
+              Filters
+            </motion.button>
+            <div className="flex bg-neutral-100 dark:bg-neutral-700/50 rounded-lg p-0.5">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-3 py-2 rounded-md transition-all duration-200 ${
+                  viewMode === 'grid'
+                    ? 'bg-white dark:bg-neutral-600 text-primary-700 dark:text-primary-300 shadow-sm'
+                    : 'text-neutral-500 dark:text-neutral-400'
+                }`}
+              >
+                <Grid className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-2 rounded-md transition-all duration-200 ${
+                  viewMode === 'list'
+                    ? 'bg-white dark:bg-neutral-600 text-primary-700 dark:text-primary-300 shadow-sm'
+                    : 'text-neutral-500 dark:text-neutral-400'
+                }`}
+              >
+                <List className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </motion.div>
@@ -710,8 +672,8 @@ export default function Stores() {
         >
           <div className="card-content">
             <div className="flex space-x-3 items-center">
-              <div className="hidden sm:flex h-11 w-11 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 items-center justify-center flex-shrink-0">
-                <MapPin className="h-5 w-5 text-white" />
+              <div className="hidden sm:flex h-10 w-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 items-center justify-center flex-shrink-0">
+                <MapPin className="h-5 w-5 text-primary-600 dark:text-primary-400" />
               </div>
               <div className="flex-1">
                 <div className="relative">
@@ -728,7 +690,7 @@ export default function Stores() {
               </div>
               <motion.button
                 onClick={handleLocationSearch}
-                className="btn btn-primary"
+                className="btn btn-primary active:scale-95"
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.97 }}
               >
@@ -737,7 +699,7 @@ export default function Stores() {
               {userLocation && (
                 <motion.button
                   onClick={handleUseMyLocation}
-                  className="btn btn-outline"
+                  className="btn btn-outline active:scale-95"
                   title="Find stores near your current location"
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.97 }}
@@ -786,8 +748,8 @@ export default function Stores() {
             <div className="card-header">
               <h2 className="card-title">Filters</h2>
             </div>
-            <div className="card-content space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="card-content space-y-3 md:space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2.5 md:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                     Store Chain
@@ -854,7 +816,7 @@ export default function Stores() {
                 <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                   Features
                 </label>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-1.5 md:gap-2">
                   {STORE_FEATURES.map(feature => (
                     <label key={feature} className="flex items-center space-x-2 cursor-pointer">
                       <input
@@ -899,20 +861,20 @@ export default function Stores() {
             initial="hidden"
             animate="visible"
           >
-            <motion.div className="flex items-center space-x-2 mb-1" variants={fadeUp}>
-              <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Results</h2>
-              <span className="badge badge-primary">{stores.length}</span>
+            <motion.div className="flex items-center gap-2 mb-1" variants={fadeUp}>
+              <h2 className="text-lg font-display text-neutral-900 dark:text-neutral-100">Results</h2>
+              <span className="badge badge-primary text-xs font-mono">{stores.length}</span>
             </motion.div>
 
             {viewMode === 'grid' ? (
               <motion.div
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 items-start"
                 variants={staggerContainer}
               >
                 {stores.map(renderStoreCard)}
               </motion.div>
             ) : (
-              <motion.div className="space-y-4" variants={staggerContainer}>
+              <motion.div className="space-y-3 md:space-y-4" variants={staggerContainer}>
                 {stores.map(renderStoreList)}
               </motion.div>
             )}

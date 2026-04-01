@@ -9,9 +9,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png'],
+      includeAssets: ['logo.png', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifest: false, // using public/manifest.json
+      devOptions: {
+        enabled: false, // SW disabled in dev mode — avoids stale cache issues
+      },
       workbox: {
+        skipWaiting: true,      // New SW takes over immediately
+        clientsClaim: true,     // Claim all open tabs on activation
+        cleanupOutdatedCaches: true,
         // Cache pages and API responses
         runtimeCaching: [
           {
@@ -57,6 +63,11 @@ export default defineConfig({
   server: {
     port: 3050,
     strictPort: true,
+    headers: {
+      // Prevent Safari from caching the service worker or HTML
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Service-Worker-Allowed': '/',
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

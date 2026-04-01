@@ -336,7 +336,7 @@ export default function GroceryLists() {
         <title>Grocery Lists - Nourish Neural</title>
       </Helmet>
 
-      <div className="relative space-y-8 pb-12">
+      <div className="relative space-y-3 md:space-y-8 pb-12">
         <motion.div
           className="pointer-events-none absolute -top-16 left-[-10%] h-64 w-64 rounded-full bg-primary-200/30 blur-3xl"
           animate={{ y: [0, 18, 0], opacity: [0.4, 0.65, 0.4] }}
@@ -356,20 +356,20 @@ export default function GroceryLists() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
-          <div className="relative glass-card rounded-3xl p-8 md:p-10 border border-neutral-200/60 backdrop-blur-sm">
+          <div className="relative glass-card rounded-3xl p-4 md:p-10 border border-neutral-200/60 backdrop-blur-sm">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 md:space-x-4">
                 <motion.div
-                  className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg shadow-primary-500/30"
+                  className="inline-flex h-10 w-10 md:h-14 md:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg shadow-primary-500/30"
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ duration: 0.6, delay: 0.2, type: 'spring' }}
                 >
-                  <ShoppingCart className="h-7 w-7 text-white" />
+                  <ShoppingCart className="h-5 w-5 md:h-7 md:w-7 text-white" />
                 </motion.div>
                 <div>
                   <motion.h1
-                    className="text-3xl md:text-4xl font-bold gradient-text"
+                    className="text-xl md:text-4xl font-bold gradient-text"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.6, delay: 0.3 }}
@@ -388,7 +388,7 @@ export default function GroceryLists() {
               </div>
               <motion.button
                 onClick={() => setShowCreateForm(true)}
-                className="btn btn-primary shadow-lg hover:shadow-xl"
+                className="btn btn-primary shadow-lg hover:shadow-xl active:scale-95 transition-transform"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: 0.5 }}
@@ -408,10 +408,10 @@ export default function GroceryLists() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
-                <div className="flex bg-neutral-100/80 dark:bg-neutral-800/80 p-1.5 rounded-xl w-full sm:w-auto backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/50 shadow-inner">
+                <div className="flex bg-neutral-100/80 dark:bg-neutral-800/80 p-1 md:p-1.5 rounded-xl w-full sm:w-auto backdrop-blur-md border border-neutral-200/50 dark:border-neutral-700/50 shadow-inner">
                   <button
                     onClick={() => setScope('personal')}
-                    className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${scope === 'personal'
+                    className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 md:px-6 py-1.5 md:py-2 rounded-lg text-sm font-medium transition-all duration-300 active:scale-95 ${scope === 'personal'
                         ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10'
                         : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50'
                       }`}
@@ -420,7 +420,7 @@ export default function GroceryLists() {
                   </button>
                   <button
                     onClick={() => setScope('household')}
-                    className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-6 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${scope === 'household'
+                    className={`flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 md:px-6 py-1.5 md:py-2 rounded-lg text-sm font-medium transition-all duration-300 active:scale-95 ${scope === 'household'
                         ? 'bg-white dark:bg-neutral-700 text-neutral-900 dark:text-white shadow-sm ring-1 ring-black/5 dark:ring-white/10'
                         : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 hover:bg-neutral-200/50 dark:hover:bg-neutral-700/50'
                       }`}
@@ -466,9 +466,9 @@ export default function GroceryLists() {
                 </button>
               </div>
             </div>
-            <div className="card-content space-y-4">
+            <div className="card-content space-y-2 md:space-y-4">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                   List Name
                 </label>
                 <input
@@ -482,10 +482,10 @@ export default function GroceryLists() {
 
               {/* Add Items Section */}
               <div>
-                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                   Add Items
                 </label>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-2 mb-2">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-1.5 md:gap-2 mb-2">
                   <input
                     type="text"
                     value={newItem.name}
@@ -531,7 +531,7 @@ export default function GroceryLists() {
                   </select>
                   <button
                     onClick={handleAddItem}
-                    className="btn btn-secondary"
+                    className="btn btn-secondary active:scale-95 transition-transform"
                   >
                     Add
                   </button>
@@ -565,13 +565,13 @@ export default function GroceryLists() {
                 <button
                   onClick={handleCreateList}
                   disabled={!newListForm.name.trim() || createListMutation.isLoading}
-                  className="btn btn-primary"
+                  className="btn btn-primary active:scale-95 transition-transform"
                 >
                   {createListMutation.isLoading ? 'Creating...' : 'Create List'}
                 </button>
                 <button
                   onClick={() => setShowCreateForm(false)}
-                  className="btn btn-outline"
+                  className="btn btn-outline active:scale-95 transition-transform"
                 >
                   Cancel
                 </button>
@@ -589,10 +589,10 @@ export default function GroceryLists() {
             transition={{ duration: 0.4 }}
           >
             <div className="card-content">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2 md:gap-4">
                 {/* Search */}
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <label className="block text-xs md:text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                     <Search className="h-4 w-4 inline mr-1" />
                     Search Lists
                   </label>
@@ -610,7 +610,7 @@ export default function GroceryLists() {
 
                 {/* Status Filter */}
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <label className="block text-xs md:text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                     <Filter className="h-4 w-4 inline mr-1" />
                     Status
                   </label>
@@ -627,7 +627,7 @@ export default function GroceryLists() {
 
                 {/* Sort By */}
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                  <label className="block text-xs md:text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1 md:mb-2">
                     <ArrowUpDown className="h-4 w-4 inline mr-1" />
                     Sort By
                   </label>
@@ -651,7 +651,7 @@ export default function GroceryLists() {
                       setFilterStatus('all')
                       setSortBy('date')
                     }}
-                    className="btn btn-outline w-full"
+                    className="btn btn-outline w-full active:scale-95 transition-transform"
                   >
                     Clear Filters
                   </button>
@@ -659,8 +659,8 @@ export default function GroceryLists() {
               </div>
 
               {/* Results Count */}
-              <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">
+              <div className="mt-2 md:mt-4 pt-2 md:pt-4 border-t border-neutral-200 dark:border-neutral-700">
+                <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-400">
                   Showing <span className="font-semibold text-neutral-900 dark:text-neutral-100">{filteredAndSortedLists.length}</span> of{' '}
                   <span className="font-semibold text-neutral-900 dark:text-neutral-100">{groceryLists.length}</span> lists
                 </p>
@@ -726,7 +726,7 @@ export default function GroceryLists() {
             </div>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
             {filteredAndSortedLists.map((list) => {
               const progress = calculateProgress(list)
               const totalCost = list.items.reduce((sum, item) => sum + (item.estimatedPrice || 0), 0)
@@ -744,7 +744,7 @@ export default function GroceryLists() {
                 >
                   <div className="card-header">
                     <div className="flex items-center justify-between">
-                      <h3 className="card-title text-lg">{list.name}</h3>
+                      <h3 className="card-title text-base md:text-lg">{list.name}</h3>
                       <div className="flex space-x-1">
                         <button
                           onClick={() => handleShareList(list)}

@@ -1,4 +1,4 @@
-const { supabase } = require('../config/supabase');
+const { supabaseAuth: supabase } = require('../config/supabase');
 
 /**
  * Middleware to authenticate requests using Supabase JWT tokens

@@ -6,7 +6,6 @@ import { useAuth } from '../hooks/useAuth'
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fadeUp, scaleIn, staggerContainer } from '../utils/motion'
-import { supabase } from '../lib/supabase'
 
 export default function Login() {
   const [formData, setFormData] = useState({
@@ -54,48 +53,29 @@ export default function Login() {
     setErrors({})
 
     try {
-      // Use Supabase directly for login
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password
+      // Route through backend API — avoids Supabase CORS issues on mobile/LAN
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
       })
 
-      if (authError) {
-        console.error('Supabase login error:', authError)
-        throw new Error(authError.message || 'Login failed')
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.details || data.error || 'Login failed')
       }
 
-      if (!authData.session || !authData.user) {
-        throw new Error('No session returned')
+      // Store refresh token for persistent sessions
+      if (data.session?.refresh_token) {
+        localStorage.setItem('nourish_neural_refresh_token', data.session.refresh_token)
       }
 
-      // Get user profile from database
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single()
-
-      if (profileError) {
-        console.warn('Could not fetch profile:', profileError)
-      }
-
-      // Construct user object
-      const user = {
-        id: authData.user.id,
-        email: authData.user.email,
-        firstName: profile?.first_name || authData.user.user_metadata?.first_name || '',
-        lastName: profile?.last_name || authData.user.user_metadata?.last_name || '',
-        age: profile?.age || authData.user.user_metadata?.age,
-        avatarUrl: profile?.avatar_url || null,
-        isVerified: authData.user.email_confirmed_at != null,
-        role: authData.user.role || 'authenticated',
-        createdAt: authData.user.created_at,
-        updatedAt: profile?.updated_at || authData.user.updated_at
-      }
-
-      // Login the user with token and user data to avoid race condition
-      login(authData.session.access_token, user as any)
+      // Login the user with token and user data
+      login(data.token, data.user)
 
       toast.success('Welcome back to Nourish Neural!')
       navigate(from, { replace: true })
@@ -152,7 +132,7 @@ export default function Login() {
               variants={fadeUp}
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20 dark:from-primary-400/30 dark:to-accent-400/30">
-                <img src="/favicon.svg" alt="Nourish Neural" className="h-4 w-4" />
+                <img src="/logo.png" alt="Nourish Neural" className="h-4 w-4" />
               </span>
               <span>Neural pantry intelligence, always learning</span>
             </motion.div>
@@ -202,7 +182,7 @@ export default function Login() {
                 transition={{ duration: 0.6 }}
               >
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
-                  <img src="/favicon.svg" alt="Nourish Neural" className="h-16 w-16" />
+                  <img src="/logo.png" alt="Nourish Neural" className="h-16 w-16" />
                 </div>
                 <span className="text-4xl font-bold gradient-text">Nourish Neural</span>
               </motion.div>

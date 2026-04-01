@@ -4,6 +4,73 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const path = require('path');
+const dns = require('dns');
+const { Resolver } = dns;
+
+// Resilient DNS: race OS resolver vs public DNS — use whichever responds first.
+// This handles both scenarios:
+//   - University blocks Supabase DNS → public DNS wins
+//   - University blocks outbound DNS (port 53) → OS resolver wins
+const publicResolver = new Resolver();
+publicResolver.setServers(['8.8.8.8', '1.1.1.1']);
+
+const originalLookup = dns.lookup;
+dns.lookup = (hostname, options, callback) => {
+  if (typeof options === 'function') { callback = options; options = {}; }
+  if (typeof options === 'number') { options = { family: options }; }
+
+  // Skip override for localhost and raw IPs
+  if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
+    return originalLookup(hostname, options, callback);
+  }
+
+  let settled = false;
+  let osErr = null;
+  let publicErr = null;
+
+  const settle = (err, address, family) => {
+    if (settled) return;
+    // Only settle with success if we have a valid address
+    if (!err && address) {
+      settled = true;
+      return callback(null, address, family);
+    }
+    // Both failed — report OS error
+    if (osErr && publicErr) {
+      settled = true;
+      return callback(osErr, undefined, undefined);
+    }
+  };
+
+  // Race 1: OS default resolver
+  originalLookup(hostname, options, (err, addr, fam) => {
+    if (!err && addr) {
+      settle(null, addr, fam);
+    } else {
+      osErr = err;
+      settle(err); // will only fire if public also failed
+    }
+  });
+
+  // Race 2: Public DNS (Google/Cloudflare)
+  publicResolver.resolve4(hostname, (err, addresses) => {
+    if (!err && addresses?.length) {
+      settle(null, addresses[0], 4);
+    } else {
+      publicErr = err;
+      settle(err); // will only fire if OS also failed
+    }
+  });
+
+  // Safety timeout — if neither responds in 8s, fail with a clear error
+  setTimeout(() => {
+    if (!settled) {
+      settled = true;
+      callback(osErr || new Error(`DNS lookup timeout for ${hostname}`), undefined, undefined);
+    }
+  }, 8000);
+};
+console.log('🌐 DNS resilience active — racing OS resolver vs Google/Cloudflare');
 
 // Load .env from server directory (handles different working directories)
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
@@ -26,6 +93,11 @@ const loyaltyRoutes = require('./routes/loyalty');
 const mealPlannerRoutes = require('./routes/meal-planner');
 const wasteRoutes = require('./routes/waste');
 const householdRoutes = require('./routes/households');
+const nutritionRoutes = require('./routes/nutrition');
+const carbonRoutes = require('./routes/carbon');
+const applianceRoutes = require('./routes/appliance');
+const challengeRoutes = require('./routes/challenges');
+const sustainabilityRoutes = require('./routes/sustainability');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,9 +116,23 @@ app.use(helmet({
   }
 }));
 
-// CORS configuration
+// CORS configuration — allow web dev server + Capacitor native app
+const allowedOrigins = [
+  process.env.CORS_ORIGIN || 'http://localhost:3000',
+  'http://localhost:3050',
+  'capacitor://localhost',    // iOS Capacitor
+  'https://localhost',        // Android Capacitor
+  'http://localhost',         // Android Capacitor fallback
+];
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // In dev, allow all origins
+    }
+  },
   credentials: true
 }));
 
@@ -634,6 +720,11 @@ app.use('/api/loyalty', loyaltyRoutes);
 app.use('/api/meal-planner', mealPlannerRoutes);
 app.use('/api/waste', wasteRoutes);
 app.use('/api/households', householdRoutes);
+app.use('/api/nutrition', nutritionRoutes);
+app.use('/api/carbon', carbonRoutes);
+app.use('/api/appliance', authenticateJWT, applianceRoutes);
+app.use('/api/challenges', authenticateJWT, challengeRoutes);
+app.use('/api/sustainability', sustainabilityRoutes); // JWT handled inside the route
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -670,12 +761,13 @@ app.use('*', (req, res) => {
 // Start server
 async function startServer() {
   try {
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Nourish Neural server running on port ${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+      console.log(`📱 Mobile access: http://10.167.101.234:${PORT}`);
       console.log(`🔑 Using Supabase Auth: ${process.env.SUPABASE_URL ? '✅' : '❌'}`);
-      console.log(`🎯 CORS enabled for: ${process.env.CORS_ORIGIN}`);
+      console.log(`🎯 CORS enabled for: web + Capacitor native`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

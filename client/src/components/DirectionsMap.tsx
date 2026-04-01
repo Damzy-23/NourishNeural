@@ -87,7 +87,7 @@ export default function DirectionsMap({
   const [mapReady, setMapReady] = useState(false)
   const [journeyActive, setJourneyActive] = useState(false)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
-  const [livePosition, setLivePosition] = useState<{ lat: number; lng: number } | null>(null)
+  const [, setLivePosition] = useState<{ lat: number; lng: number } | null>(null)
   const liveMarkerRef = useRef<L.Marker | null>(null)
   const watchIdRef = useRef<number | null>(null)
 

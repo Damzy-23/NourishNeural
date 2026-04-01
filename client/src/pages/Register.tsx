@@ -6,7 +6,6 @@ import { useAuth } from '../hooks/useAuth'
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { fadeUp, scaleIn, staggerContainer } from '../utils/motion'
-import { supabase } from '../lib/supabase'
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -93,84 +92,45 @@ export default function Register() {
     setErrors({})
 
     try {
-      // Use Supabase directly for registration
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            age: parseInt(formData.age)
-          }
-        }
+      // Route through backend API — avoids Supabase CORS issues on mobile/LAN
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          age: parseInt(formData.age)
+        })
       })
 
-      if (authError) {
-        console.error('Supabase registration error:', authError)
-        if (authError.message.includes('already registered')) {
+      const data = await response.json()
+
+      if (!response.ok) {
+        if (data.details?.includes('already registered') || data.error?.includes('already')) {
           setErrors({ email: 'An account with this email already exists' })
           toast.error('Email already registered')
           return
         }
-        throw new Error(authError.message || 'Registration failed')
+        throw new Error(data.details || data.error || 'Registration failed')
       }
 
-      if (!authData.user) {
-        throw new Error('Registration failed - no user returned')
-      }
-
-      // If no session, email confirmation is required
-      if (!authData.session) {
+      // If email confirmation is required (no token returned)
+      if (!data.token) {
         toast.success('Registration successful! Please check your email to confirm your account.')
         setIsLoading(false)
         navigate('/login')
         return
       }
 
-      // Create user profile
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .insert({
-          id: authData.user.id,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-          age: parseInt(formData.age)
-        })
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError)
-        // Don't fail registration if profile creation fails
+      // Store refresh token for persistent sessions
+      if (data.session?.refresh_token) {
+        localStorage.setItem('nourish_neural_refresh_token', data.session.refresh_token)
       }
 
-      // Create default preferences
-      const { error: prefsError } = await supabase
-        .from('user_preferences')
-        .insert({
-          user_id: authData.user.id
-        })
-
-      if (prefsError) {
-        console.error('Preferences creation error:', prefsError)
-        // Don't fail registration
-      }
-
-      // Construct user object
-      const user = {
-        id: authData.user.id,
-        email: authData.user.email,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        age: parseInt(formData.age),
-        avatarUrl: null,
-        isVerified: authData.user.email_confirmed_at != null,
-        role: authData.user.role || 'authenticated',
-        createdAt: authData.user.created_at,
-        updatedAt: new Date().toISOString()
-      }
-
-      // Login the user with token and user data to avoid race condition
-      login(authData.session.access_token, user as any)
+      // Login the user with token and user data
+      login(data.token, data.user)
 
       toast.success('Welcome to Nourish Neural! Your account has been created successfully.')
       navigate('/app/dashboard', { replace: true })
@@ -248,7 +208,7 @@ export default function Register() {
               variants={fadeUp}
             >
               <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20 dark:from-primary-400/30 dark:to-accent-400/30">
-                <img src="/favicon.svg" alt="Nourish Neural" className="h-4 w-4" />
+                <img src="/logo.png" alt="Nourish Neural" className="h-4 w-4" />
               </span>
               <span>Activate neural nourishment for your household</span>
             </motion.div>
@@ -310,7 +270,7 @@ export default function Register() {
                 transition={{ duration: 0.6 }}
               >
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg overflow-hidden">
-                  <img src="/favicon.svg" alt="Nourish Neural" className="h-16 w-16" />
+                  <img src="/logo.png" alt="Nourish Neural" className="h-16 w-16" />
                 </div>
                 <span className="text-4xl font-bold gradient-text">Nourish Neural</span>
               </motion.div>

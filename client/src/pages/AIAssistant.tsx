@@ -73,7 +73,7 @@ const AI_FEATURES: AIFeature[] = [
     icon: ShoppingCart,
     endpoint: '/api/ai/shopping-tips',
     prompt: 'Give me tips for budget-friendly grocery shopping',
-    color: 'from-blue-500 to-primary-500'
+    color: 'from-accent-500 to-primary-500'
   }
 ]
 
@@ -203,8 +203,8 @@ export default function AIAssistant() {
       >
         {/* Avatar */}
         <div className={`flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center ${isUser
-            ? 'bg-gradient-to-br from-blue-500 to-primary-500 shadow-lg shadow-blue-500/30'
-            : 'bg-white border-2 border-neutral-200'
+          ? 'bg-gradient-to-br from-accent-500 to-primary-500 shadow-lg shadow-accent-500/30'
+          : 'bg-white border-2 border-neutral-200'
           }`}>
           {isUser ? (
             <User className="h-5 w-5 text-white" />
@@ -216,8 +216,8 @@ export default function AIAssistant() {
         {/* Message Content */}
         <div className={`flex-1 max-w-2xl ${isUser ? 'text-right' : ''}`}>
           <div className={`inline-block px-5 py-3 rounded-2xl ${isUser
-              ? 'bg-gradient-to-br from-blue-500 to-primary-500 text-white shadow-lg shadow-blue-500/20 rounded-br-md'
-              : 'bg-white text-neutral-900 border-2 border-neutral-200 rounded-bl-md'
+            ? 'bg-gradient-to-br from-accent-500 to-primary-500 text-white shadow-lg shadow-accent-500/20 rounded-br-md'
+            : 'bg-white text-neutral-900 border-2 border-neutral-200 rounded-bl-md'
             }`}>
             {/* Special rendering for different message types */}
             {message.type === 'recipe' && message.data ? (
@@ -279,19 +279,19 @@ export default function AIAssistant() {
       <div className="relative min-h-screen pb-8">
         {/* Subtle gradient background blurs */}
         <motion.div
-          className="pointer-events-none fixed top-0 right-0 h-[500px] w-[500px] rounded-full bg-purple-100/40 blur-3xl"
+          className="pointer-events-none fixed top-0 right-0 h-[500px] w-[500px] rounded-full bg-primary-100/40 blur-3xl"
           animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.5, 0.3] }}
           transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="pointer-events-none fixed bottom-0 left-0 h-[400px] w-[400px] rounded-full bg-blue-100/30 blur-3xl"
+          className="pointer-events-none fixed bottom-0 left-0 h-[400px] w-[400px] rounded-full bg-accent-100/30 blur-3xl"
           animate={{ scale: [1, 1.15, 1], opacity: [0.25, 0.4, 0.25] }}
           transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
         />
 
         {/* Header */}
         <motion.div
-          className="mb-8"
+          className="mb-4 md:mb-8"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -299,20 +299,20 @@ export default function AIAssistant() {
           <div className="flex items-start justify-between">
             <div>
               <motion.div
-                className="flex items-center space-x-4 mb-3"
+                className="flex items-center space-x-3 md:space-x-4 mb-2 md:mb-3"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
               >
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 to-blue-500 shadow-lg shadow-purple-500/30">
-                  <Sparkles className="w-8 h-8 text-white" />
+                <div className="inline-flex items-center justify-center w-11 h-11 md:w-16 md:h-16 rounded-xl md:rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 shadow-lg shadow-primary-500/30">
+                  <Sparkles className="w-5 h-5 md:w-8 md:h-8 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-5xl font-black text-neutral-900 dark:text-neutral-100">
-                    Nurexa <span className="bg-gradient-to-r from-purple-600 via-blue-600 to-primary-500 bg-clip-text text-transparent">AI</span>
+                  <h1 className="text-2xl md:text-5xl font-black text-neutral-900 dark:text-neutral-100">
+                    Nurexa <span className="bg-gradient-to-r from-primary-600 via-accent-600 to-primary-500 bg-clip-text text-transparent">AI</span>
                   </h1>
-                  <p className="text-lg text-neutral-500 dark:text-neutral-400 mt-1">
-                    Your intelligent culinary assistant
+                  <p className="text-sm md:text-lg text-neutral-500 dark:text-neutral-400">
+                    Your culinary assistant
                   </p>
                 </div>
               </motion.div>
@@ -332,15 +332,15 @@ export default function AIAssistant() {
           </div>
         </motion.div>
 
-        {/* AI Features Quick Access */}
+        {/* AI Features Quick Access — horizontal scroll on mobile */}
         <motion.div
-          className="mb-8"
+          className="mb-4 md:mb-8"
           variants={staggerContainer}
           initial="hidden"
           animate="visible"
         >
-          <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <h2 className="text-base md:text-xl font-bold text-neutral-900 dark:text-neutral-100 mb-3 md:mb-4">Quick Actions</h2>
+          <div className="flex md:grid md:grid-cols-4 gap-2.5 md:gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory md:snap-none">
             {AI_FEATURES.map((feature) => {
               const Icon = feature.icon
               return (
@@ -348,21 +348,20 @@ export default function AIAssistant() {
                   key={feature.id}
                   onClick={() => handleFeatureClick(feature)}
                   disabled={chatMutation.isLoading}
-                  className={`relative overflow-hidden bg-white dark:bg-neutral-800 rounded-2xl border-2 p-5 transition-all duration-300 ${selectedFeature === feature.id
-                      ? 'border-primary-400 dark:border-primary-500 shadow-lg shadow-primary-500/20'
-                      : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 hover:shadow-md'
+                  className={`relative overflow-hidden bg-white dark:bg-neutral-800 rounded-xl md:rounded-2xl border md:border-2 p-3 md:p-5 transition-all duration-300 shrink-0 w-[120px] md:w-auto snap-start active:scale-95 ${selectedFeature === feature.id
+                    ? 'border-primary-400 dark:border-primary-500 shadow-lg shadow-primary-500/20'
+                    : 'border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600 hover:shadow-md'
                     }`}
                   variants={fadeUp}
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={{ scale: 0.95 }}
                   transition={{ duration: 0.2 }}
                 >
                   <div className="flex flex-col items-center text-center">
-                    <div className={`w-12 h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-3 shadow-lg`}>
-                      <Icon className="h-6 w-6 text-white" />
+                    <div className={`w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br ${feature.color} rounded-xl flex items-center justify-center mb-2 md:mb-3 shadow-lg`}>
+                      <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
                     </div>
-                    <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-sm mb-1">{feature.name}</h3>
-                    <p className="text-xs text-neutral-600 dark:text-neutral-400">{feature.description}</p>
+                    <h3 className="font-bold text-neutral-900 dark:text-neutral-100 text-xs md:text-sm mb-0.5 md:mb-1">{feature.name}</h3>
+                    <p className="text-[10px] md:text-xs text-neutral-600 dark:text-neutral-400 hidden md:block">{feature.description}</p>
                   </div>
                 </motion.button>
               )
@@ -372,14 +371,14 @@ export default function AIAssistant() {
 
         {/* Chat Interface */}
         <motion.div
-          className="bg-white rounded-3xl border-2 border-neutral-200 overflow-hidden shadow-xl"
+          className="bg-white dark:bg-neutral-800 rounded-2xl md:rounded-3xl border border-neutral-200 dark:border-neutral-700 md:border-2 overflow-hidden shadow-xl"
           variants={fadeUp}
           initial="hidden"
           animate="visible"
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          {/* Messages Area */}
-          <div className="h-[500px] overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-neutral-50/50 to-white dark:from-neutral-900/50 dark:to-neutral-800">
+          {/* Messages Area — full height on mobile, fixed on desktop */}
+          <div className="h-[calc(100vh-20rem)] md:h-[500px] overflow-y-auto p-4 md:p-6 space-y-3 md:space-y-4 bg-gradient-to-b from-neutral-50/50 to-white dark:from-neutral-900/50 dark:to-neutral-800">
             {messages.map(renderMessage)}
 
             {/* Loading indicator */}
@@ -407,23 +406,23 @@ export default function AIAssistant() {
           </div>
 
           {/* Input Area */}
-          <div className="border-t-2 border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5">
-            <div className="flex space-x-3 mb-3">
+          <div className="border-t border-neutral-200 dark:border-neutral-700 md:border-t-2 bg-white dark:bg-neutral-800 p-3 md:p-5">
+            <div className="flex items-end gap-2 md:space-x-3 mb-2 md:mb-3">
               <div className="flex-1">
                 <textarea
                   value={inputMessage}
                   onChange={(e) => setInputMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask me anything about cooking, nutrition, or food shopping..."
-                  className="w-full px-4 py-3 border-2 border-neutral-200 dark:border-neutral-600 rounded-xl resize-none focus:outline-none focus:border-primary-400 dark:focus:border-primary-500 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 transition-all text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 bg-white dark:bg-neutral-700"
-                  rows={2}
+                  placeholder="Ask about cooking, nutrition..."
+                  className="w-full px-3 md:px-4 py-2.5 md:py-3 border border-neutral-200 dark:border-neutral-600 md:border-2 rounded-xl resize-none focus:outline-none focus:border-primary-400 dark:focus:border-primary-500 focus:ring-2 md:focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 transition-all text-sm md:text-base text-neutral-900 dark:text-neutral-100 placeholder-neutral-400 dark:placeholder-neutral-500 bg-white dark:bg-neutral-700"
+                  rows={1}
                   disabled={chatMutation.isLoading}
                 />
               </div>
               <motion.button
                 onClick={() => handleSendMessage()}
                 disabled={!inputMessage.trim() || chatMutation.isLoading}
-                className="px-6 py-3 bg-gradient-to-br from-blue-500 to-primary-500 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="p-3 md:px-6 md:py-3 bg-gradient-to-br from-accent-500 to-primary-500 text-white rounded-xl font-semibold shadow-lg shadow-accent-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all shrink-0"
                 whileHover={{ y: -2, scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -435,20 +434,19 @@ export default function AIAssistant() {
               </motion.button>
             </div>
 
-            {/* Quick suggestions */}
-            <div className="flex flex-wrap gap-2">
+            {/* Quick suggestions — horizontal scroll on mobile */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-3 px-3 md:mx-0 md:px-0 md:flex-wrap snap-x snap-mandatory md:snap-none">
               {[
-                "What's a healthy breakfast recipe?",
-                "How can I meal prep for the week?",
-                "What's in season right now?",
-                "Help me use up my leftovers"
+                "Healthy breakfast?",
+                "Meal prep ideas",
+                "What's in season?",
+                "Use up leftovers"
               ].map((suggestion, idx) => (
                 <motion.button
                   key={idx}
                   onClick={() => handleSendMessage(suggestion)}
                   disabled={chatMutation.isLoading}
-                  className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-lg text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 hover:border-neutral-300 dark:hover:border-neutral-500 transition-all disabled:opacity-50"
-                  whileHover={{ y: -1 }}
+                  className="px-3 py-1.5 bg-neutral-100 dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 rounded-lg text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-600 transition-all disabled:opacity-50 whitespace-nowrap shrink-0 snap-start active:scale-95"
                   whileTap={{ scale: 0.98 }}
                 >
                   {suggestion}
@@ -458,22 +456,21 @@ export default function AIAssistant() {
           </div>
         </motion.div>
 
-        {/* Info Banner */}
-
+        {/* Info Banner — hidden on mobile */}
         <motion.div
-          className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200/60 rounded-2xl p-5"
+          className="hidden md:block mt-6 bg-gradient-to-r from-primary-50 to-accent-50 border-2 border-primary-200/60 rounded-2xl p-5"
           variants={fadeUp}
           initial="hidden"
           animate="visible"
           transition={{ duration: 0.45, delay: 0.3 }}
         >
           <div className="flex items-start space-x-3">
-            <div className="flex-shrink-0 w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center">
-              <Zap className="h-5 w-5 text-blue-600" />
+            <div className="flex-shrink-0 w-10 h-10 bg-primary-500/10 rounded-xl flex items-center justify-center">
+              <Zap className="h-5 w-5 text-primary-600" />
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-bold text-blue-900 dark:text-blue-300 mb-1">Pro Tips for Best Results</h3>
-              <p className="text-sm text-blue-700 dark:text-blue-400 leading-relaxed">
+              <h3 className="text-sm font-bold text-primary-900 dark:text-primary-300 mb-1">Pro Tips for Best Results</h3>
+              <p className="text-sm text-primary-700 dark:text-primary-400 leading-relaxed">
                 Be specific about your dietary preferences, allergies, and available ingredients.
                 I can provide personalized suggestions based on your pantry contents and shopping lists.
               </p>

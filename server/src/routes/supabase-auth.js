@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { supabase } = require('../config/supabase');
+const { supabase, supabaseAuth } = require('../config/supabase');
 
 // Rate limiting for auth endpoints (brute-force protection)
 let authRateLimit;
@@ -38,7 +38,7 @@ router.post('/register', authRateLimit, async (req, res) => {
     }
 
     // Sign up user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await supabaseAuth.auth.signUp({
       email,
       password,
       options: {
@@ -155,7 +155,7 @@ router.post('/login', authRateLimit, async (req, res) => {
     }
 
     // Sign in with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    const { data: authData, error: authError } = await supabaseAuth.auth.signInWithPassword({
       email,
       password
     });
@@ -230,7 +230,7 @@ router.get('/me', async (req, res) => {
     const token = authHeader.substring(7);
 
     // Verify token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const { data: { user }, error } = await supabaseAuth.auth.getUser(token);
 
     if (error || !user) {
       return res.status(401).json({
@@ -276,7 +276,7 @@ router.post('/logout', async (req, res) => {
     if (authHeader && authHeader.startsWith('Bearer ') && supabase) {
       const token = authHeader.substring(7);
       // Sign out from Supabase
-      await supabase.auth.signOut(token);
+      await supabaseAuth.auth.signOut(token);
     }
 
     res.json({
@@ -310,7 +310,7 @@ router.post('/refresh', async (req, res) => {
       });
     }
 
-    const { data, error } = await supabase.auth.refreshSession({
+    const { data, error } = await supabaseAuth.auth.refreshSession({
       refresh_token
     });
 
@@ -354,7 +354,7 @@ router.post('/forgot-password', authRateLimit, async (req, res) => {
     }
 
     // Send password reset email
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabaseAuth.auth.resetPasswordForEmail(email, {
       redirectTo: `${process.env.CORS_ORIGIN}/reset-password`
     });
 
@@ -409,7 +409,7 @@ router.post('/reset-password', async (req, res) => {
     const token = authHeader.substring(7);
 
     // Verify the token is valid
-    const { data: { user }, error: verifyError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: verifyError } = await supabaseAuth.auth.getUser(token);
 
     if (verifyError || !user) {
       return res.status(401).json({
@@ -419,7 +419,7 @@ router.post('/reset-password', async (req, res) => {
     }
 
     // Update the password
-    const { error: updateError } = await supabase.auth.updateUser({
+    const { error: updateError } = await supabaseAuth.auth.updateUser({
       password: password
     });
 

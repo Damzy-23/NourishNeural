@@ -337,4 +337,54 @@ router.get('/health', async (req, res) => {
   }
 });
 
+/**
+ * @route POST /api/barcode/search
+ * @desc Search OpenFoodFacts by product name (for ProductAutocomplete)
+ * @access Public
+ */
+router.post('/search', async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query || query.length < 2) {
+      return res.json({ success: true, products: [] });
+    }
+
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,code,categories,nutriscore_grade,ecoscore_grade,image_small_url,nutriments`;
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return res.json({ success: true, products: [] });
+    }
+
+    const data = await response.json();
+    const products = (data.products || [])
+      .filter(p => p.product_name)
+      .map(p => ({
+        name: p.product_name,
+        brand: p.brands || null,
+        barcode: p.code || null,
+        category: p.categories ? p.categories.split(',')[0].trim() : null,
+        nutriScore: p.nutriscore_grade || null,
+        ecoScore: p.ecoscore_grade || null,
+        imageUrl: p.image_small_url || null,
+        nutritionPer100g: p.nutriments ? {
+          energy_kcal: p.nutriments['energy-kcal_100g'] || null,
+          protein: p.nutriments.proteins_100g || null,
+          fat: p.nutriments.fat_100g || null,
+          carbs: p.nutriments.carbohydrates_100g || null,
+        } : null,
+      }));
+
+    res.json({ success: true, products });
+  } catch (error) {
+    console.error('OpenFoodFacts search error:', error.message);
+    res.json({ success: true, products: [] });
+  }
+});
+
 module.exports = router;

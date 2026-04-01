@@ -68,20 +68,20 @@ const MEAL_STYLES: Record<MealType, {
     hoverBg: 'hover:bg-orange-50 dark:hover:bg-orange-900/20'
   },
   Lunch: {
-    filledBg: 'bg-blue-50 dark:bg-blue-900/20',
-    filledBorder: 'border border-blue-200 dark:border-blue-800',
-    iconColor: 'text-blue-500',
-    textColor: 'text-blue-700 dark:text-blue-300',
-    hoverColor: 'hover:text-blue-500',
-    hoverBg: 'hover:bg-blue-50 dark:hover:bg-blue-900/20'
+    filledBg: 'bg-amber-50 dark:bg-amber-900/20',
+    filledBorder: 'border border-amber-200 dark:border-amber-800',
+    iconColor: 'text-amber-500',
+    textColor: 'text-amber-700 dark:text-amber-300',
+    hoverColor: 'hover:text-amber-500',
+    hoverBg: 'hover:bg-amber-50 dark:hover:bg-amber-900/20'
   },
   Dinner: {
-    filledBg: 'bg-purple-50 dark:bg-purple-900/20',
-    filledBorder: 'border border-purple-200 dark:border-purple-800',
-    iconColor: 'text-purple-500',
-    textColor: 'text-purple-700 dark:text-purple-300',
-    hoverColor: 'hover:text-purple-500',
-    hoverBg: 'hover:bg-purple-50 dark:hover:bg-purple-900/20'
+    filledBg: 'bg-primary-50 dark:bg-primary-900/20',
+    filledBorder: 'border border-primary-200 dark:border-primary-800',
+    iconColor: 'text-primary-500',
+    textColor: 'text-primary-700 dark:text-primary-300',
+    hoverColor: 'hover:text-primary-500',
+    hoverBg: 'hover:bg-primary-50 dark:hover:bg-primary-900/20'
   }
 }
 
@@ -316,30 +316,30 @@ export default function MealPlanCalendar() {
       </Helmet>
 
       <div className="relative min-h-screen pb-16">
-        <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-purple-50/30 via-white to-blue-50/20 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800" />
+        <div className="pointer-events-none fixed inset-0 bg-gradient-to-br from-primary-50/30 via-white to-accent-50/20 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800" />
         <motion.div
-          className="pointer-events-none absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-purple-200/30 blur-3xl"
+          className="pointer-events-none absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-primary-200/30 blur-3xl"
           animate={{ y: [0, 18, 0], opacity: [0.3, 0.55, 0.3] }}
           transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="pointer-events-none absolute bottom-[-10%] left-[-8%] h-64 w-64 rounded-full bg-blue-200/25 blur-3xl"
+          className="pointer-events-none absolute bottom-[-10%] left-[-8%] h-64 w-64 rounded-full bg-accent-200/25 blur-3xl"
           animate={{ y: [0, -14, 0], opacity: [0.25, 0.5, 0.25] }}
           transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
         />
 
         <div className="relative">
           {/* Header */}
-          <motion.div className="mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <div className="relative glass-card rounded-3xl p-6">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-blue-500/5 rounded-3xl" />
+          <motion.div className="mb-4 md:mb-6" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="relative glass-card rounded-3xl p-3 md:p-6">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl" />
               <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center shadow-lg">
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-lg">
                     <CalendarDays className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h1 className="text-3xl font-black gradient-text">Meal Planner</h1>
+                    <h1 className="text-xl md:text-3xl font-black gradient-text">Meal Planner</h1>
                     <p className="text-sm text-neutral-500 dark:text-neutral-400">Plan your week, one meal at a time</p>
                   </div>
                 </div>
@@ -347,7 +347,7 @@ export default function MealPlanCalendar() {
                   <button
                     onClick={handleAIGenerate}
                     disabled={isGenerating}
-                    className="btn btn-primary flex items-center space-x-2"
+                    className="btn btn-primary flex items-center space-x-2 min-h-[40px] active:scale-95"
                   >
                     {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                     <span>AI Generate</span>
@@ -355,7 +355,7 @@ export default function MealPlanCalendar() {
                   <button
                     onClick={handleGenerateShoppingList}
                     disabled={isGenShoppingList || !currentPlan}
-                    className="btn btn-outline flex items-center space-x-2"
+                    className="btn btn-outline flex items-center space-x-2 min-h-[40px] active:scale-95"
                   >
                     {isGenShoppingList ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                     <span>Shopping List</span>
@@ -367,12 +367,12 @@ export default function MealPlanCalendar() {
 
           {/* Week Navigation */}
           <motion.div
-            className="flex items-center justify-between mb-6 glass-card rounded-2xl px-4 py-3"
+            className="flex items-center justify-between mb-4 md:mb-6 glass-card rounded-2xl px-3 md:px-4 py-2.5 md:py-3"
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           >
             <button
               onClick={() => setWeekStart(prev => addDays(prev, -7))}
-              className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              className="p-2.5 md:p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <ChevronLeft className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
             </button>
@@ -384,7 +384,7 @@ export default function MealPlanCalendar() {
             </div>
             <button
               onClick={() => setWeekStart(prev => addDays(prev, 7))}
-              className="p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors"
+              className="p-2.5 md:p-2 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors active:scale-95 min-w-[44px] min-h-[44px] flex items-center justify-center"
             >
               <ChevronRight className="w-5 h-5 text-neutral-600 dark:text-neutral-400" />
             </button>
@@ -393,7 +393,7 @@ export default function MealPlanCalendar() {
           {/* Calendar Grid */}
           {isLoading ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
             </div>
           ) : (
             <motion.div
@@ -402,10 +402,10 @@ export default function MealPlanCalendar() {
               {/* First-use prompt when no meals planned this week */}
               {!currentPlan && (
                 <motion.div
-                  className="mb-4 p-5 rounded-2xl border border-dashed border-purple-300 dark:border-purple-700 bg-purple-50/50 dark:bg-purple-900/10 text-center"
+                  className="mb-4 p-5 rounded-2xl border border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-900/10 text-center"
                   initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }}
                 >
-                  <CalendarDays className="w-10 h-10 text-purple-400 mx-auto mb-2" />
+                  <CalendarDays className="w-10 h-10 text-primary-400 mx-auto mb-2" />
                   <h3 className="text-base font-bold text-neutral-800 dark:text-neutral-200 mb-1">No meals planned this week</h3>
                   <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-3">Tap a slot below to add a meal, or let AI fill in the whole week.</p>
                   <button
@@ -427,11 +427,11 @@ export default function MealPlanCalendar() {
                   const dayNum = date.getDate()
 
                   return (
-                    <div key={dateStr} className={`rounded-2xl border ${isToday ? 'border-purple-400 dark:border-purple-500 bg-purple-50/50 dark:bg-purple-900/10' : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800'} overflow-hidden`}>
+                    <div key={dateStr} className={`rounded-2xl border ${isToday ? 'border-primary-400 dark:border-primary-500 bg-primary-50/50 dark:bg-primary-900/10' : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800'} overflow-hidden`}>
                       {/* Day header */}
-                      <div className={`px-3 py-2 border-b ${isToday ? 'border-purple-200 dark:border-purple-700 bg-purple-100/50 dark:bg-purple-900/20' : 'border-neutral-100 dark:border-neutral-700'}`}>
-                        <p className={`text-xs font-bold uppercase tracking-wider ${isToday ? 'text-purple-600 dark:text-purple-400' : 'text-neutral-500 dark:text-neutral-400'}`}>{dayLabel}</p>
-                        <p className={`text-lg font-black ${isToday ? 'text-purple-700 dark:text-purple-300' : 'text-neutral-900 dark:text-neutral-100'}`}>{dayNum}</p>
+                      <div className={`px-3 py-2 border-b ${isToday ? 'border-primary-200 dark:border-primary-700 bg-primary-100/50 dark:bg-primary-900/20' : 'border-neutral-100 dark:border-neutral-700'}`}>
+                        <p className={`text-xs font-bold uppercase tracking-wider ${isToday ? 'text-primary-600 dark:text-primary-400' : 'text-neutral-500 dark:text-neutral-400'}`}>{dayLabel}</p>
+                        <p className={`text-lg font-black ${isToday ? 'text-primary-700 dark:text-primary-300' : 'text-neutral-900 dark:text-neutral-100'}`}>{dayNum}</p>
                       </div>
 
                       {/* Meal slots */}
@@ -486,9 +486,9 @@ export default function MealPlanCalendar() {
                   const dayLabel = date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })
 
                   return (
-                    <div key={dateStr} className={`rounded-2xl border ${isToday ? 'border-purple-400 dark:border-purple-500' : 'border-neutral-200 dark:border-neutral-700'} bg-white dark:bg-neutral-800 overflow-hidden`}>
-                      <div className={`px-4 py-3 border-b ${isToday ? 'border-purple-200 dark:border-purple-700 bg-purple-50 dark:bg-purple-900/20' : 'border-neutral-100 dark:border-neutral-700'}`}>
-                        <p className={`font-bold ${isToday ? 'text-purple-700 dark:text-purple-300' : 'text-neutral-900 dark:text-neutral-100'}`}>{dayLabel}</p>
+                    <div key={dateStr} className={`rounded-2xl border ${isToday ? 'border-primary-400 dark:border-primary-500' : 'border-neutral-200 dark:border-neutral-700'} bg-white dark:bg-neutral-800 overflow-hidden`}>
+                      <div className={`px-4 py-3 border-b ${isToday ? 'border-primary-200 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/20' : 'border-neutral-100 dark:border-neutral-700'}`}>
+                        <p className={`font-bold ${isToday ? 'text-primary-700 dark:text-primary-300' : 'text-neutral-900 dark:text-neutral-100'}`}>{dayLabel}</p>
                       </div>
                       <div className="p-3 space-y-2">
                         {MEAL_TYPES.map(mealType => {
@@ -568,7 +568,7 @@ export default function MealPlanCalendar() {
                   onChange={e => setMealInput(e.target.value)}
                   onKeyDown={e => { if (e.key === 'Enter') handleSaveMeal() }}
                   placeholder={`e.g. ${editSlot.mealType === 'Breakfast' ? 'Avocado toast' : editSlot.mealType === 'Lunch' ? 'Chicken salad' : 'Pasta bolognese'}`}
-                  className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  className="w-full px-3 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-600 bg-neutral-50 dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
                 />
               </div>
 
@@ -582,7 +582,7 @@ export default function MealPlanCalendar() {
                 <button
                   onClick={handleSaveMeal}
                   disabled={updatePlanMutation.isLoading || createPlanMutation.isLoading}
-                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center space-x-2"
+                  className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center space-x-2"
                 >
                   {(updatePlanMutation.isLoading || createPlanMutation.isLoading) ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -610,7 +610,7 @@ export default function MealPlanCalendar() {
             >
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
-                  <ShoppingCart className="w-5 h-5 text-purple-500" />
+                  <ShoppingCart className="w-5 h-5 text-primary-500" />
                   <h2 className="text-lg font-bold text-neutral-900 dark:text-neutral-100">Shopping List</h2>
                 </div>
                 <button onClick={() => setShowShoppingList(false)} className="p-1.5 rounded-lg hover:bg-neutral-100 dark:hover:bg-neutral-700 transition-colors">
@@ -634,7 +634,7 @@ export default function MealPlanCalendar() {
                       <div key={idx} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-neutral-50 dark:bg-neutral-700/50 border border-neutral-100 dark:border-neutral-700">
                         <span className="text-sm font-medium text-neutral-800 dark:text-neutral-200">{item.name}</span>
                         {item.quantity > 1 && (
-                          <span className="text-xs font-bold text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 px-2 py-0.5 rounded-full">×{item.quantity}</span>
+                          <span className="text-xs font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 px-2 py-0.5 rounded-full">×{item.quantity}</span>
                         )}
                       </div>
                     ))}
@@ -643,7 +643,7 @@ export default function MealPlanCalendar() {
                   <button
                     onClick={handleAddToGroceryList}
                     disabled={isAddingToGrocery}
-                    className="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 text-white font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center space-x-2"
+                    className="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-primary-500 to-accent-500 text-white font-bold text-sm hover:opacity-90 disabled:opacity-50 transition-opacity flex items-center justify-center space-x-2"
                   >
                     {isAddingToGrocery ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
