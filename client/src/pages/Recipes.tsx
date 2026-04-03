@@ -314,7 +314,7 @@ export default function Recipes() {
           >
             <div className="absolute inset-0 bg-black/60" onClick={() => setSelectedRecipe(null)} />
             <motion.div
-              className="relative bg-white dark:bg-neutral-800 rounded-2xl shadow-2xl w-full max-w-md p-6 z-10 max-h-[80vh] overflow-y-auto"
+              className="relative bg-white dark:bg-neutral-800 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full max-w-md p-4 md:p-6 z-10 max-h-[85vh] overflow-y-auto"
               initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
             >
               <div className="flex items-start justify-between mb-4">
@@ -383,7 +383,7 @@ export default function Recipes() {
               {selectedRecipe.missing && selectedRecipe.missing.length > 0 && (
                 <button
                   onClick={() => { handleAddMissing(selectedRecipe); setSelectedRecipe(null) }}
-                  className="w-full mt-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                  className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 min-h-[44px] active:scale-[0.98]"
                 >
                   <ShoppingCart className="w-4 h-4" />
                   Add {selectedRecipe.missing.length} items to grocery list

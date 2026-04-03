@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',  // Don't auto-reload — avoids refresh loops on mobile
       includeAssets: ['logo.png', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifest: false, // using public/manifest.json
       devOptions: {
@@ -18,6 +18,7 @@ export default defineConfig({
         skipWaiting: true,      // New SW takes over immediately
         clientsClaim: true,     // Claim all open tabs on activation
         cleanupOutdatedCaches: true,
+        navigateFallback: null, // Don't intercept navigation requests
         // Cache pages and API responses
         runtimeCaching: [
           {

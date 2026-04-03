@@ -455,7 +455,7 @@ export default function Dashboard() {
                       </div>
                       <SmartFoodClassifier
                         placeholder="Enter food name..."
-                        onClassification={(result) => console.log(result)}
+                        onClassification={() => {}}
                       />
                     </div>
 

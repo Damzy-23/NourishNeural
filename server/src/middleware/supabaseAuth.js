@@ -1,5 +1,13 @@
 const { supabaseAuth: supabase } = require('../config/supabase');
 
+/** Check if a Supabase error is a transient network issue (DNS, timeout, etc.) */
+function isNetworkError(error) {
+  const msg = (error?.message || '').toLowerCase();
+  return msg.includes('fetch failed') || msg.includes('network') ||
+         msg.includes('econnrefused') || msg.includes('dns') ||
+         msg.includes('timeout') || msg.includes('enotfound');
+}
+
 /**
  * Middleware to authenticate requests using Supabase JWT tokens
  * Extracts the token from Authorization header and verifies it with Supabase
@@ -34,9 +42,20 @@ async function authenticateJWT(req, res, next) {
     const token = authHeader.substring(7);
     console.log('🔐 Auth middleware - Token length:', token.length)
 
-    // Verify the token with Supabase
+    // Verify the token with Supabase (retry once on transient network errors)
     console.log('🔐 Auth middleware - Verifying token with Supabase...')
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    let user, error;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const result = await supabase.auth.getUser(token);
+      user = result.data?.user;
+      error = result.error;
+
+      if (!error || !isNetworkError(error)) break;
+      if (attempt === 0) {
+        console.warn('🔐 Auth middleware - Transient network error, retrying...', error.message);
+        await new Promise(r => setTimeout(r, 300));
+      }
+    }
 
     if (error) {
       console.error('🔐 Auth middleware - Token verification error:', error.message)

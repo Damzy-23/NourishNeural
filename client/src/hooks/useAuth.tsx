@@ -118,13 +118,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const queryClient = useQueryClient()
 
-  // Set auth token in API service
+  // Set auth token in API service — and clear stale user cache when no token
   useEffect(() => {
     if (token) {
       setAuthToken(token)
     } else {
       removeAuthToken()
+      // If there's a cached user but no token, clear it to prevent stale state
+      if (user) {
+        setUser(null)
+        setPreferences(null)
+        localStorage.removeItem(USER_KEY)
+      }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
   // Clear all auth state
@@ -184,12 +191,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   )
 
-  // Fetch user's household when user is loaded
+  // Fetch user's household when user is loaded AND token is valid
   const { data: householdData } = useQuery(
     ['household', user?.id],
     () => apiService.get<{ household: Household | null }>('/api/households/mine'),
     {
-      enabled: !!user?.id,
+      enabled: !!user?.id && !!token,
       retry: false,
       staleTime: 30000,
     }
@@ -201,12 +208,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     queryClient.invalidateQueries(['household'])
   }
 
-  // Fetch user preferences when user is loaded
+  // Fetch user preferences when user is loaded AND token is valid
   const { isLoading: prefsLoading } = useQuery(
     ['preferences', user?.id],
     () => apiService.get('/api/users/preferences'),
     {
-      enabled: !!user?.id,
+      enabled: !!user?.id && !!token,
       retry: false,
       onSuccess: (data: any) => {
         setPreferences(data.preferences || data)

@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_1"
+                  targetNamespace="http://bpmn.io/schema/bpmn">
+                  
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_User" name="User" processRef="Process_User" />
+    <bpmn:participant id="Participant_System" name="Nourish Neural System Architecture" processRef="Process_System" />
+    <bpmn:messageFlow id="Flow_MessageUpload" sourceRef="Task_UploadImage" targetRef="Task_Compress" />
+    <bpmn:messageFlow id="Flow_MessageResponse" sourceRef="Task_UpdateState" targetRef="Event_UserWait" />
+  </bpmn:collaboration>
+
+  <bpmn:process id="Process_User" isExecutable="false">
+    <bpmn:startEvent id="StartEvent_User" name="Capture Pantry Item">
+      <bpmn:outgoing>Flow_U1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="Task_UploadImage" name="Upload via Camera">
+      <bpmn:incoming>Flow_U1</bpmn:incoming>
+      <bpmn:outgoing>Flow_U2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:intermediateCatchEvent id="Event_UserWait" name="Wait for Analysis">
+      <bpmn:incoming>Flow_U2</bpmn:incoming>
+      <bpmn:outgoing>Flow_U3</bpmn:outgoing>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:endEvent id="EndEvent_UserComplete" name="Pantry Updated">
+      <bpmn:incoming>Flow_U3</bpmn:incoming>
+    </bpmn:endEvent>
+    
+    <bpmn:sequenceFlow id="Flow_U1" sourceRef="StartEvent_User" targetRef="Task_UploadImage" />
+    <bpmn:sequenceFlow id="Flow_U2" sourceRef="Task_UploadImage" targetRef="Event_UserWait" />
+    <bpmn:sequenceFlow id="Flow_U3" sourceRef="Event_UserWait" targetRef="EndEvent_UserComplete" />
+  </bpmn:process>
+
+  <bpmn:process id="Process_System" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Frontend" name="React 18 PWA (Client)">
+        <bpmn:flowNodeRef>Task_Compress</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_PostRequest</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Response</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_UpdateState</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ShowFallback</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Backend" name="Express.js (Node Backend)">
+        <bpmn:flowNodeRef>Task_Auth</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Spawn</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_PythonStatus</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RuleBased</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_OllamaPrompt</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_OllamaStatus</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_OllamaFallback</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_SaveSupabase</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Python" name="Python ML Subprocess">
+        <bpmn:flowNodeRef>Event_PythonStart</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_MLSplit</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_RF</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_GB</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_NN</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_MLJoin</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_ComputeVote</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_PythonEnd</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <!-- FRONTEND -->
+    <bpmn:task id="Task_Compress" name="Compress Image locally">
+      <bpmn:outgoing>Flow_F1</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_PostRequest" name="POST /api/pantry (Inject JWT)">
+      <bpmn:incoming>Flow_F1</bpmn:incoming>
+      <bpmn:outgoing>Flow_F2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_Response" name="HTTP Status?">
+      <bpmn:incoming>Flow_B8</bpmn:incoming>
+      <bpmn:outgoing>Flow_F3</bpmn:outgoing>
+      <bpmn:outgoing>Flow_F4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_UpdateState" name="Invalidate Query State">
+      <bpmn:incoming>Flow_F3</bpmn:incoming>
+    </bpmn:task>
+    <bpmn:task id="Task_ShowFallback" name="Trigger Client Fallback UI">
+      <bpmn:incoming>Flow_F4</bpmn:incoming>
+    </bpmn:task>
+
+    <!-- BACKEND -->
+    <bpmn:task id="Task_Auth" name="Validate JWT Middleware">
+      <bpmn:incoming>Flow_F2</bpmn:incoming>
+      <bpmn:outgoing>Flow_B1</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_Spawn" name="Spawn predict.py shell child process">
+      <bpmn:incoming>Flow_B1</bpmn:incoming>
+      <bpmn:outgoing>Flow_B2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_PythonStatus" name="Alive?">
+      <bpmn:incoming>Flow_B2</bpmn:incoming>
+      <bpmn:outgoing>Flow_B3</bpmn:outgoing>
+      <bpmn:outgoing>Flow_B4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_RuleBased" name="Rule-Based Heuristic">
+      <bpmn:incoming>Flow_B4</bpmn:incoming>
+      <bpmn:outgoing>Flow_B5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_OllamaPrompt" name="Ollama LLM Insight">
+      <bpmn:incoming>Flow_P10</bpmn:incoming>
+      <bpmn:incoming>Flow_B5</bpmn:incoming>
+      <bpmn:outgoing>Flow_O1</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_OllamaStatus" name="Ollama OK?">
+      <bpmn:incoming>Flow_O1</bpmn:incoming>
+      <bpmn:outgoing>Flow_O2</bpmn:outgoing>
+      <bpmn:outgoing>Flow_O3</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="Task_OllamaFallback" name="Templated Explanation">
+      <bpmn:incoming>Flow_O3</bpmn:incoming>
+      <bpmn:outgoing>Flow_O4</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_SaveSupabase" name="Persist to PostgreSQL">
+      <bpmn:incoming>Flow_O2</bpmn:incoming>
+      <bpmn:incoming>Flow_O4</bpmn:incoming>
+      <bpmn:outgoing>Flow_B8</bpmn:outgoing>
+    </bpmn:task>
+
+    <!-- PYTHON SUBPROCESS -->
+    <bpmn:intermediateCatchEvent id="Event_PythonStart" name="Receive stdin data">
+      <bpmn:incoming>Flow_B3</bpmn:incoming>
+      <bpmn:outgoing>Flow_P1</bpmn:outgoing>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:parallelGateway id="Gateway_MLSplit" name="Multiprocess Split">
+      <bpmn:incoming>Flow_P1</bpmn:incoming>
+      <bpmn:outgoing>Flow_P2</bpmn:outgoing>
+      <bpmn:outgoing>Flow_P3</bpmn:outgoing>
+      <bpmn:outgoing>Flow_P4</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="Task_RF" name="Random Forest (40%)">
+      <bpmn:incoming>Flow_P2</bpmn:incoming>
+      <bpmn:outgoing>Flow_P5</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_GB" name="Gradient Boosting (30%)">
+      <bpmn:incoming>Flow_P3</bpmn:incoming>
+      <bpmn:outgoing>Flow_P6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="Task_NN" name="Neural Network (30%)">
+      <bpmn:incoming>Flow_P4</bpmn:incoming>
+      <bpmn:outgoing>Flow_P7</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:parallelGateway id="Gateway_MLJoin" name="Join Outputs">
+      <bpmn:incoming>Flow_P5</bpmn:incoming>
+      <bpmn:incoming>Flow_P6</bpmn:incoming>
+      <bpmn:incoming>Flow_P7</bpmn:incoming>
+      <bpmn:outgoing>Flow_P8</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:task id="Task_ComputeVote" name="Ensemble Vote">
+      <bpmn:incoming>Flow_P8</bpmn:incoming>
+      <bpmn:outgoing>Flow_P9</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:intermediateThrowEvent id="Event_PythonEnd" name="stdout string">
+      <bpmn:incoming>Flow_P9</bpmn:incoming>
+      <bpmn:outgoing>Flow_P10</bpmn:outgoing>
+    </bpmn:intermediateThrowEvent>
+
+    <!-- SEQUENCE FLOWS -->
+    <bpmn:sequenceFlow id="Flow_F1" sourceRef="Task_Compress" targetRef="Task_PostRequest" />
+    <bpmn:sequenceFlow id="Flow_F2" sourceRef="Task_PostRequest" targetRef="Task_Auth" />
+    <bpmn:sequenceFlow id="Flow_F3" name="200 Success" sourceRef="Gateway_Response" targetRef="Task_UpdateState" />
+    <bpmn:sequenceFlow id="Flow_F4" name="4xx / 5xx Error" sourceRef="Gateway_Response" targetRef="Task_ShowFallback" />
+    
+    <bpmn:sequenceFlow id="Flow_B1" sourceRef="Task_Auth" targetRef="Task_Spawn" />
+    <bpmn:sequenceFlow id="Flow_B2" sourceRef="Task_Spawn" targetRef="Gateway_PythonStatus" />
+    <bpmn:sequenceFlow id="Flow_B3" name="Spawn OK" sourceRef="Gateway_PythonStatus" targetRef="Event_PythonStart" />
+    <bpmn:sequenceFlow id="Flow_B4" name="Timeout" sourceRef="Gateway_PythonStatus" targetRef="Task_RuleBased" />
+    <bpmn:sequenceFlow id="Flow_B5" sourceRef="Task_RuleBased" targetRef="Task_OllamaPrompt" />
+    
+    <bpmn:sequenceFlow id="Flow_O1" sourceRef="Task_OllamaPrompt" targetRef="Gateway_OllamaStatus" />
+    <bpmn:sequenceFlow id="Flow_O2" name="Yes" sourceRef="Gateway_OllamaStatus" targetRef="Task_SaveSupabase" />
+    <bpmn:sequenceFlow id="Flow_O3" name="No" sourceRef="Gateway_OllamaStatus" targetRef="Task_OllamaFallback" />
+    <bpmn:sequenceFlow id="Flow_O4" sourceRef="Task_OllamaFallback" targetRef="Task_SaveSupabase" />
+    
+    <bpmn:sequenceFlow id="Flow_B8" sourceRef="Task_SaveSupabase" targetRef="Gateway_Response" />
+
+    <bpmn:sequenceFlow id="Flow_P1" sourceRef="Event_PythonStart" targetRef="Gateway_MLSplit" />
+    <bpmn:sequenceFlow id="Flow_P2" sourceRef="Gateway_MLSplit" targetRef="Task_RF" />
+    <bpmn:sequenceFlow id="Flow_P3" sourceRef="Gateway_MLSplit" targetRef="Task_GB" />
+    <bpmn:sequenceFlow id="Flow_P4" sourceRef="Gateway_MLSplit" targetRef="Task_NN" />
+    <bpmn:sequenceFlow id="Flow_P5" sourceRef="Task_RF" targetRef="Gateway_MLJoin" />
+    <bpmn:sequenceFlow id="Flow_P6" sourceRef="Task_GB" targetRef="Gateway_MLJoin" />
+    <bpmn:sequenceFlow id="Flow_P7" sourceRef="Task_NN" targetRef="Gateway_MLJoin" />
+    <bpmn:sequenceFlow id="Flow_P8" sourceRef="Gateway_MLJoin" targetRef="Task_ComputeVote" />
+    <bpmn:sequenceFlow id="Flow_P9" sourceRef="Task_ComputeVote" targetRef="Event_PythonEnd" />
+    <bpmn:sequenceFlow id="Flow_P10" sourceRef="Event_PythonEnd" targetRef="Task_OllamaPrompt" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_User_di" bpmnElement="Participant_User" isHorizontal="true"><dc:Bounds x="150" y="80" width="1400" height="150" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_System_di" bpmnElement="Participant_System" isHorizontal="true"><dc:Bounds x="150" y="280" width="1400" height="780" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Frontend_di" bpmnElement="Lane_Frontend" isHorizontal="true"><dc:Bounds x="180" y="280" width="1370" height="250" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Backend_di" bpmnElement="Lane_Backend" isHorizontal="true"><dc:Bounds x="180" y="530" width="1370" height="230" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Python_di" bpmnElement="Lane_Python" isHorizontal="true"><dc:Bounds x="180" y="760" width="1370" height="300" /></bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="StartEvent_User_di" bpmnElement="StartEvent_User"><dc:Bounds x="200" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_UploadImage_di" bpmnElement="Task_UploadImage"><dc:Bounds x="280" y="120" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_UserWait_di" bpmnElement="Event_UserWait"><dc:Bounds x="1282" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_UserComplete_di" bpmnElement="EndEvent_UserComplete"><dc:Bounds x="1400" y="142" width="36" height="36" /></bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_Compress_di" bpmnElement="Task_Compress"><dc:Bounds x="280" y="320" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_PostRequest_di" bpmnElement="Task_PostRequest"><dc:Bounds x="420" y="320" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Response_di" bpmnElement="Gateway_Response" isMarkerVisible="true"><dc:Bounds x="1150" y="335" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_UpdateState_di" bpmnElement="Task_UpdateState"><dc:Bounds x="1250" y="320" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ShowFallback_di" bpmnElement="Task_ShowFallback"><dc:Bounds x="1250" y="420" width="100" height="80" /></bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_Auth_di" bpmnElement="Task_Auth"><dc:Bounds x="420" y="580" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Spawn_di" bpmnElement="Task_Spawn"><dc:Bounds x="560" y="580" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_PythonStatus_di" bpmnElement="Gateway_PythonStatus" isMarkerVisible="true"><dc:Bounds x="695" y="595" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RuleBased_di" bpmnElement="Task_RuleBased"><dc:Bounds x="780" y="530" width="100" height="80" /></bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="Task_OllamaPrompt_di" bpmnElement="Task_OllamaPrompt"><dc:Bounds x="920" y="580" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_OllamaStatus_di" bpmnElement="Gateway_OllamaStatus" isMarkerVisible="true"><dc:Bounds x="1055" y="595" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_OllamaFallback_di" bpmnElement="Task_OllamaFallback"><dc:Bounds x="1030" y="670" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SaveSupabase_di" bpmnElement="Task_SaveSupabase"><dc:Bounds x="1150" y="580" width="100" height="80" /></bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Event_PythonStart_di" bpmnElement="Event_PythonStart"><dc:Bounds x="702" y="872" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_MLSplit_di" bpmnElement="Gateway_MLSplit"><dc:Bounds x="785" y="865" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_RF_di" bpmnElement="Task_RF"><dc:Bounds x="870" y="780" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_GB_di" bpmnElement="Task_GB"><dc:Bounds x="870" y="880" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_NN_di" bpmnElement="Task_NN"><dc:Bounds x="870" y="970" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_MLJoin_di" bpmnElement="Gateway_MLJoin"><dc:Bounds x="1005" y="865" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ComputeVote_di" bpmnElement="Task_ComputeVote"><dc:Bounds x="1090" y="850" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_PythonEnd_di" bpmnElement="Event_PythonEnd"><dc:Bounds x="1232" y="872" width="36" height="36" /></bpmndi:BPMNShape>
+
+      <!-- Routing Coordinates -->
+      <bpmndi:BPMNEdge id="Flow_MessageUpload_di" bpmnElement="Flow_MessageUpload"><di:waypoint x="330" y="200" /><di:waypoint x="330" y="320" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_MessageResponse_di" bpmnElement="Flow_MessageResponse"><di:waypoint x="1300" y="320" /><di:waypoint x="1300" y="178" /></bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_U1_di" bpmnElement="Flow_U1"><di:waypoint x="236" y="160" /><di:waypoint x="280" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U2_di" bpmnElement="Flow_U2"><di:waypoint x="380" y="160" /><di:waypoint x="1282" y="160" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U3_di" bpmnElement="Flow_U3"><di:waypoint x="1318" y="160" /><di:waypoint x="1400" y="160" /></bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_F1_di" bpmnElement="Flow_F1"><di:waypoint x="380" y="360" /><di:waypoint x="420" y="360" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_F2_di" bpmnElement="Flow_F2"><di:waypoint x="470" y="400" /><di:waypoint x="470" y="580" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_F3_di" bpmnElement="Flow_F3"><di:waypoint x="1175" y="335" /><di:waypoint x="1175" y="360" /><di:waypoint x="1250" y="360" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_F4_di" bpmnElement="Flow_F4"><di:waypoint x="1175" y="385" /><di:waypoint x="1175" y="460" /><di:waypoint x="1250" y="460" /></bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_B1_di" bpmnElement="Flow_B1"><di:waypoint x="520" y="620" /><di:waypoint x="560" y="620" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B2_di" bpmnElement="Flow_B2"><di:waypoint x="660" y="620" /><di:waypoint x="695" y="620" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B3_di" bpmnElement="Flow_B3"><di:waypoint x="720" y="645" /><di:waypoint x="720" y="872" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B4_di" bpmnElement="Flow_B4"><di:waypoint x="720" y="595" /><di:waypoint x="720" y="570" /><di:waypoint x="780" y="570" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_B5_di" bpmnElement="Flow_B5"><di:waypoint x="880" y="570" /><di:waypoint x="900" y="570" /><di:waypoint x="900" y="605" /><di:waypoint x="920" y="605" /></bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_O1_di" bpmnElement="Flow_O1"><di:waypoint x="1020" y="620" /><di:waypoint x="1055" y="620" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_O2_di" bpmnElement="Flow_O2"><di:waypoint x="1105" y="620" /><di:waypoint x="1150" y="620" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_O3_di" bpmnElement="Flow_O3"><di:waypoint x="1080" y="645" /><di:waypoint x="1080" y="670" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_O4_di" bpmnElement="Flow_O4"><di:waypoint x="1130" y="710" /><di:waypoint x="1200" y="710" /><di:waypoint x="1200" y="660" /></bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_B8_di" bpmnElement="Flow_B8"><di:waypoint x="1200" y="580" /><di:waypoint x="1200" y="470" /><di:waypoint x="1175" y="470" /><di:waypoint x="1175" y="385" /></bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_P1_di" bpmnElement="Flow_P1"><di:waypoint x="738" y="890" /><di:waypoint x="785" y="890" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P2_di" bpmnElement="Flow_P2"><di:waypoint x="810" y="865" /><di:waypoint x="810" y="820" /><di:waypoint x="870" y="820" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P3_di" bpmnElement="Flow_P3"><di:waypoint x="835" y="890" /><di:waypoint x="870" y="890" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P4_di" bpmnElement="Flow_P4"><di:waypoint x="810" y="915" /><di:waypoint x="810" y="1010" /><di:waypoint x="870" y="1010" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P5_di" bpmnElement="Flow_P5"><di:waypoint x="970" y="820" /><di:waypoint x="1030" y="820" /><di:waypoint x="1030" y="865" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P6_di" bpmnElement="Flow_P6"><di:waypoint x="970" y="890" /><di:waypoint x="1005" y="890" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P7_di" bpmnElement="Flow_P7"><di:waypoint x="970" y="1010" /><di:waypoint x="1030" y="1010" /><di:waypoint x="1030" y="915" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P8_di" bpmnElement="Flow_P8"><di:waypoint x="1055" y="890" /><di:waypoint x="1090" y="890" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P9_di" bpmnElement="Flow_P9"><di:waypoint x="1190" y="890" /><di:waypoint x="1232" y="890" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_P10_di" bpmnElement="Flow_P10"><di:waypoint x="1268" y="890" /><di:waypoint x="1330" y="890" /><di:waypoint x="1330" y="520" /><di:waypoint x="970" y="520" /><di:waypoint x="970" y="580" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -30,11 +30,19 @@ dns.lookup = (hostname, options, callback) => {
 
   const settle = (err, address, family) => {
     if (settled) return;
-    // Only settle with success if we have a valid address
-    if (!err && address) {
+    // Only settle with success if we have a valid, non-empty IP address
+    if (!err && address && typeof address === 'string' && /^\d+\.\d+\.\d+\.\d+$/.test(address)) {
       settled = true;
       return callback(null, address, family);
     }
+    // Treat invalid address as an error
+    if (!err && (!address || typeof address !== 'string')) {
+      err = new Error(`DNS resolved invalid address for ${hostname}`);
+    }
+    // Store the error for this resolver
+    if (!osErr && !publicErr) osErr = err;
+    else if (osErr && !publicErr) publicErr = err;
+    else if (!osErr) publicErr = err;
     // Both failed — report OS error
     if (osErr && publicErr) {
       settled = true;

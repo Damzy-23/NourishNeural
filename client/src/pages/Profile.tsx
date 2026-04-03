@@ -475,7 +475,7 @@ export default function Profile() {
         <title>Profile - Nourish Neural</title>
       </Helmet>
 
-      <div className="relative space-y-4 md:space-y-8 pb-12">
+      <div className="relative space-y-3 md:space-y-8 pb-12">
         <motion.div
           className="pointer-events-none absolute -top-24 right-[-12%] h-72 w-72 rounded-full bg-primary-200/35 blur-3xl"
           animate={{ y: [0, 18, 0], opacity: [0.35, 0.6, 0.35] }}
@@ -495,12 +495,12 @@ export default function Profile() {
           transition={{ duration: 0.6, ease: 'easeOut' }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-primary-600/5 to-accent-500/5 rounded-3xl"></div>
-          <div className="relative glass-card rounded-3xl p-4 md:p-8">
+          <div className="relative glass-card rounded-3xl p-3 md:p-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-xl md:text-4xl font-bold gradient-text mb-1 md:mb-2">Profile</h1>
-                <p className="text-sm md:text-lg text-neutral-600 dark:text-neutral-400">
-                  Manage your account settings and preferences
+                <h1 className="text-xl md:text-4xl font-bold gradient-text mb-0.5 md:mb-2">Profile</h1>
+                <p className="text-xs md:text-lg text-neutral-600 dark:text-neutral-400">
+                  Manage your account settings
                 </p>
               </div>
             </div>
@@ -509,42 +509,62 @@ export default function Profile() {
 
         {/* User Stats Cards */}
         <motion.section
-          className="flex md:grid md:grid-cols-4 gap-2.5 md:gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0"
+          className="flex md:grid md:grid-cols-4 gap-2 md:gap-4 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 snap-x snap-mandatory md:snap-none"
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
         >
           {[
-            { key: 'lists', label: 'Grocery Lists', value: stats.totalLists || 0, Icon: ShoppingCart, color: 'text-blue-500', border: 'border-l-4 border-l-blue-500' },
-            { key: 'pantry', label: 'Pantry Items', value: stats.totalPantryItems || 0, Icon: User, color: 'text-emerald-500', border: 'border-l-4 border-l-emerald-500' },
-            { key: 'saved', label: 'Money Saved', value: `£${stats.moneySaved || 0}`, Icon: DollarSign, color: 'text-amber-500', border: 'border-l-4 border-l-amber-500' },
-            { key: 'member', label: 'Member Since', value: profile.createdAt ? new Date(profile.createdAt).getFullYear() : 'New', Icon: Heart, color: 'text-red-500', border: 'border-l-4 border-l-red-500' }
+            { key: 'lists', label: 'Lists', value: stats.totalLists || 0, Icon: ShoppingCart, color: 'text-blue-500', border: 'border-l-4 border-l-blue-500' },
+            { key: 'pantry', label: 'Pantry', value: stats.totalPantryItems || 0, Icon: User, color: 'text-emerald-500', border: 'border-l-4 border-l-emerald-500' },
+            { key: 'saved', label: 'Saved', value: `£${stats.moneySaved || 0}`, Icon: DollarSign, color: 'text-amber-500', border: 'border-l-4 border-l-amber-500' },
+            { key: 'member', label: 'Since', value: profile.createdAt ? new Date(profile.createdAt).getFullYear() : 'New', Icon: Heart, color: 'text-red-500', border: 'border-l-4 border-l-red-500' }
           ].map(({ key, label, value, Icon, color, border }, index) => (
             <motion.div
               key={key}
-              className={`card ${border} min-w-[140px] md:min-w-0 shrink-0 snap-start`}
+              className={`card ${border} min-w-[110px] md:min-w-0 shrink-0 snap-start`}
               variants={fadeUp}
               transition={{ duration: 0.45, delay: index * 0.05 }}
               whileHover={{ y: -6, boxShadow: '0 28px 55px -35px rgba(14,165,233,0.3)' }}
             >
-              <div className="card-content">
+              <div className="card-content p-3 md:p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-neutral-600 dark:text-neutral-400">{label}</p>
-                    <p className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{value}</p>
+                    <p className="text-[10px] md:text-sm font-medium text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">{label}</p>
+                    <p className="text-lg md:text-2xl font-bold text-neutral-900 dark:text-neutral-100">{value}</p>
                   </div>
-                  <Icon className={`h-8 w-8 ${color} dark:opacity-80`} />
+                  <Icon className={`h-6 w-6 md:h-8 md:w-8 ${color} dark:opacity-80`} />
                 </div>
               </div>
             </motion.div>
           ))}
         </motion.section>
 
+        {/* Tab Navigation — horizontal pills on mobile, sidebar on desktop */}
+        <div className="flex overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 gap-1.5 snap-x snap-mandatory md:hidden">
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`shrink-0 snap-start flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold transition-colors active:scale-95 ${activeTab === tab.id
+                  ? 'bg-primary-600 text-white shadow-sm'
+                  : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                  }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
+        </div>
+
         {/* Main Content */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
-          {/* Sidebar Navigation */}
-          <div className="lg:col-span-1">
+          {/* Sidebar Navigation — desktop only */}
+          <div className="hidden md:block lg:col-span-1">
             <motion.div
               className="card"
               variants={fadeUp}
@@ -553,14 +573,14 @@ export default function Profile() {
               transition={{ duration: 0.45 }}
             >
               <div className="card-content">
-                <nav className="flex overflow-x-auto scrollbar-hide md:flex-col gap-1.5 md:gap-1 -mx-4 px-4 md:mx-0 md:px-0">
+                <nav className="flex flex-col gap-1">
                   {tabs.map((tab) => {
                     const Icon = tab.icon
                     return (
                       <motion.button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id as any)}
-                        className={`shrink-0 whitespace-nowrap w-auto md:w-full flex items-center space-x-2 md:space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id
+                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id
                           ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
                           : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-700'
                           }`}
@@ -601,15 +621,15 @@ export default function Profile() {
                     </motion.button>
                   </div>
                 </div>
-                <div className="card-content space-y-4 md:space-y-6">
+                <div className="card-content space-y-3 md:space-y-6">
                   {/* Avatar */}
-                  <div className="flex items-center space-x-3 md:space-x-4">
+                  <div className="flex items-center space-x-3">
                     <div className="relative">
-                      <div className="w-14 h-14 md:w-20 md:h-20 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                      <div className="w-12 h-12 md:w-20 md:h-20 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
                         {user?.avatarUrl ? (
-                          <img src={user.avatarUrl} alt="Avatar" className="w-14 h-14 md:w-20 md:h-20 rounded-full object-cover" />
+                          <img src={user.avatarUrl} alt="Avatar" className="w-12 h-12 md:w-20 md:h-20 rounded-full object-cover" />
                         ) : (
-                          <User className="h-6 w-6 md:h-8 md:w-8 text-primary-600 dark:text-primary-400" />
+                          <User className="h-5 w-5 md:h-8 md:w-8 text-primary-600 dark:text-primary-400" />
                         )}
                       </div>
                       {isEditing && (
@@ -910,10 +930,10 @@ export default function Profile() {
                     { key: 'shoppingReminders', label: 'Shopping Reminders', description: 'Reminders for your shopping schedule' },
                     { key: 'dealAlerts', label: 'Deal Alerts', description: 'Notifications about discounts and special offers' }
                   ].map(setting => (
-                    <div key={setting.key} className="flex items-center justify-between py-3 border-b border-neutral-200 dark:border-neutral-700 last:border-b-0">
-                      <div>
-                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100">{setting.label}</h3>
-                        <p className="text-sm text-neutral-600 dark:text-neutral-400">{setting.description}</p>
+                    <div key={setting.key} className="flex items-center justify-between py-2.5 md:py-3 border-b border-neutral-200 dark:border-neutral-700 last:border-b-0">
+                      <div className="pr-3">
+                        <h3 className="text-sm md:text-base font-medium text-neutral-900 dark:text-neutral-100">{setting.label}</h3>
+                        <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-400">{setting.description}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -961,10 +981,10 @@ export default function Profile() {
                     { key: 'allowAnalytics', label: 'Analytics', description: 'Help us improve by sharing usage analytics' },
                     { key: 'publicProfile', label: 'Public Profile', description: 'Make your profile visible to other users' }
                   ].map(setting => (
-                    <div key={setting.key} className="flex items-center justify-between py-3 border-b border-neutral-200 dark:border-neutral-700 last:border-b-0">
-                      <div>
-                        <h3 className="font-medium text-neutral-900 dark:text-neutral-100">{setting.label}</h3>
-                        <p className="text-sm text-neutral-600 dark:text-neutral-400">{setting.description}</p>
+                    <div key={setting.key} className="flex items-center justify-between py-2.5 md:py-3 border-b border-neutral-200 dark:border-neutral-700 last:border-b-0">
+                      <div className="pr-3">
+                        <h3 className="text-sm md:text-base font-medium text-neutral-900 dark:text-neutral-100">{setting.label}</h3>
+                        <p className="text-xs md:text-sm text-neutral-600 dark:text-neutral-400">{setting.description}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -1118,10 +1138,10 @@ export default function Profile() {
                       <p className="text-sm text-neutral-500 dark:text-neutral-500">Create one or join an existing household with an invite code.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
                       {/* Create Household */}
-                      <div className="p-6 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-600">
-                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-4">Create a Household</h3>
+                      <div className="p-4 md:p-6 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-600">
+                        <h3 className="text-sm md:text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-3 md:mb-4">Create a Household</h3>
                         <div className="space-y-3">
                           <input
                             type="text"
@@ -1143,8 +1163,8 @@ export default function Profile() {
                       </div>
 
                       {/* Join Household */}
-                      <div className="p-6 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-600">
-                        <h3 className="font-semibold text-neutral-900 dark:text-neutral-100 mb-4">Join a Household</h3>
+                      <div className="p-4 md:p-6 rounded-xl border-2 border-dashed border-neutral-300 dark:border-neutral-600">
+                        <h3 className="text-sm md:text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-3 md:mb-4">Join a Household</h3>
                         <div className="space-y-3">
                           <input
                             type="text"
@@ -1230,10 +1250,10 @@ export default function Profile() {
                     </div>
 
                     {/* Invite Code */}
-                    <div className="p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl">
-                      <p className="text-sm text-primary-700 dark:text-primary-300 mb-2 font-medium">Invite Code</p>
-                      <div className="flex items-center space-x-3">
-                        <code className="flex-1 bg-white dark:bg-neutral-800 px-4 py-2 rounded-lg text-sm font-mono text-neutral-900 dark:text-neutral-100 border border-primary-200 dark:border-primary-700">
+                    <div className="p-3 md:p-4 bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl">
+                      <p className="text-xs md:text-sm text-primary-700 dark:text-primary-300 mb-2 font-medium">Invite Code</p>
+                      <div className="flex flex-wrap items-center gap-2 md:gap-3">
+                        <code className="flex-1 min-w-0 bg-white dark:bg-neutral-800 px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-mono text-neutral-900 dark:text-neutral-100 border border-primary-200 dark:border-primary-700 truncate">
                           {household?.inviteCode}
                         </code>
                         <motion.button
@@ -1365,11 +1385,11 @@ export default function Profile() {
 
         {/* Add Loyalty Card Modal */}
         {showAddLoyaltyModal && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-neutral-800 rounded-2xl p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto"
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white dark:bg-neutral-800 rounded-t-2xl sm:rounded-2xl p-5 md:p-6 max-w-lg w-full max-h-[85vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold text-neutral-900 dark:text-neutral-100">

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_User" name="User" processRef="Process_User" />
+    <bpmn:participant id="Participant_System" name="NourishNeural Machine Vision API" processRef="Process_System" />
+    <bpmn:messageFlow id="Flow_M1" sourceRef="Task_ScanReceipt" targetRef="Task_OCR" />
+    <bpmn:messageFlow id="Flow_M2" sourceRef="Task_ParseJSON" targetRef="Gateway_Verify" />
+    <bpmn:messageFlow id="Flow_M3" sourceRef="Task_Confirm" targetRef="Task_SaveDB" />
+  </bpmn:collaboration>
+  
+  <bpmn:process id="Process_User">
+    <bpmn:startEvent id="Start_1" name="Purchase Groceries"><bpmn:outgoing>Flow_U1</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:task id="Task_ScanReceipt" name="Scan Receipt Image"><bpmn:incoming>Flow_U1</bpmn:incoming></bpmn:task>
+    <bpmn:exclusiveGateway id="Gateway_Verify" name="Review Extracted Items?"><bpmn:outgoing>Flow_U2</bpmn:outgoing><bpmn:outgoing>Flow_U3</bpmn:outgoing></bpmn:exclusiveGateway>
+    <bpmn:task id="Task_Edit" name="Edit Mistakes"><bpmn:incoming>Flow_U2</bpmn:incoming><bpmn:outgoing>Flow_U4</bpmn:outgoing></bpmn:task>
+    <bpmn:task id="Task_Confirm" name="Confirm Addition"><bpmn:incoming>Flow_U3</bpmn:incoming><bpmn:incoming>Flow_U4</bpmn:incoming><bpmn:outgoing>Flow_U5</bpmn:outgoing></bpmn:task>
+    <bpmn:endEvent id="End_1" name="Pantry Checked-In"><bpmn:incoming>Flow_U5</bpmn:incoming></bpmn:endEvent>
+    
+    <bpmn:sequenceFlow id="Flow_U1" sourceRef="Start_1" targetRef="Task_ScanReceipt" />
+    <bpmn:sequenceFlow id="Flow_U2" name="Errors Found" sourceRef="Gateway_Verify" targetRef="Task_Edit" />
+    <bpmn:sequenceFlow id="Flow_U3" name="All Correct" sourceRef="Gateway_Verify" targetRef="Task_Confirm" />
+    <bpmn:sequenceFlow id="Flow_U4" sourceRef="Task_Edit" targetRef="Task_Confirm" />
+    <bpmn:sequenceFlow id="Flow_U5" sourceRef="Task_Confirm" targetRef="End_1" />
+  </bpmn:process>
+
+  <bpmn:process id="Process_System">
+    <bpmn:task id="Task_OCR" name="Ollama Vision OCR Extract"><bpmn:outgoing>Flow_S1</bpmn:outgoing></bpmn:task>
+    <bpmn:task id="Task_ParseJSON" name="Map Array to Pantry Object Schema"><bpmn:incoming>Flow_S1</bpmn:incoming></bpmn:task>
+    <bpmn:task id="Task_SaveDB" name="Persist to Supabase"><bpmn:outgoing>Flow_S2</bpmn:outgoing></bpmn:task>
+    <bpmn:endEvent id="End_2" name="Transaction Committed"><bpmn:incoming>Flow_S2</bpmn:incoming></bpmn:endEvent>
+    
+    <bpmn:sequenceFlow id="Flow_S1" sourceRef="Task_OCR" targetRef="Task_ParseJSON" />
+    <bpmn:sequenceFlow id="Flow_S2" sourceRef="Task_SaveDB" targetRef="End_2" />
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_User_di" bpmnElement="Participant_User" isHorizontal="true"><dc:Bounds x="100" y="50" width="800" height="200" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_System_di" bpmnElement="Participant_System" isHorizontal="true"><dc:Bounds x="100" y="300" width="800" height="200" /></bpmndi:BPMNShape>
+      
+      <bpmndi:BPMNShape id="Start_1_di" bpmnElement="Start_1"><dc:Bounds x="150" y="132" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ScanReceipt_di" bpmnElement="Task_ScanReceipt"><dc:Bounds x="250" y="110" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Verify_di" bpmnElement="Gateway_Verify" isMarkerVisible="true"><dc:Bounds x="450" y="125" width="50" height="50" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Edit_di" bpmnElement="Task_Edit"><dc:Bounds x="550" y="60" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Confirm_di" bpmnElement="Task_Confirm"><dc:Bounds x="550" y="160" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_1_di" bpmnElement="End_1"><dc:Bounds x="750" y="132" width="36" height="36" /></bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="Task_OCR_di" bpmnElement="Task_OCR"><dc:Bounds x="250" y="360" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_ParseJSON_di" bpmnElement="Task_ParseJSON"><dc:Bounds x="425" y="360" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_SaveDB_di" bpmnElement="Task_SaveDB"><dc:Bounds x="550" y="360" width="100" height="80" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="End_2_di" bpmnElement="End_2"><dc:Bounds x="750" y="382" width="36" height="36" /></bpmndi:BPMNShape>
+
+      <!-- Edges -->
+      <bpmndi:BPMNEdge id="Flow_U1_di" bpmnElement="Flow_U1"><di:waypoint x="186" y="150" /><di:waypoint x="250" y="150" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U2_di" bpmnElement="Flow_U2"><di:waypoint x="475" y="125" /><di:waypoint x="475" y="100" /><di:waypoint x="550" y="100" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U3_di" bpmnElement="Flow_U3"><di:waypoint x="475" y="175" /><di:waypoint x="475" y="200" /><di:waypoint x="550" y="200" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U4_di" bpmnElement="Flow_U4"><di:waypoint x="650" y="100" /><di:waypoint x="680" y="100" /><di:waypoint x="680" y="180" /><di:waypoint x="650" y="180" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_U5_di" bpmnElement="Flow_U5"><di:waypoint x="650" y="150" /><di:waypoint x="750" y="150" /></bpmndi:BPMNEdge>
+      
+      <bpmndi:BPMNEdge id="Flow_S1_di" bpmnElement="Flow_S1"><di:waypoint x="350" y="400" /><di:waypoint x="425" y="400" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_S2_di" bpmnElement="Flow_S2"><di:waypoint x="650" y="400" /><di:waypoint x="750" y="400" /></bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="Flow_M1_di" bpmnElement="Flow_M1"><di:waypoint x="300" y="190" /><di:waypoint x="300" y="360" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_M2_di" bpmnElement="Flow_M2"><di:waypoint x="475" y="360" /><di:waypoint x="475" y="175" /></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_M3_di" bpmnElement="Flow_M3"><di:waypoint x="600" y="240" /><di:waypoint x="600" y="360" /></bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

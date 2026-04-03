@@ -43,6 +43,20 @@
     rel="stylesheet">
 
   <title>Nourish Neural - AI Culinary Intelligence</title>
+
+  <!-- Escape hatch: Force unregister stuck service workers (PWA loop fix) -->
+  <script>
+    if ('serviceWorker' in navigator && !localStorage.getItem('sw_loop_fixed_v1')) {
+      localStorage.setItem('sw_loop_fixed_v1', 'true');
+      navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        if (registrations.length > 0) {
+          Promise.all(registrations.map(function (r) { return r.unregister(); })).then(function () {
+            window.location.reload();
+          });
+        }
+      });
+    }
+  </script>
 </head>
 
 <body>
