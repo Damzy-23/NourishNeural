@@ -23,6 +23,9 @@ build/
 # IDE
 .vscode/
 .idea/
+
+# Claude Code working files
+.claude/
 *.swp
 *.swo
 *~
