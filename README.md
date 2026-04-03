@@ -1,101 +1,41 @@
 <div align="center">
-  <img src="./assets/nourish-logo.png" alt="Nourish Neural Logo" width="120" />
+  <img src="https://raw.githubusercontent.com/Nourish-Neural/assets/main/logo.png" alt="Nourish Neural Concept" width="140" />
   <h1>Nourish Neural 🧠🥗</h1>
   <p><strong>Predictive kitchen orchestration blending machine learning, behavioural insights, and premium UI craft.</strong></p>
 
-  <!-- Badges -->
   <p>
-    <img src="https://img.shields.io/badge/React-18.0-61DAFB?logo=react&logoColor=white&style=for-the-badge" alt="React" />
-    <img src="https://img.shields.io/badge/Express.js-Backend-000000?logo=express&logoColor=white&style=for-the-badge" alt="Express" />
-    <img src="https://img.shields.io/badge/Capacitor-Android_%7C_iOS-119EFF?logo=capacitor&logoColor=white&style=for-the-badge" alt="Capacitor" />
-    <img src="https://img.shields.io/badge/Supabase-Database_%7C_Auth-3ECF8E?logo=supabase&logoColor=white&style=for-the-badge" alt="Supabase" />
-    <img src="https://img.shields.io/badge/TensorFlow-Ensemble_ML-FF6F00?logo=tensorflow&logoColor=white&style=for-the-badge" alt="TensorFlow" />
-    <img src="https://img.shields.io/badge/Ollama-Local_LLM-000000?logo=ollama&logoColor=white&style=for-the-badge" alt="Ollama" />
+    <img src="https://img.shields.io/badge/React-18.0-61DAFB?logo=react&logoColor=white&style=flat-square" alt="React" />
+    <img src="https://img.shields.io/badge/Express.js-Backend-000000?logo=express&logoColor=white&style=flat-square" alt="Express" />
+    <img src="https://img.shields.io/badge/Capacitor-Android_%7C_iOS-119EFF?logo=capacitor&logoColor=white&style=flat-square" alt="Capacitor" />
+    <img src="https://img.shields.io/badge/Supabase-Database_%7C_Auth-3ECF8E?logo=supabase&logoColor=white&style=flat-square" alt="Supabase" />
+    <img src="https://img.shields.io/badge/TensorFlow-Ensemble_ML-FF6F00?logo=tensorflow&logoColor=white&style=flat-square" alt="TensorFlow" />
+    <img src="https://img.shields.io/badge/Ollama-Local_LLM-000000?logo=ollama&logoColor=white&style=flat-square" alt="Ollama" />
   </p>
-
-  <p>
-    <i>An AI-first household food management platform built to eradicate food waste through predictive forecasting.</i>
-  </p>
+  <p><i>An AI-first household food management platform built to eradicate food waste through predictive forecasting.</i></p>
 </div>
 
 ---
 
-## 📱 App Showcase
+## ✦ The Problem
+Annually, households globally waste millions of tonnes of perfectly edible food due to poor tracking and lack of cohesive meal planning. Existing pantry managers are manual tracking chores. 
 
-| Dashboard & Waste Analytics | Smart Pantry & Expiry | ReAct AI Assistant |
-|:---:|:---:|:---:|
-| <img src="./assets/screenshots/dashboard.jpg" width="250" alt="Dashboard UI"> | <img src="./assets/screenshots/pantry.jpg" width="250" alt="Pantry UI"> | <img src="./assets/screenshots/ai.jpg" width="250" alt="Nurexa AI"> |
-| **Real-time Waste Metric Cards** | **Visual Expiry Badges & Risk** | **Agentic Tool-Calling Chat** |
-
----
-
-## ✨ Overview
-
-Nourish Neural is designed for UK households. A dedicated **Machine Learning Ensemble** (Gradient Boosting + Random Forest + Neural Networks) powers dynamic expiry forecasting and waste prediction logic, while a locally hosted **LLM (Ollama)** drives a true **ReAct AI Agent** that can autonomously query your pantry, predict waste scenarios, and structure real-time recipes. 
-
-The platform runs as a tightly optimized **Progressive Web App (PWA)**, complete with intelligent caching, network resilience, and installability, while also building to a **Native Android APK** via Capacitor.
-
-### Core Architecture
-- **Nurexa AI Agent** - Utilises a Thought/Action/Observation execution loop across 7 exclusive tools (`check_pantry`, `predict_waste`, etc.)
-- **Waste Forecasting** - Evaluates probability per item; the LLM explicitly explains *why* the item is at risk.
-- **Smart Grocery Automation** - Checking an item off functionally patches the database and inserts it directly into the Pantry map.
-- **Meal Plan to List** - Full-week AI plan generation that cross-references your current expiry list and pushes missing components to a distinct Grocery List.
-- **Image Classifier** - Upload food images; the model automatically detects the category and populates the schema.
+## ✦ The Solution: Nourish Neural
+Nourish Neural bridges the gap. By leveraging an **Ensemble Machine Learning** architecture (Gradient Boosting + Random Forests + Neural Networks) and a locally hosted **LLM Agent** (Ollama), the platform takes the cognitive load entirely off the user. Nourish Neural *predicts* when your food goes bad before you even know, builds meal plans to use those exact expiring ingredients, and autonomously patches your grocery list.
 
 ---
 
-## 🚀 Quick Start Boot
+## ⚡ Core Modalities
 
-### Prerequisites
-- Node.js 18+ and npm 9+
-- Supabase account (database + auth)
-- Ollama installed locally (or OpenAI API key)
-- Python 3.8+ (for ML prediction layers)
-
-### 1. Initialization
-```bash
-git clone <repository-url>
-cd NourishNeural
-
-# Install Client Stack
-cd client && npm install
-
-# Install Server Stack
-cd ../server && npm install
-```
-
-### 2. Environment Matrix
-```bash
-cp server/.env.example server/.env
-cp client/.env.example client/.env
-```
-Ensure `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, and `OLLAMA_BASE_URL` are strictly set.
-
-### 3. Execution
-```bash
-# Terminal 1: Application Server
-cd server && node src/index.js
-
-# Terminal 2: Vite Hot-Reload Client
-cd client && npx vite --host 0.0.0.0 --port 3050
-```
+| 🧠 Intelligent Architecture | ♻️ Smart Automation | 🌍 Sustainability |
+| :--- | :--- | :--- |
+| **Nurexa AI Agent**<br>A fully-fledged ReAct agent operating with tool-calling precision to act autonomously on your pantry data. | **Auto-Add Synchronization**<br>Checking off a grocery item perfectly auto-maps it to the active pantry stock via Express REST APIs. | **Carbon Matrix Tracking**<br>Quantifies ecological footprints (CO2e/kg) utilizing the Poore & Nemecek reference models. |
+| **Waste Forecasting**<br>Predicts exact waste parameters per item, with the LLM actively diagnosing item degradation factors. | **LLM Meal Planning**<br>Generates entire weekly calendars constructed explicitly around the subset of ingredients about to expire. | **Community Leaderboards**<br>Gamified Zero-Waste challenges and metrics across your local household clusters. |
 
 ---
 
-## 🛠️ Tech Stack Topography
+## 📐 Systems Topology
 
-- **Frontend Environment**: React 18, TypeScript, TailwindCSS, Framer Motion, React Query.
-- **Native Bridges**: Capacitor (Android native APK + iOS PWA), Haptics, Camera, Geolocation.
-- **Backend Environment**: Node.js, Express, Rate Limiters, Custom Google/Cloudflare DNS fallback resolution.
-- **Data Persistence**: Supabase (PostgreSQL + RLS Auth).
-- **Machine Learning**: Scikit-Learn, TensorFlow, Numpy. Piped strictly to Python inference daemons.
-- **Maps / Geo**: TomTom SDK (Routing, Directions, Geocoding).
-
----
-
-## 📂 System Architecture Topology
-
-The application relies on highly isolated bounded contexts:
+The physical infrastructure divides cleanly into separated bounds, operating resiliently behind protective routing.
 
 ```text
 ┌─────────────────────────────┐        ┌──────────────────────────────────┐
@@ -114,9 +54,53 @@ The application relies on highly isolated bounded contexts:
 └────────────────────┘                 └──────────────────────────────────┘
 ```
 
-See the specific architectural `.bpmn` diagrams in the root directory for a visual representation of tool-calling execution and automated pantry tracking.
+---
+
+## 🚀 Execution Guide
+
+### Prerequisites
+* **Node.js**: v18.0.0 or higher.
+* **Supabase**: Active DB + Auth configured.
+* **Ollama**: Hosted locally, pre-pulled with `llama3.2:1b`.
+* **Python**: 3.8+ context for ML inference processing.
+
+### Initialization & Boot
+Clone down and pull the dependencies across both contexts.
+```bash
+git clone https://github.com/yourusername/NourishNeural.git
+cd NourishNeural
+
+# Hydrate Client Modules
+cd client && npm install
+
+# Hydrate Backend Modules
+cd ../server && npm install
+```
+
+Configure the `.env` pipelines precisely.
+```bash
+cp server/.env.example server/.env
+# Requires: SUPABASE_URL, SUPABASE_SERVICE_KEY, OLLAMA_BASE_URL
+```
+
+Execute the system daemons in separate TTYs:
+```bash
+# Server Daemon
+cd server && node src/index.js
+
+# Hot-Reload Visual Client
+cd client && npx vite --host 0.0.0.0 --port 3050
+```
 
 ---
 
-## 📄 License
-This project is licensed under the MIT License - see the `LICENSE` file for execution terms.
+## 📱 Mobile Architecture
+Nourish Neural is constructed heavily prioritizing the mobile interface.
+- **Android App:** Fully native hooks via Capacitor plugins (Haptics, Geolocation bounding). Build directly to `.apk` utilizing Android Studio.
+- **iOS App:** Fully standalone-compliant Progressive Web App framework. Installs natively via Safari's "Add to Home Screen".
+- **Offline Integrity:** Deep Service Worker intercepts (`workbox`) guarantee your pantry data renders globally even when physically disconnected from cell towers.
+
+---
+
+## 📄 Licensing & Open Source
+This architecture is licensed strictly under the MIT License. See the `LICENSE` document for deployment bounds.
