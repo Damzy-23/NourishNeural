@@ -37,8 +37,8 @@ My supervisor pushed me to be more honest about my evaluation methodology than I
 | Figure A.5 | Meal Planner — AI-generated 7-day plan with expiring items prioritised | Appendix A |
 | Figure A.6 | Store Finder — TomTom map with supermarket pins and chain filter panel | Appendix A |
 | Figure A.7 | Waste Prediction — High risk badge, 71% probability, and LLM explanation | Appendix A |
-| Figure A.8 | Mobile UI — bottom tab bar and More bottom sheet on Android Chrome | Appendix A |
-| Figure A.9 | PWA — Chrome install prompt on Android and home screen icon | Appendix A |
+| Figure A.8 | Mobile UI — bottom tab bar and More bottom sheet on iOS Safari | Appendix A |
+| Figure A.9 | PWA — Safari share sheet install prompt on iOS and home screen icon | Appendix A |
 | Figure A.10 | Authentication — login form with Remember me toggle and email confirmation banner | Appendix A |
 
 ---
@@ -47,19 +47,15 @@ My supervisor pushed me to be more honest about my evaluation methodology than I
 
 ### 1.1 Background and motivation
 
-Food waste is a well-documented household problem in the UK. WRAP (2024) estimates that UK families discard around £700 worth of food each year, and household-level waste outweighs losses at every other point in the supply chain in developed economies (FAO, 2019; Parfitt et al., 2010). The causes and the technical approaches available to address them are examined in the literature review (Section 2). The design gap this project targets is that no existing tool both predicts waste before it occurs and connects that prediction to an actionable recommendation — an ML ensemble combined with a locally-hosted LLM agent (Brown et al., 2020) is the proposed approach.
+UK households discard around £700 worth of food each year (WRAP, 2024), with household-level waste outweighing losses at every other supply chain stage in developed economies (FAO, 2019). No existing tool both predicts waste before it occurs and connects that prediction to an actionable recommendation. An ML ensemble combined with a locally-hosted LLM agent is the proposed approach.
 
 ### 1.2 Aims and objectives
 
 **Aim:** Build and evaluate an AI-driven web application that helps UK households reduce food waste, and determine whether an ML ensemble combined with an LLM agent produces a more useful tool than either approach alone.
 
-**Objectives:** (1) Full-stack React/TypeScript + Node.js/Express application with Supabase PostgreSQL and row-level security — React and TypeScript were familiar from coursework; Express and Supabase were new in practice. (2) Heterogeneous ML ensemble (Gradient Boosting, Random Forest, Neural Network) targeting >90% waste-prediction accuracy — ML engineering was entirely new territory. (3) Locally-hosted ReAct agent via Ollama with tools for pantry queries, waste stats, and recipe suggestions — prompt engineering and tool-calling patterns were new. (4) Meal planning that prioritises expiring ingredients. (5) Household collaboration with shared pantry, grocery lists, and meal plans. (6) End-to-end testing with verified graceful degradation when AI services are offline.
+**Objectives:** (1) Full-stack React/TypeScript + Node.js/Express application with Supabase PostgreSQL and row-level security (React/TS familiar from coursework; Express and Supabase were new). (2) Heterogeneous ML ensemble targeting >90% waste-prediction accuracy (ML engineering was new). (3) Locally-hosted ReAct agent via Ollama (prompt engineering and tool-calling were new). (4) Meal planning that generates a 7-day plan with expiring items ranked first, verified by a usability task. (5) Household collaboration allowing at least two users to share a pantry and grocery list. (6) End-to-end testing with verified graceful degradation when AI services are offline.
 
-### 1.3 Scope
-
-The application targets UK households and runs in modern browsers. It is a proof-of-concept rather than a commercial product. Beyond the core waste-prediction and conversational AI features, a food image classification model was also trained to enable camera-based pantry entry; this is discussed in Section 4.4 and Appendix C.
-
-### 1.4 Requirements
+### 1.3 Requirements
 
 **Functional:** User auth and profile (FR1); pantry CRUD via manual entry, barcode, receipt OCR, and image classification (FR2); ML waste probability with LLM explanation (FR3–4); ReAct conversational agent (FR5); expiry-prioritised meal plans, grocery lists, and auto pantry-add on checkout (FR6–9); household sharing (FR10); waste analytics and store finder (FR11–12).
 
@@ -71,43 +67,37 @@ The application targets UK households and runs in modern browsers. It is a proof
 
 ### 2.1 The problem and the gap
 
-The FAO (2019) estimated that a third of all food produced globally is lost or wasted; WRAP (2024) found that 70% of UK post-farm-gate waste occurs in homes. Quested et al. (2013) traced the causes to over-purchasing, poor storage, and failure to plan meals around existing stock. Stancu et al. (2016) found that planning behaviours were the strongest predictor of lower waste; Graham-Rowe et al. (2014) showed that making waste visible was a necessary precondition for changing it.
-
-Fang et al. (2023) demonstrated that ML can predict food waste from item characteristics with above 85% accuracy using gradient boosting alone, which established technical feasibility for the prediction feature. This project extends that approach by adding a neural network to the ensemble and grounding predictions in live pantry state rather than survey responses. That shift addresses the reactive limitation Hebrok and Boks (2017) identified in existing tracking tools.
+WRAP (2024) found 70% of UK post-farm-gate waste occurs in homes; Quested et al. (2013) traced causes to over-purchasing, poor storage, and failure to plan meals around existing stock. Stancu et al. (2016) found planning behaviours the strongest predictor of lower waste; Graham-Rowe et al. (2014) showed waste visibility is a necessary precondition for changing it. Fang et al. (2023) demonstrated that gradient boosting alone predicts waste with above 85% accuracy; this project extends that by adding a neural network and grounding predictions in live pantry state rather than survey responses, addressing the reactive limitation Hebrok and Boks (2017) identified.
 
 ### 2.2 Technical foundations
 
-Dietterich (2000) showed that heterogeneous ensembles — combining models with different inductive biases — generalise better than homogeneous ones; LeCun et al. (2015) justified including a neural network specifically for its ability to learn compressed nonlinear representations. Brancoli et al. (2017) identified perishability, storage conditions, and seasonal patterns as the strongest waste predictors; these directly informed the feature pipeline in Section 3.4.
-
-For conversational AI, the ReAct pattern (Yao et al., 2023) grounds LLM responses in real data by alternating reasoning with tool calls. Schick et al. (2023) showed LLMs can learn tool use without supervised labelling. Local inference via Ollama (2024) keeps household food data off third-party servers, satisfying the privacy requirement. For security and offline access, JWT authentication (Jones et al., 2015), Supabase RLS (PostgreSQL Global Development Group, 2024), and PWA service workers (Biørn-Hansen et al., 2017) provide the infrastructure layer.
+Dietterich (2000) showed heterogeneous ensembles generalise better than homogeneous ones; LeCun et al. (2015) justified including a neural network for compressed nonlinear representations. Fang et al. (2023) achieved above 85% accuracy with gradient boosting alone, which raises the question of whether a neural network adds anything. The answer from this project is yes, but only marginally: the NN's 30% weight was trimmed after equal weighting added variance without improving overall accuracy. For structured tabular food data, tree models dominate; the NN's contribution was mainly on the high-risk minority class. Brancoli et al. (2017) identified perishability, storage conditions, and seasonal patterns as the strongest waste predictors. For the conversational layer, the ReAct pattern (Yao et al., 2023) grounds LLM responses in real data via tool calls; local inference via Ollama (2024) keeps pantry data off third-party servers. JWT (Jones et al., 2015), Supabase RLS (PostgreSQL Global Development Group, 2024), and PWA service workers (Biørn-Hansen et al., 2017) cover security and offline access.
 
 ### 2.3 Existing tools and the design gap
 
-Several consumer tools address parts of the problem but not the whole. Kitche tracks household inventory and suggests recipes from expiring items but has no predictive ML component — users see what is near expiry only once it is already imminent. OurGroceries and similar grocery list tools make no connection between purchased items and waste outcomes. Too Good To Go and OLIO address surplus redistribution (connecting users to discounted food from local shops and neighbours respectively) rather than preventing waste at the point of storage. WRAP's own digital interventions have focused on aggregate awareness — showing households their weekly waste in summary — which Graham-Rowe et al. (2014) found insufficient on its own: participants reverted to prior habits after structured awareness programmes ended without ongoing prompting.
+Existing tools address parts of the problem. Kitche suggests recipes from expiring items but has no predictive ML. OurGroceries makes no connection between purchased items and waste outcomes. Too Good To Go and OLIO address redistribution rather than prevention. None combines a predictive model with a conversational interface that responds to specific pantry context — that is the gap this project targets.
 
-The common limitation is that all of these tools are reactive. They record or redistribute waste after the household has already failed to consume an item. None combines a predictive model — estimating waste probability before expiry — with a conversational interface that can respond to specific pantry context. That is the gap this project targets.
-
-There is, however, a more fundamental question the literature does not resolve: whether digital food management tools produce durable behaviour change at all, not just short-term awareness. Hebrok and Boks (2017) found that participants engaged with food tracking apps initially but reverted to prior habits as novelty faded, and attributed this to the effort-to-return imbalance — logging waste after it happens requires effort but provides no actionable return. This project cannot answer the long-term behaviour change question at proof-of-concept scale; usability testing measures task completion and perceived usefulness, not whether households actually waste less food over months. What the design can address is the specific failure Hebrok and Boks identified: the combination of predictive ML (flagging items before they expire) and conversational recommendation (explaining what to do about them) is intended to shift the effort-to-return ratio in the user's favour. Whether it does so durably requires longitudinal evaluation beyond this project's scope.
+A deeper question the literature leaves open is whether digital tools produce durable behaviour change. Hebrok and Boks (2017) found users reverted as novelty faded, attributing this to an effort-to-return imbalance: logging waste after the fact costs effort but returns nothing actionable. This design targets that failure — predictive ML flags items before expiry, and the conversational layer explains what to do about them. Whether the shift is durable requires longitudinal evaluation beyond this project's scope.
 
 ---
 
 ## 3. Design
 
-The design process was iterative rather than waterfall: the database schema was defined first to fix data contracts, frontend and backend were built in parallel once the schema stabilised, and ML and LLM components were integrated last. That order was enforced by dependency — a lesson made concrete when ReAct agent development stalled for a week waiting on a stable prediction endpoint (§5.4). Several approaches were considered and rejected: a Python monolith was discarded because blocking ML inference would freeze the Node.js event loop; SQLite was ruled out in favour of Supabase because row-level security would otherwise need application-level implementation; a regression model was prototyped before settling on the ensemble after it failed to separate the high-risk minority class. Mobile layouts were sketched on paper before coding, with the bottom tab bar and bottom-sheet modal patterns adopted after reviewing Material Design guidelines for mobile-first PWAs.
+The design was iterative: schema first, frontend/backend in parallel, ML and LLM last. Three rejected approaches informed final choices: Python monolith (blocking inference), SQLite (no native RLS), and a regression model (failed to separate the high-risk minority class). Mobile layouts were sketched before coding, following Material Design guidelines for PWAs.
 
 ### 3.1 System architecture
 
-Three requirements from the literature drove the architectural decisions: meal planning tied to pantry state (Stancu et al., 2016), ML-based waste prediction (Fang et al., 2023), and a grounded conversational agent (Yao et al., 2023). These map to a three-tier architecture: a React SPA for the interface, an Express REST API that orchestrates the AI components, and Supabase PostgreSQL for persistent storage with row-level security.
+The literature pointed to three requirements — meal planning tied to pantry state, ML-based waste prediction, and a grounded conversational agent — mapping to a three-tier architecture: React SPA, Express REST API, and Supabase PostgreSQL with RLS.
 
 ![Figure 1: UML Component Diagram — System Architecture](./assets/diagrams/figure1_architecture_uml.png)
 
-*Figure 1: UML Component Diagram — System Architecture. Four runtime processes: React 18 SPA (with React Context Providers, PWA Service Worker, and React Query cache), Express/Node.js server (JWT Auth Middleware, ReAct LLM Tool Orchestrator), Python ML Subprocess (Feature Extraction Module, ML Ensemble Predictor, RF/GB/NN model arrays), and Supabase (PostgreSQL + RLS). The server communicates with the client over Axios HTTP REST, with Supabase via the PostgREST API, with Ollama over port 11434, and with the Python process via POSIX stdin/stdout using `spawn()`.*
+*Figure 1: UML Component Diagram. Four runtime processes: React 18 SPA, Express/Node.js server, Python ML Subprocess, and Supabase (PostgreSQL + RLS). The server communicates with the client over Axios HTTP, with Supabase via PostgREST, with Ollama on port 11434, and with the Python process via stdin/stdout using `spawn()`.*
 
-The React client handles the interface. Express owns the business logic, orchestrates AI calls, and controls data access. Python runs ML inference as a subprocess. Supabase provides managed PostgreSQL with built-in auth and row-level security. Every client request passes through an Axios wrapper that attaches the JWT; the backend scopes all Supabase queries to `req.user.id` and enforces access at both middleware level (JWT validation) and database level (RLS policies). Ollama is called via the OpenAI-compatible API at `localhost:11434`; each route has a fallback for when it is unreachable. The Python ML subprocess is spawned via `child_process.spawn()` with JSON piped over stdin/stdout and a 30-second kill timeout to guard against TensorFlow cold-start hangs.
+Every client request attaches a JWT via Axios; the backend scopes Supabase queries to `req.user.id` and enforces access at middleware level (JWT) and database level (RLS). Ollama is called at `localhost:11434` with a fallback per route. The Python ML subprocess is spawned via `child_process.spawn()` with a 30-second kill timeout for TensorFlow cold starts.
 
 #### 3.1.1 Key user-triggered workflows
 
-Four core workflows are illustrated as BPMN Activity Diagrams (Figures 2–5). **Grocery to Pantry (Figure 3):** checking off a grocery item triggers a non-blocking server-side pantry upsert. **ReAct Agent (Figure 4):** user questions are sent to Ollama with a tool-listing system prompt; the server parses Thought/Action/Observation output with regex, executes the tool against Supabase, and appends the result before the next iteration (max 5). **ML Prediction with LLM Explanation (Figure 2):** item metadata is piped to `predict.py`, the weighted ensemble returns a probability via stdout, and the server passes it to Ollama for a plain-language explanation — both layers have independent fallbacks. **Meal Plan to Grocery List (Figure 5):** pantry items sorted by expiry are sent to Ollama to generate a 7-day plan; a diff against current pantry state returns only missing items for grocery list creation.
+Four core workflows are illustrated as BPMN Activity Diagrams (Figures 2–5). Checking off a grocery item triggers a non-blocking pantry upsert. ReAct queries are parsed from Thought/Action/Observation output with regex, executed against Supabase, and looped up to 5 iterations. ML prediction pipes item metadata to `predict.py`; the weighted ensemble returns a probability via stdout that Ollama converts to plain-language explanation, with independent fallbacks at each layer. Meal plans are generated from pantry items sorted by expiry; a diff against current pantry state returns only missing items for the grocery list.
 
 ![Figure 3: BPMN — Grocery Item Purchase to Automatic Pantry Addition](./assets/diagrams/figure3_bpmn_grocery_pantry.png)
 
@@ -127,11 +117,11 @@ Four core workflows are illustrated as BPMN Activity Diagrams (Figures 2–5). *
 
 #### 3.1.2 Rule-based fallback
 
-When the ML ensemble is unavailable, `rule_based_prediction()` maps category and days-since-purchase to a waste probability using FSA shelf-life guidelines, with thresholds calibrated against ensemble outputs on 500 test items. A confidence score of 0.5 signals to the frontend that this is an estimate. The ML ensemble is invoked on-demand across four call sites rather than run as a persistent service; each invocation spawns a fresh Python process, introducing TensorFlow cold-start latency on first use — a limitation discussed in Section 5.3.
+When the ML ensemble is unavailable, `rule_based_prediction()` maps category and days-since-purchase to a waste probability using FSA shelf-life guidelines (thresholds calibrated on 500 test items). A confidence score of 0.5 signals an estimate to the frontend. Each invocation spawns a fresh Python process, introducing TensorFlow cold-start latency — discussed in Section 5.3.
 
 ### 3.2 Technology choices
 
-Each technology was selected based on the project's specific constraints: a single developer, consumer hardware (RTX 2060, 6 GB VRAM), a privacy requirement that prohibits sending food data to cloud APIs, and the need to support concurrent AI requests without blocking the event loop.
+Technologies were selected against four constraints: single developer, consumer hardware (RTX 2060, 6 GB VRAM), privacy (no food data to cloud APIs), and non-blocking concurrent AI requests.
 
 | Component | Technology | How it proved its value in this project |
 |-----------|-----------|----------------------------------------|
@@ -151,27 +141,15 @@ Each technology was selected based on the project's specific constraints: a sing
 
 ### 3.3 Database design
 
-The schema has 13 tables across four groups: user management, food tracking, waste analytics, and household collaboration (full listing in Appendix B). All tables carry RLS policies restricting access to the owning user or household members. Household sharing is implemented through a nullable `household_id` column on `pantry_items`, `grocery_lists`, and `meal_plans` — null means personal, a value means shared — which avoids duplicating tables. The `waste_logs` table records structured reason codes (expired, spoiled, did_not_like, etc.) that feed both the analytics dashboard and the ML feature pipeline.
+The schema has 13 tables across four groups (full listing in Appendix B), all with RLS policies. Household sharing uses a nullable `household_id` on `pantry_items`, `grocery_lists`, and `meal_plans` — null means personal — avoiding table duplication. `waste_logs` records structured reason codes (expired, spoiled, did_not_like, etc.) that feed both the analytics dashboard and the ML feature pipeline.
 
 ### 3.4 ML pipeline design
 
-The heterogeneous ensemble (Dietterich, 2000) weights Random Forest at 40%, Gradient Boosting at 30%, and a 4-layer Neural Network at 30%. RF was given the highest weight for stability under class imbalance; GB captures nonlinear feature interactions; the NN learns compressed representations inaccessible to tree models. The weights were set empirically: starting from equal thirds, RF's share was raised after it consistently outperformed GB on the high-risk minority class across validation folds; the NN's share was trimmed from 33% to 30% after equal weighting added variance without improving overall accuracy. Feature engineering drew on Brancoli et al. (2017), producing 44 features across food characteristics, user behaviour, environmental factors, and temporal signals, all standardised with StandardScaler. Feature importance analysis — Gini impurity for RF, gain for GB — confirmed that perishability, days-since-purchase, and category ranked highest, consistent with Brancoli et al. (2017); seasonal and environmental features contributed less but were retained to avoid overfitting on narrow item subsets. Evaluation used stratified 80/20 splits repeated across 10 random seeds to confirm the ensemble's advantage was not a single-split artefact.
+The heterogeneous ensemble (Dietterich, 2000) weights RF at 40%, GB at 30%, and a 4-layer NN at 30%. RF's share was raised after it consistently outperformed GB on the high-risk minority class; the NN's share was trimmed from 33% after equal weighting added variance without improving accuracy. Feature importance analysis (Gini for RF, gain for GB) confirmed perishability, days-since-purchase, and category as the top predictors, consistent with Brancoli et al. (2017); 44 features were produced in total, standardised with StandardScaler. Evaluation used stratified 80/20 splits across 10 random seeds.
 
 ### 3.5 ReAct agent design
 
-The conversational agent uses the ReAct pattern from Yao et al. (2023). It alternates reasoning with tool calls:
-
-```
-Thought: I need to check what's expiring soon
-Action: get_expiring_items(days=3)
-Observation: [Milk (expires tomorrow), Chicken (expires in 2 days)]
-Thought: I should suggest recipes using these items
-Action: suggest_recipes(ingredients=["milk", "chicken"])
-Observation: [Creamy Chicken Pasta, ...]
-Final Answer: You have milk and chicken expiring soon. Try Creamy Chicken Pasta tonight.
-```
-
-Five tools are available: `check_pantry`, `get_expiring_items`, `check_waste_stats`, `predict_waste`, and `suggest_recipes`. The iteration cap is 5 (all test queries resolved within 3–4 tool calls) and temperature is set to 0.3 for consistent tool selection. The `stop: ['Observation:']` parameter prevents the model from hallucinating its own observations.
+The conversational agent uses the ReAct pattern (Yao et al., 2023), alternating Thought/Action/Observation cycles with five tools: `check_pantry`, `get_expiring_items`, `check_waste_stats`, `predict_waste`, and `suggest_recipes`. The iteration cap is 5; all test queries resolved in 3–4 tool calls. Temperature is 0.3 for consistent tool selection; `stop: ['Observation:']` prevents the model from hallucinating its own observations.
 
 ---
 
@@ -179,15 +157,15 @@ Five tools are available: `check_pantry`, `get_expiring_items`, `check_waste_sta
 
 ### 4.1 Frontend implementation
 
-Seven pages sit behind a sidebar on desktop and a bottom tab bar on mobile. The Pantry page handles full CRUD with barcode scanning (ZXing), receipt OCR (Tesseract.js), category filtering, and a household/personal toggle. The Dashboard shows waste analytics (Recharts) and an LLM-generated 4-week forecast. React Query manages all server state — `useState` caused stale data race conditions within the first week and was replaced. The PWA uses `vite-plugin-pwa` and Workbox (CacheFirst for static assets, NetworkFirst for API endpoints) with an offline banner in `App.tsx`. On mobile, the layout switches to bottom-sheet modals, scroll-snap cards, safe-area-inset navigation, and hardened CSS for a native feel. Two notable bugs fixed: a cached user object caused unauthenticated query loops after logout (fixed by gating fetches on both `!!user?.id` and `!!token`); a shared `supabase-js` client caused RLS recursion on `household_members` (fixed by splitting into separate auth and data clients).
+Seven pages sit behind a sidebar on desktop and a bottom tab bar on mobile. The Pantry page handles full CRUD with barcode scanning (ZXing), receipt OCR (Tesseract.js), category filtering, and a household/personal toggle. The Dashboard shows waste analytics (Recharts) and an LLM-generated 4-week forecast. React Query manages all server state — `useState` caused stale data race conditions in week one and was replaced. The PWA uses Workbox (CacheFirst for static assets, NetworkFirst for API endpoints) with an offline banner. On mobile, the layout switches to bottom-sheet modals, scroll-snap cards, and safe-area-inset navigation for a native feel. Two bugs worth noting: a cached user object caused unauthenticated query loops after logout, fixed by gating all fetches on both `!!user?.id` and `!!token`; a shared `supabase-js` client caused RLS recursion on `household_members`, fixed by splitting into separate auth and data clients.
 
 ### 4.2 Backend implementation
 
-The Express server has 25+ endpoints across six route modules. AI routes try Ollama first and return hardcoded fallbacks if it is unreachable. Waste routes spawn the Python subprocess for ML predictions, aggregate historical stats, and pass the time series to the LLM for trend classification and 4-week forecasting (linear average fallback). The meal planner prompts Ollama with pantry items sorted by expiry to generate a 7-day plan; ingredient-matching against a recipe database is the fallback. Pantry routes handle CRUD with barcode duplicate detection and consumption tracking (auto-archive at zero quantity). Household routes manage invite codes, member roles, and personal/shared scope transitions. Rate limiting, Helmet.js, CORS, and JWT validation are in place. A production deployment would containerise the Node.js server and Python subprocess with Docker, serve the React build from a CDN, and replace the development Supabase project with a managed PostgreSQL instance — all straightforward steps. The harder constraint is Ollama: cloud deployment needs a GPU-enabled instance (e.g. Runpod, Lambda Labs), or the LLM dependency gets replaced with an ONNX Runtime export for serverless inference. A CI/CD pipeline running the E2E test suite on each push would be the first operational addition.
+The Express server has 25+ endpoints across six route modules. AI routes try Ollama first and return fallbacks if unreachable. Waste routes spawn the Python subprocess, aggregate historical stats, and pass the time series to the LLM for 4-week forecasting (linear average fallback). Pantry routes handle CRUD with barcode duplicate detection; household routes manage invite codes and member roles. Rate limiting, Helmet.js, CORS, and JWT validation are in place. Production deployment is straightforward for the Node/React layers (Docker + CDN); the harder constraint is Ollama, which needs a GPU-enabled cloud instance or an ONNX Runtime replacement for serverless inference. A CI/CD pipeline running the E2E suite on each push would be the first operational addition.
 
 ### 4.3 ML model training and performance
 
-The ensemble was trained on 10,000 synthetic samples generated from UK food safety guidelines with realistic noise — real household waste logs in a structured labelled format do not exist publicly. Stratified 80/20 splits preserved class distribution; the neural network used 20% of training data for early stopping.
+The ensemble was trained on 10,000 synthetic samples from UK food safety guidelines — real labelled household waste logs do not exist publicly. Stratified 80/20 splits preserved class distribution.
 
 Results on the held-out test set:
 
@@ -198,11 +176,11 @@ Results on the held-out test set:
 | Neural Network | 94.8% | 0.94 | 0.95 | 0.95 |
 | Ensemble (weighted vote) | 98.0% | 0.97 | 0.98 | 0.98 |
 
-The ensemble (98.0%) outperformed every individual model across all 10 random splits — it never scored below the best single model (GB at 97.1%) — confirming the improvement is consistent rather than a split artefact. A separate GB+NN ensemble for expiry date prediction achieved 0.73 days MAE. These numbers come from synthetic data; real-world performance will be lower, particularly for unusual foods (see Section 5.3).
+The ensemble never scored below the best individual model (GB at 97.1%) across all 10 splits. A separate GB+NN ensemble for expiry date prediction achieved 0.73 days MAE. These numbers come from synthetic data; real-world performance will be lower (see Section 5.3).
 
 ### 4.4 Food recognition model training
 
-MobileNetV3-Large pretrained on ImageNet (Deng et al., 2009) was chosen over EfficientNet-B4 because it trains within 2 GB VRAM on an RTX 2060 while achieving comparable accuracy (Howard et al., 2019). Food-11's 11 categories were remapped to 8 UK-relevant ones. The classification head adds two linear layers (960→512→8) with ReLU, batch normalisation, and dropout; three auxiliary heads provide additional gradient signal. Training used AdamW with cosine annealing, label smoothing, and fp16 mixed-precision for 47 epochs.
+MobileNetV3-Large (Howard et al., 2019) was chosen over EfficientNet-B4 because it trains within 2 GB VRAM on an RTX 2060. Food-11's 11 categories were remapped to 8 UK-relevant ones; three auxiliary heads (storage type, chain, quality) provided additional gradient signal. Training used AdamW with cosine annealing and fp16 mixed-precision for 47 epochs.
 
 Results on the held-out test set (3,347 images):
 
@@ -238,19 +216,15 @@ During the project, Ollama crashed regularly, and TensorFlow cold-starts frequen
 
 `server/test_e2e.js` creates a temporary Supabase user and exercises every API endpoint. All 19 tests passed (server health, auth, AI chat, waste stats, ML prediction, forecasting, ReAct agent, meal planner, cleanup). Full output is in Appendix D.
 
-Five bugs were caught that would have reached users: NumPy `float32` not JSON-serialisable (added `NumpyEncoder`); missing `rule_based_prediction()` implementation; an "undefined waste risk" interpolation bug; Axios timeout too short for ML endpoints (10s → 30s); Python subprocess timeout too short for TensorFlow cold starts (15s → 30s). The NumPy bug in particular only surfaces across the full inference chain — subprocess, TensorFlow load, model run, float32 output — which is why unit tests would never have caught it.
+Five bugs were caught: NumPy `float32` not JSON-serialisable (`NumpyEncoder` added); missing `rule_based_prediction()` implementation; "undefined waste risk" interpolation bug; Axios timeout too short (10s → 30s); Python subprocess timeout too short for TensorFlow cold starts (15s → 30s). The NumPy bug only surfaces across the full inference chain — subprocess, TensorFlow load, model run, float32 output — unreachable by unit tests. NFR7 was confirmed: non-ML endpoints responded within 400–600ms throughout E2E testing.
 
-NFR7 (non-ML responses within 2 seconds) was confirmed: pantry CRUD, auth, and household endpoints responded within 400–600ms on localhost throughout E2E testing. ML and LLM endpoints are explicitly excluded from this target given the acknowledged cold-start latency.
+### 4.7 Ethics and security
 
-### 4.7 Ethical considerations
-
-Supabase's GDPR-compliant DPA covers stored data; RLS enforces per-user isolation at the database level; Ollama runs entirely locally so pantry contents never reach a third-party API; receipt images are processed client-side by Tesseract.js and never uploaded. The ML ensemble uses synthetic data — real household waste logs would have required ethics approval not feasible within the project timeline. Full deployment would need a privacy notice and GDPR Article 17 deletion mechanism; cascading account deletion is already implemented.
+Supabase's GDPR DPA covers stored data; Ollama runs locally so pantry data never reaches a third-party API; receipt images are processed client-side. The ML ensemble uses synthetic data — real waste logs would have required ethics approval not feasible in scope. Full deployment would need a privacy notice and Article 17 deletion mechanism; cascading deletion is implemented. Rate limiting, 30+ RLS policies, Helmet.js, and parameterised queries cover the security surface.
 
 ### 4.8 Usability testing
 
-Three participants completed five structured tasks on their own phones (WiFi to local dev server), followed by the SUS questionnaire (Brooke, 1996). No assistance was given.
-
-**Results**
+Three participants completed five structured tasks on their own phones, followed by the SUS questionnaire (Brooke, 1996). No assistance was given.
 
 | Participant | Task 1 | Task 2 | Task 3 | Task 4 | Task 5 | SUS Score |
 |-------------|--------|--------|--------|--------|--------|-----------|
@@ -259,11 +233,8 @@ Three participants completed five structured tasks on their own phones (WiFi to 
 | P3 — Ayobamidele Esho | Yes | Yes | Yes | Yes | Yes | 88 |
 | **Average** | 3/3 | 2/3 | 3/3 | 2/3 | 2/3 | **81.3** |
 
-Overall: **12/15 tasks completed (80%)**; SUS mean **81.3** ("Excellent", Brooke, 1996). Task 4 partials were caused by ML cold-start latency (participants unsure if the app had frozen); Task 5 partials by the "Generate Shopping List" button being hidden below the calendar fold. P2's Task 2 partial revealed that risk badge colours alone are insufficient affordance without a text label. Actionable fixes: loading indicator during cold start; sticky shopping list button. All three participants said they would use the app regularly.
+12/15 tasks completed (80%); SUS mean 81.3 ("Excellent", Brooke, 1996). Task 4 partials were caused by ML cold-start latency; Task 5 partials by the shopping list button being hidden below the calendar fold; P2's Task 2 partial confirmed that risk badge colours alone are insufficient affordance without a text label. N=3 produces a point estimate only — the SUS band classification should be treated with caution at this sample size.
 
-### 4.9 Security
-
-Rate limiting (15 requests/15 min) on auth endpoints prevents brute-force attacks; 30+ RLS policies enforce data isolation at the database level independently of application logic; Helmet.js sets security headers; CORS restricts allowed origins; Supabase's parameterised query builder prevents SQL injection. JWT auth and session persistence are described in Section 4.1.
 
 ---
 
@@ -285,29 +256,19 @@ Rate limiting (15 requests/15 min) on auth endpoints prevents brute-force attack
 | Mobile-native UI | Achieved | Bottom tab bar, slide-up modals, touch targets, safe area insets, scroll-snap cards |
 | Session persistence | Achieved | Refresh token flow; survives app close/reopen without logout |
 
-Seven of the original seven objectives fully met, plus three additional non-functional requirements (PWA installability, mobile-native UI, session persistence) that emerged during mobile testing. The food recognition model missed its 95% target by 0.1 percentage points on the test set, which I consider close enough to be usable but worth noting honestly.
+All seven objectives met, with three additional NFRs (PWA installability, mobile-native UI, session persistence) emerging from mobile testing. The food recognition model missed the 95% target by 0.1 percentage points — close enough to be usable, worth noting honestly.
 
 ### 5.2 Strengths
 
-The fallback architecture was the single most important design decision. Decoupling each feature from its AI dependency meant development never blocked on a single broken component. The 98% ensemble accuracy, while from synthetic data, shows genuine feature quality — errors clustered around genuinely ambiguous items (e.g. bread, stored differently by different households) rather than randomly, and the ensemble beat every individual model consistently across 10 splits. The mobile-native rebuild (bottom tab bar, bottom-sheet modals, offline caching) transformed the app from a usable demo into something a participant would open daily. Local LLM inference keeps pantry data off third-party servers, which for this domain specifically was worth the response quality trade-off.
-
-The research question asked whether combining ML prediction with a locally-hosted LLM produces a more useful tool than either alone. The fallback periods provide indirect evidence. When Ollama was unavailable during development, ML probability badges were shown without LLM explanation — P2's session showed that risk badge colours alone were insufficient affordance without a reason for the risk. When the system fell back to hardcoded LLM responses without ML grounding, the advice was generic rather than item-specific. Neither component alone satisfied the non-functional requirements; the combination was necessary for both actionability and specificity. A controlled A/B comparison would be needed to confirm this conclusively, and is the obvious next evaluation step. The finding also echoes Graham-Rowe et al. (2014): making waste risk visible is a necessary precondition for behaviour change, but it requires an accompanying actionable prompt — which is precisely what the LLM explanation layer provides over a bare ML probability badge.
+The fallback architecture was the single most important design decision — without it, Ollama crashes and TensorFlow cold starts would have broken half the app. The 98% ensemble accuracy reflects genuine feature quality: errors clustered around ambiguous items rather than randomly, and the ensemble beat every individual model across all 10 splits. Development fallback periods provide indirect evidence on the research question: ML badges without LLM explanation gave P2 no reason for the risk; hardcoded LLM responses without ML grounding were generic rather than item-specific. Neither component alone satisfied the NFRs, echoing Graham-Rowe et al. (2014) — visibility requires an actionable prompt. A controlled A/B study is the next step.
 
 ### 5.3 Limitations
 
-**Synthetic training data** is the biggest caveat. The ensemble captures category-level patterns but not individual household quirks (e.g. consistently forgetting items at the back of the fridge). The application logs waste events, so retraining on real data is feasible once sufficient usage exists.
-
-**Cold-start latency** (15–30 seconds on first ML invocation) is a known usability problem. Switching to ONNX Runtime would eliminate TensorFlow's graph compilation overhead — estimated to cut start time to under 3 seconds — but required rewriting the model export pipeline, which ran out of time.
-
-**Food classifier shortfall**: The 6–7 point train-validation gap (99.9% vs 93.2%) indicates overfitting. More aggressive augmentation (CutMix, MixUp) and isolating the classification head from auxiliary training tasks would be the first interventions. Barcode coverage for UK own-brand products (Tesco Finest, Sainsbury's Taste the Difference) is also patchy via Open Food Facts.
+Synthetic training data is the biggest caveat — the ensemble captures category-level patterns but not individual quirks. Cold-start latency (15–30 seconds) caused Task 4 usability failures; ONNX Runtime would cut this to under 3 seconds but required rewriting the export pipeline, which ran out of time. The food classifier's 6–7 point train-validation gap indicates overfitting; CutMix/MixUp augmentation and decoupled auxiliary heads are the first interventions.
 
 ### 5.4 Reflection
 
-The main process lesson was dependency sequencing. I assumed the ML pipeline and LLM integration could be built in parallel; in practice the ReAct agent depended on a stable prediction endpoint. A week was lost before I accepted the sequential constraint.
-
-The end-to-end test suite caught five bugs that unit tests would not have found — the NumPy float32 serialisation bug only surfaces across the full chain from subprocess spawn to JSON response. That shifted how I think about testing: integration tests should come before unit tests.
-
-The area where I learned most was ML engineering: feature pipeline design, class imbalance handling, ensemble architecture, and debugging a plateaued neural network loss. The gap between understanding an algorithm conceptually and making it work on constrained hardware is only bridged by doing it.
+Dependency sequencing was the main process lesson — the ReAct agent depended on a stable prediction endpoint and a week was lost assuming the two could be built in parallel. The E2E suite catching five bugs unreachable by unit tests changed how I think about testing: integration tests should come first. Feature pipeline design and debugging a plateaued loss curve was where understanding an algorithm and running it on constrained hardware stopped being the same thing.
 
 ---
 
@@ -315,15 +276,11 @@ The area where I learned most was ML engineering: feature pipeline design, class
 
 ### 6.1 Further work
 
-Priority items: (1) push the food classifier past 95% with CutMix/MixUp augmentation and decoupled auxiliary head training; (2) retrain the waste ensemble on real household data collected through the app's existing waste logging; (3) extend household sharing to grocery lists and meal plans; (4) replace the TensorFlow subprocess with ONNX Runtime to eliminate cold-start latency; (5) add background push notifications via web-push/VAPID for expiry alerts when the app is closed.
+Three priorities: push the food classifier past 95% with CutMix/MixUp augmentation; retrain the waste ensemble on real household data collected through the app's existing waste logging; replace the TensorFlow subprocess with ONNX Runtime to cut cold-start latency from 30 seconds to under 3.
 
 ### 6.2 Conclusion
 
-Combining a heterogeneous ML ensemble with a locally-hosted ReAct agent produces a different kind of food management tool — one that predicts waste before it occurs and grounds its recommendations in the user's actual pantry state. The waste prediction ensemble exceeded its accuracy target at 98%; the food recognition model reached 94.9%, marginally below the 95% threshold; all 19 end-to-end tests pass; and usability testing returned a SUS mean of 81.3. The known limitations — synthetic training data, TensorFlow cold-start latency, and food classifier overfitting — are well-understood and addressable without architectural change, as detailed in Section 5.3 and the further work above.
-
-The application is installable as a PWA, functional offline in a supermarket, and designed to feel native on a phone. The UK focus — FSA shelf-life guidelines in the ML features, TomTom store finder for UK supermarkets, British English throughout — runs through the whole system.
-
-Most food management tools record waste after it happens. This one is designed to prevent it.
+Combining a heterogeneous ML ensemble with a locally-hosted ReAct agent produces a tool that predicts waste before it occurs and grounds recommendations in the user's actual pantry state. The ensemble hit 98% accuracy; the food recognition model reached 94.9%; all 19 E2E tests pass; SUS mean is 81.3. The known limitations — synthetic training data, TensorFlow cold-start latency, classifier overfitting — are addressable without architectural change. Most food management tools record waste after it happens. This one is designed to prevent it.
 
 ---
 
@@ -382,7 +339,7 @@ Dietterich, T.G. (2000) 'Ensemble methods in machine learning', in *Internationa
 
 Fang, D. et al. (2023) 'Machine learning approaches for predicting household food waste', *Journal of Cleaner Production*, 395, p. 136369. doi:[10.1016/j.jclepro.2023.136369](https://doi.org/10.1016/j.jclepro.2023.136369).
 
-FAO (2019) *The State of Food and Agriculture 2019: Moving Forward on Food Loss and Waste Reduction*. Rome: Food and Agriculture Organization of the United Nations. Available at: [https://www.fao.org/3/ca6030en/ca6030en.pdf](https://www.fao.org/3/ca6030en/ca6030en.pdf).
+FAO (2019) *The State of Food and Agriculture 2019: Moving Forward on Food Loss and Waste Reduction*. Rome: Food and Agriculture Organization of the United Nations. doi:[10.4060/ca6030en](https://doi.org/10.4060/ca6030en).
 
 Graham-Rowe, E., Jessop, D.C. and Sparks, P. (2014) 'Identifying motivations and barriers to minimising household food waste', *Resources, Conservation and Recycling*, 84, pp. 15–23. doi:[10.1016/j.resconrec.2013.12.005](https://doi.org/10.1016/j.resconrec.2013.12.005).
 
@@ -506,17 +463,17 @@ The waste prediction overlay for milk (refrigerated, purchased 6 days ago). The 
 
 **Figure A.8 — Mobile UI.**
 
-![Mobile UI — bottom tab bar and 'More' bottom sheet on Android Chrome](./assets/screenshots/08_mobile_ui.png)
+![Mobile UI — bottom tab bar and 'More' bottom sheet on iOS Safari](./assets/screenshots/08_mobile_ui.png)
 
-Chrome on Android showing the bottom tab bar (Home, Lists, Pantry, Nurexa, More) with frosted-glass background and safe-area inset padding at the bottom. The "More" sheet is expanded, showing secondary navigation items. This is the mobile-native navigation pattern from Section 4.1.2. The bottom tab bar replaces the desktop sidebar below the `lg` breakpoint; the sheet replaces a separate page for secondary routes. Evidence for NFR4.
+Safari on iOS showing the bottom tab bar (Home, Lists, Pantry, Nurexa, More) with frosted-glass background and safe-area inset padding at the bottom. The "More" sheet is expanded, showing secondary navigation items. This is the mobile-native navigation pattern from Section 4.1.2. The bottom tab bar replaces the desktop sidebar below the `lg` breakpoint; the sheet replaces a separate page for secondary routes. Evidence for NFR4.
 
 ---
 
 **Figure A.9 — PWA install prompt and home screen.**
 
-![PWA — Chrome install prompt on Android (left) and home screen icon (right)](./assets/screenshots/09_pwa_install.png)
+![PWA — Safari share sheet install prompt on iOS (left) and home screen icon (right)](./assets/screenshots/09_pwa_install.png)
 
-Left: Chrome on Android showing the "Add to home screen" install prompt after visiting the application. Right: the NourishNeural icon on the Android home screen sitting alongside native apps. The icon uses the 512px PNG declared in `manifest.json`. This is direct evidence that NFR4 (installable PWA) is met. Once installed, the app opens without browser chrome and behaves identically to a native app.
+Left: Safari on iOS showing the "Add to Home Screen" option in the share sheet after visiting the application. Right: the NourishNeural icon on the iOS home screen sitting alongside native apps. The icon uses the 512px PNG declared in `manifest.json`. This is direct evidence that NFR4 (installable PWA) is met. Once installed, the app opens without browser chrome and behaves identically to a native app.
 
 ---
 
@@ -536,73 +493,25 @@ The login page showing the email and password fields, "Remember me" toggle, and 
 
 ### Training configuration
 
-| Parameter | Value |
-|-----------|-------|
-| Architecture | MobileNetV3-Large (pretrained on ImageNet) |
-| Dataset | Food-11, remapped to 8 NourishNeural categories |
-| Input size | 224x224 (RandomResizedCrop for training, CenterCrop for eval) |
-| Batch size | 8 (effective 32 with 4x gradient accumulation) |
-| Optimiser | AdamW (lr=3e-4, weight_decay=1e-4) |
-| Scheduler | CosineAnnealingLR (T_max=50, eta_min=3e-5) |
-| Loss | CrossEntropy with label smoothing=0.1 + auxiliary losses |
-| Precision | Mixed (fp16 via GradScaler) |
-| Hardware | NVIDIA RTX 2060 (6 GB VRAM), capped at 4 GB |
-| Training time | Approximately 3.5 hours (47 epochs) |
-| Early stopping | Patience=8, triggered at epoch 47 |
+The model is MobileNetV3-Large, pretrained on ImageNet and fine-tuned on Food-11 remapped to 8 NourishNeural categories. Input images are 224×224; training uses RandomResizedCrop and evaluation uses CenterCrop.
 
-### Training progression (selected epochs)
+Hardware was the binding constraint. The RTX 2060 has 6 GB VRAM but works stably at 4 GB, so the physical batch size was kept at 8 with 4× gradient accumulation to reach an effective batch of 32. fp16 mixed precision via GradScaler stopped VRAM from spiking during the forward pass.
 
-| Epoch | Train Loss | Train Acc | Val Loss | Val Acc | LR |
-|-------|-----------|-----------|----------|---------|------|
-| 1 | 1.8249 | 82.5% | 1.0347 | 82.1% | 3.00e-04 |
-| 5 | 1.5402 | 93.0% | 0.7812 | 88.3% | 2.90e-04 |
-| 10 | 1.4217 | 96.8% | 0.7112 | 90.3% | 2.72e-04 |
-| 15 | 1.3874 | 98.0% | 0.6739 | 91.7% | 2.39e-04 |
-| 19 | 1.3662 | 98.8% | 0.6637 | 92.5% | 2.06e-04 |
-| 24 | 1.3471 | 99.4% | 0.6537 | 92.7% | 1.61e-04 |
-| 27 | 1.3432 | 99.5% | 0.6494 | 92.8% | 1.33e-04 |
-| 33 | 1.3336 | 99.8% | 0.6436 | 92.7% | 8.00e-05 |
-| 39 | 1.3282 | 99.9% | 0.6351 | 93.2% | 3.27e-05 |
-| 47 | 1.3266 | 99.9% | 0.6351 | 93.1% | 5.63e-06 |
+The optimiser is AdamW (lr=3e-4, weight_decay=1e-4) with CosineAnnealingLR (T_max=50, eta_min=3e-5). Loss is CrossEntropy with 0.1 label smoothing plus auxiliary heads for storage type, supermarket chain, and quality, which provided additional gradient signal during fine-tuning. Training took around 3.5 hours over 47 epochs before early stopping triggered at patience=8.
 
-Best validation accuracy: 93.2% at epoch 39. Early stopping at epoch 47.
+### Training progression
 
-### Test set evaluation (3,347 images)
+Validation accuracy was 82.1% after the first epoch, largely because ImageNet pretraining does a lot of the heavy lifting upfront. It climbed steadily through the early epochs: 88.3% at epoch 5, 90.3% at epoch 10, 92.5% at epoch 19. Things slowed after that. The best result came at epoch 39 with 93.2% validation accuracy, and the last eight epochs produced no meaningful improvement. Early stopping triggered at epoch 47.
 
-```
-              precision    recall  f1-score   support
+By then, training accuracy was 99.9% against validation accuracy of 93.1%, a 6–7 point gap that is the overfitting problem flagged in Section 5.3.
 
-      Bakery       0.93      0.94      0.93       868
-       Dairy       0.91      0.91      0.91       148
-        Eggs       0.97      0.93      0.95       335
-        Fish       0.94      0.96      0.95       303
-     General       0.95      0.97      0.96       787
-        Meat       0.97      0.92      0.95       432
-      Pantry       0.99      1.00      0.99       243
-  Vegetables       0.96      0.98      0.97       231
+### Test set performance (3,347 images)
 
-    accuracy                           0.95      3347
-   macro avg       0.95      0.95      0.95      3347
-weighted avg       0.95      0.95      0.95      3347
-```
-
-Test accuracy: 94.9%. Confusion matrix and training history plots are saved in `ml-models/models/`.
+On 3,347 held-out images the model reached 94.9% overall accuracy. The easiest class was Pantry (F1 0.99), where items are visually distinct. Vegetables came next at 0.97, then General at 0.96. Eggs, Fish, and Meat all landed at 0.95 F1. Bakery scored 0.93 across its 868-image test set, the largest class by some margin. Dairy was the weakest at 0.91 F1, with only 148 test images and high visual variety across milk, cheese, and yoghurt. Macro and weighted F1 both round to 0.95. Confusion matrix and training history plots are saved in `ml-models/models/`.
 
 ### Food-11 to NourishNeural category mapping
 
-| Food-11 category | NourishNeural category |
-|-----------------|----------------------|
-| Bread | Bakery |
-| Dessert | Bakery |
-| Dairy product | Dairy |
-| Egg | Eggs |
-| Fried food | General |
-| Soup | General |
-| Meat | Meat |
-| Noodles-Pasta | Pantry |
-| Rice | Pantry |
-| Seafood | Fish |
-| Vegetable-Fruit | Vegetables |
+Food-11 ships with 11 categories; NourishNeural uses 8, chosen to reflect how a UK household actually organises food rather than how a research dataset groups it. Bread and Dessert both map to Bakery. Dairy product maps to Dairy. Egg maps to Eggs. Fried food and Soup consolidate under General, as neither maps cleanly to a pantry shelf. Meat stays as Meat. Noodles-Pasta and Rice both become Pantry. Seafood maps to Fish. Vegetable-Fruit maps to Vegetables.
 
 ## Appendix D: End-to-end test output
 
