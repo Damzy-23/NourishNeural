@@ -4,81 +4,6 @@ const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
 const path = require('path');
-const dns = require('dns');
-const { Resolver } = dns;
-
-// Resilient DNS: race OS resolver vs public DNS — use whichever responds first.
-// This handles both scenarios:
-//   - University blocks Supabase DNS → public DNS wins
-//   - University blocks outbound DNS (port 53) → OS resolver wins
-const publicResolver = new Resolver();
-publicResolver.setServers(['8.8.8.8', '1.1.1.1']);
-
-const originalLookup = dns.lookup;
-dns.lookup = (hostname, options, callback) => {
-  if (typeof options === 'function') { callback = options; options = {}; }
-  if (typeof options === 'number') { options = { family: options }; }
-
-  // Skip override for localhost and raw IPs
-  if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) {
-    return originalLookup(hostname, options, callback);
-  }
-
-  let settled = false;
-  let osErr = null;
-  let publicErr = null;
-
-  const settle = (err, address, family) => {
-    if (settled) return;
-    // Only settle with success if we have a valid, non-empty IP address
-    if (!err && address && typeof address === 'string' && /^\d+\.\d+\.\d+\.\d+$/.test(address)) {
-      settled = true;
-      return callback(null, address, family);
-    }
-    // Treat invalid address as an error
-    if (!err && (!address || typeof address !== 'string')) {
-      err = new Error(`DNS resolved invalid address for ${hostname}`);
-    }
-    // Store the error for this resolver
-    if (!osErr && !publicErr) osErr = err;
-    else if (osErr && !publicErr) publicErr = err;
-    else if (!osErr) publicErr = err;
-    // Both failed — report OS error
-    if (osErr && publicErr) {
-      settled = true;
-      return callback(osErr, undefined, undefined);
-    }
-  };
-
-  // Race 1: OS default resolver
-  originalLookup(hostname, options, (err, addr, fam) => {
-    if (!err && addr) {
-      settle(null, addr, fam);
-    } else {
-      osErr = err;
-      settle(err); // will only fire if public also failed
-    }
-  });
-
-  // Race 2: Public DNS (Google/Cloudflare)
-  publicResolver.resolve4(hostname, (err, addresses) => {
-    if (!err && addresses?.length) {
-      settle(null, addresses[0], 4);
-    } else {
-      publicErr = err;
-      settle(err); // will only fire if OS also failed
-    }
-  });
-
-  // Safety timeout — if neither responds in 8s, fail with a clear error
-  setTimeout(() => {
-    if (!settled) {
-      settled = true;
-      callback(osErr || new Error(`DNS lookup timeout for ${hostname}`), undefined, undefined);
-    }
-  }, 8000);
-};
-console.log('🌐 DNS resilience active — racing OS resolver vs Google/Cloudflare');
 
 // Load .env from server directory (handles different working directories)
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
@@ -733,6 +658,91 @@ app.use('/api/carbon', carbonRoutes);
 app.use('/api/appliance', authenticateJWT, applianceRoutes);
 app.use('/api/challenges', authenticateJWT, challengeRoutes);
 app.use('/api/sustainability', sustainabilityRoutes); // JWT handled inside the route
+
+// GDPR data export endpoint (authenticated)
+app.get('/api/users/export', authenticateJWT, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const exportData = { exportedAt: new Date().toISOString(), userId };
+
+    // Profile
+    const { data: profile } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    exportData.profile = profile || null;
+
+    // Preferences
+    const { data: prefs } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    exportData.preferences = prefs || null;
+
+    // Pantry items (including archived)
+    const { data: pantryItems } = await supabase
+      .from('pantry_items')
+      .select('*')
+      .eq('user_id', userId);
+    exportData.pantryItems = pantryItems || [];
+
+    // Grocery lists
+    const { data: groceryLists } = await supabase
+      .from('grocery_lists')
+      .select('*')
+      .eq('user_id', userId);
+    exportData.groceryLists = groceryLists || [];
+
+    // Waste logs
+    const { data: wasteLogs } = await supabase
+      .from('waste_logs')
+      .select('*')
+      .eq('user_id', userId);
+    exportData.wasteLogs = wasteLogs || [];
+
+    // Nutrition profile
+    const { data: nutrition } = await supabase
+      .from('nutrition_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    exportData.nutritionProfile = nutrition || null;
+
+    res.status(200).json(exportData);
+  } catch (error) {
+    console.error('Data export error:', error.message);
+    res.status(500).json({ error: 'Failed to export data' });
+  }
+});
+
+// Contact form endpoint (public, no auth required)
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { name, email, subject, message } = req.body;
+
+    if (!name || !email || !subject || !message) {
+      return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    if (supabase) {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert([{ name, email, subject, message }]);
+
+      if (error) {
+        console.error('Failed to store contact message:', error.message);
+        return res.status(500).json({ error: 'Failed to send message' });
+      }
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Contact form error:', error.message);
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

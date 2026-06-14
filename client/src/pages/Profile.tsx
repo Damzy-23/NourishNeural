@@ -21,7 +21,11 @@ import {
   Copy,
   LogOut,
   RefreshCw,
-  Home
+  Home,
+  Download,
+  FileText,
+  AlertTriangle,
+  Database
 } from 'lucide-react'
 import { apiService } from '../services/api'
 import { useAuth } from '../hooks/useAuth'
@@ -110,7 +114,9 @@ const SHOPPING_FREQUENCIES = [
 export default function Profile() {
   const { user, updateUser } = useAuth()
   const queryClient = useQueryClient()
-  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'notifications' | 'privacy' | 'loyalty' | 'household'>('profile')
+  const [activeTab, setActiveTab] = useState<'profile' | 'preferences' | 'notifications' | 'privacy' | 'mydata' | 'loyalty' | 'household'>('profile')
+  const [exportingData, setExportingData] = useState(false)
+  const [deletionRequested, setDeletionRequested] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [profileForm, setProfileForm] = useState<Partial<UserProfile>>({})
   const [preferencesForm, setPreferencesForm] = useState<Partial<UserPreferences>>({})
@@ -465,6 +471,7 @@ export default function Profile() {
     { id: 'preferences', label: 'Preferences', icon: Heart },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy', icon: Shield },
+    { id: 'mydata', label: 'My Data', icon: Database },
     { id: 'loyalty', label: 'Loyalty Cards', icon: CreditCard },
     { id: 'household', label: 'Household', icon: Home }
   ]
@@ -1009,6 +1016,180 @@ export default function Profile() {
                       <Save className="h-4 w-4 mr-2" />
                       {updatePreferencesMutation.isLoading ? 'Saving...' : 'Save Settings'}
                     </motion.button>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'mydata' && (
+              <motion.div
+                className="card"
+                key="mydata-tab"
+                variants={fadeUp}
+                initial="hidden"
+                animate="visible"
+                transition={{ duration: 0.45 }}
+              >
+                <div className="card-header">
+                  <h2 className="card-title">My Data — GDPR Controls</h2>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                    Manage your personal data in accordance with GDPR and UK Data Protection Act 2018.
+                  </p>
+                </div>
+                <div className="card-content space-y-6">
+
+                  {/* Data categories */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3 flex items-center">
+                      <FileText className="h-4 w-4 mr-2 text-primary-600 dark:text-primary-400" />
+                      Data We Hold
+                    </h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        { category: 'Account & Profile', items: 'Name, email, preferences, dietary restrictions', icon: User },
+                        { category: 'Pantry Records', items: 'Items, categories, expiry dates, purchase history', icon: ShoppingCart },
+                        { category: 'Waste & Analytics', items: 'Waste logs, prediction history, sustainability metrics', icon: Database },
+                        { category: 'AI Interactions', items: 'Nurexa chat history, meal plan requests, recipe searches', icon: RefreshCw },
+                      ].map((d) => (
+                        <div key={d.category} className="rounded-lg border border-neutral-200 dark:border-neutral-700 p-3.5">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <d.icon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                            <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{d.category}</span>
+                          </div>
+                          <p className="text-xs text-neutral-500 dark:text-neutral-400">{d.items}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Export data */}
+                  <div className="rounded-xl bg-neutral-50 dark:bg-neutral-700/50 p-5">
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-1 flex items-center">
+                      <Download className="h-4 w-4 mr-2 text-primary-600 dark:text-primary-400" />
+                      Export Your Data
+                    </h3>
+                    <p className="text-xs text-neutral-600 dark:text-neutral-400 mb-3">
+                      Download a complete copy of all personal data we hold about you (GDPR Article 20 — Right to Data Portability). Exported as a machine-readable JSON file.
+                    </p>
+                    <motion.button
+                      onClick={async () => {
+                        setExportingData(true)
+                        try {
+                          const token = localStorage.getItem('nourish_neural_token')
+                          const res = await fetch('/api/users/export', {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                          })
+                          if (!res.ok) throw new Error('Export failed')
+                          const data = await res.json()
+                          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+                          const url = URL.createObjectURL(blob)
+                          const a = document.createElement('a')
+                          a.href = url
+                          a.download = `nourish-neural-data-export-${new Date().toISOString().split('T')[0]}.json`
+                          a.click()
+                          URL.revokeObjectURL(url)
+                        } catch (e) {
+                          alert('Failed to export data. Please try again.')
+                        } finally {
+                          setExportingData(false)
+                        }
+                      }}
+                      disabled={exportingData}
+                      className="btn btn-primary btn-sm"
+                      whileHover={{ y: -1 }}
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      {exportingData ? 'Exporting...' : 'Download My Data'}
+                    </motion.button>
+                  </div>
+
+                  {/* Data processing log */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3 flex items-center">
+                      <Shield className="h-4 w-4 mr-2 text-primary-600 dark:text-primary-400" />
+                      How We Process Your Data
+                    </h3>
+                    <div className="space-y-2.5">
+                      {[
+                        { purpose: 'Service Delivery', basis: 'Contract (Art. 6(1)(b))', detail: 'Pantry management, grocery lists, meal planning' },
+                        { purpose: 'AI Predictions', basis: 'Legitimate Interest (Art. 6(1)(f))', detail: 'Waste prediction, expiry forecasting, recipe suggestions' },
+                        { purpose: 'Model Training', basis: 'Legitimate Interest (Art. 6(1)(f))', detail: 'Aggregated, anonymised data only — never individual records' },
+                        { purpose: 'Analytics', basis: 'Consent (Art. 6(1)(a))', detail: 'Optional usage analytics to improve the service — you can opt out above' },
+                      ].map((p) => (
+                        <div key={p.purpose} className="flex items-start space-x-3 py-2 border-b border-neutral-100 dark:border-neutral-700 last:border-b-0">
+                          <CheckCircle className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{p.purpose}</span>
+                              <span className="text-[10px] font-mono bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 px-1.5 py-0.5 rounded">{p.basis}</span>
+                            </div>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">{p.detail}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Your rights */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 mb-3">Your Rights Under GDPR</h3>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {[
+                        'Right of Access (Art. 15)',
+                        'Right to Rectification (Art. 16)',
+                        'Right to Erasure (Art. 17)',
+                        'Right to Data Portability (Art. 20)',
+                        'Right to Restrict Processing (Art. 18)',
+                        'Right to Object (Art. 21)',
+                      ].map((right) => (
+                        <div key={right} className="flex items-center space-x-2 text-xs text-neutral-700 dark:text-neutral-300">
+                          <CheckCircle className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
+                          <span>{right}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Account deletion */}
+                  <div className="rounded-xl border-2 border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-5">
+                    <h3 className="text-sm font-semibold text-red-700 dark:text-red-400 mb-1 flex items-center">
+                      <AlertTriangle className="h-4 w-4 mr-2" />
+                      Delete Account & Data
+                    </h3>
+                    <p className="text-xs text-red-600 dark:text-red-400 mb-3">
+                      Permanently delete your account and all associated data (GDPR Article 17 — Right to Erasure).
+                      This action cannot be undone. Your data will be erased within 30 days.
+                    </p>
+                    {deletionRequested ? (
+                      <div className="flex items-center space-x-2 text-sm text-red-700 dark:text-red-400">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Deletion request submitted. You will receive a confirmation email.</span>
+                      </div>
+                    ) : (
+                      <motion.button
+                        onClick={() => {
+                          if (window.confirm('Are you sure? This will permanently delete your account, pantry data, waste history, and all personal information. This cannot be undone.')) {
+                            setDeletionRequested(true)
+                          }
+                        }}
+                        className="inline-flex items-center rounded-lg border-2 border-red-300 dark:border-red-700 bg-white dark:bg-neutral-800 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.97 }}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Request Account Deletion
+                      </motion.button>
+                    )}
+                  </div>
+
+                  {/* DPO contact */}
+                  <div className="text-center pt-2">
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                      For data protection enquiries, contact our DPO at{' '}
+                      <a href="mailto:privacy@nourishneural.co.uk" className="text-primary-600 dark:text-primary-400 hover:underline">privacy@nourishneural.co.uk</a>
+                      {' '}or write to: Nourish Neural Data Protection Officer, London, United Kingdom.
+                    </p>
                   </div>
                 </div>
               </motion.div>

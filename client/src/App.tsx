@@ -11,6 +11,14 @@ import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
 import TermsOfService from './pages/TermsOfService'
 import PrivacyPolicy from './pages/PrivacyPolicy'
+import Support from './pages/Support'
+import Contact from './pages/Contact'
+import HowItWorks from './pages/HowItWorks'
+import AIExplainability from './pages/AIExplainability'
+import NutritionalInsights from './pages/NutritionalInsights'
+import PromptLab from './pages/PromptLab'
+import AIGovernance from './pages/AIGovernance'
+import AgentEvaluation from './pages/AgentEvaluation'
 import Dashboard from './pages/Dashboard'
 import GroceryLists from './pages/GroceryLists'
 import Pantry from './pages/Pantry'
@@ -76,6 +84,14 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/ai-explainability" element={<AIExplainability />} />
+        <Route path="/nutrition-insights" element={<NutritionalInsights />} />
+        <Route path="/prompt-lab" element={<PromptLab />} />
+        <Route path="/ai-governance" element={<AIGovernance />} />
+        <Route path="/agent-evaluation" element={<AgentEvaluation />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* Protected routes */}

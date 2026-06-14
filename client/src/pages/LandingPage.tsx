@@ -1073,7 +1073,7 @@ export default function LandingPage() {
             {/* Footer */}
             <footer className="bg-neutral-950 dark:bg-neutral-950 text-neutral-200 dark:text-neutral-200 py-14">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid gap-10 md:grid-cols-4">
+                <div className="grid gap-10 md:grid-cols-5">
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
                       <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl overflow-hidden">
@@ -1095,12 +1095,23 @@ export default function LandingPage() {
                     </ul>
                   </div>
                   <div>
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400 mb-4">Explore</h3>
+                    <ul className="space-y-2 text-sm text-neutral-400 dark:text-neutral-400">
+                      <li><Link to="/how-it-works" className="hover:text-white dark:hover:text-white transition-colors">How It Works</Link></li>
+                      <li><Link to="/ai-explainability" className="hover:text-white dark:hover:text-white transition-colors">AI Explainability</Link></li>
+                      <li><Link to="/nutrition-insights" className="hover:text-white dark:hover:text-white transition-colors">Nutrition Insights</Link></li>
+                      <li><Link to="/prompt-lab" className="hover:text-white dark:hover:text-white transition-colors">Prompt Lab</Link></li>
+                      <li><Link to="/ai-governance" className="hover:text-white dark:hover:text-white transition-colors">AI Governance</Link></li>
+                      <li><Link to="/agent-evaluation" className="hover:text-white dark:hover:text-white transition-colors">Agent Evaluation</Link></li>
+                    </ul>
+                  </div>
+                  <div>
                     <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400 mb-4">Company</h3>
                     <ul className="space-y-2 text-sm text-neutral-400 dark:text-neutral-400">
                       <li><Link to="/terms" className="hover:text-white dark:hover:text-white transition-colors">Terms</Link></li>
                       <li><Link to="/privacy" className="hover:text-white dark:hover:text-white transition-colors">Privacy</Link></li>
-                      <li><a href="#" className="hover:text-white dark:hover:text-white transition-colors">Support</a></li>
-                      <li><a href="#" className="hover:text-white dark:hover:text-white transition-colors">Contact</a></li>
+                      <li><Link to="/support" className="hover:text-white dark:hover:text-white transition-colors">Support</Link></li>
+                      <li><Link to="/contact" className="hover:text-white dark:hover:text-white transition-colors">Contact</Link></li>
                     </ul>
                   </div>
                   <div className="space-y-4">
