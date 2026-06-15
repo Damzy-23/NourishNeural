@@ -1,15 +1,15 @@
 import { Helmet } from 'react-helmet-async'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Shield, Eye, Database, Lock, Users, Globe, Mail } from 'lucide-react'
+import { ArrowLeft, Shield, Eye, Database, Lock, Users, Globe, Mail, Cookie, Clock, Brain, Server } from 'lucide-react'
 
 export default function PrivacyPolicy() {
-  const lastUpdated = "March 6, 2026"
+  const lastUpdated = "June 15, 2026"
 
   return (
     <>
       <Helmet>
         <title>Privacy Policy - Nourish Neural</title>
-        <meta name="description" content="Privacy Policy for Nourish Neural - How we protect and use your data" />
+        <meta name="description" content="Privacy Policy for Nourish Neural - How we protect and use your data under UK GDPR" />
       </Helmet>
 
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-900">
@@ -51,29 +51,39 @@ export default function PrivacyPolicy() {
                 </div>
               </div>
               <p className="text-primary-100 text-lg max-w-2xl">
-                Your privacy is important to us. This policy explains how we collect, use, and protect your information.
+                This policy explains how we collect, use, store, and protect your personal data in compliance with
+                the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018.
               </p>
             </div>
 
             {/* Privacy Content */}
             <div className="px-8 py-12">
               <div className="prose prose-lg max-w-none">
-                
-                {/* Introduction */}
+
+                {/* Data Controller */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
                     <Shield className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
-                    1. Introduction
+                    1. Data Controller
                   </h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
-                      Nourish Neural ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy 
-                      explains how we collect, use, disclose, and safeguard your information when you use our AI-powered 
-                      culinary intelligence platform.
+                      For the purposes of the UK GDPR and the Data Protection Act 2018, the data controller is:
+                    </p>
+                    <div className="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-6">
+                      <p><strong>Nourish Neural</strong></p>
+                      <p>London, United Kingdom</p>
+                      <p>Email: privacy@nourishneural.co.uk</p>
+                    </div>
+                    <p>
+                      We are responsible for deciding how we hold and use your personal data. We are required under data
+                      protection legislation to notify you of the information contained in this Privacy Policy.
                     </p>
                     <p>
-                      We comply with applicable data protection laws, including the UK General Data Protection Regulation (UK GDPR)
-                      and the Data Protection Act 2018.
+                      Our supervisory authority is the Information Commissioner's Office (ICO). You have the right to make
+                      a complaint at any time to the ICO (ico.org.uk, telephone 0303 123 1113). We would, however,
+                      appreciate the opportunity to resolve your concerns before you approach the ICO, so please contact
+                      us first at privacy@nourishneural.co.uk.
                     </p>
                   </div>
                 </section>
@@ -82,147 +92,224 @@ export default function PrivacyPolicy() {
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
                     <Database className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
-                    2. Information We Collect
+                    2. Personal Data We Collect
                   </h2>
 
                   <div className="space-y-8">
                     <div>
-                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-4">2.1 Personal Information</h3>
+                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-4">2.1 Data You Provide Directly</h3>
                       <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                        <p>We collect information you provide directly to us, including:</p>
+                        <p>We collect personal data that you voluntarily provide when you register, use, or interact with the Service:</p>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm border-collapse">
+                            <thead>
+                              <tr className="border-b border-neutral-200 dark:border-neutral-600">
+                                <th className="text-left py-3 pr-4 font-semibold text-neutral-900 dark:text-neutral-100">Category</th>
+                                <th className="text-left py-3 pr-4 font-semibold text-neutral-900 dark:text-neutral-100">Data</th>
+                                <th className="text-left py-3 font-semibold text-neutral-900 dark:text-neutral-100">Purpose</th>
+                              </tr>
+                            </thead>
+                            <tbody className="text-neutral-700 dark:text-neutral-300">
+                              <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                                <td className="py-3 pr-4 font-medium">Identity</td>
+                                <td className="py-3 pr-4">Name, email address</td>
+                                <td className="py-3">Account creation and authentication</td>
+                              </tr>
+                              <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                                <td className="py-3 pr-4 font-medium">Credentials</td>
+                                <td className="py-3 pr-4">Password (bcrypt-hashed, never stored in plain text)</td>
+                                <td className="py-3">Secure account access</td>
+                              </tr>
+                              <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                                <td className="py-3 pr-4 font-medium">Profile</td>
+                                <td className="py-3 pr-4">Dietary preferences, allergies, household size, cooking skill</td>
+                                <td className="py-3">Personalised recommendations</td>
+                              </tr>
+                              <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                                <td className="py-3 pr-4 font-medium">Food data</td>
+                                <td className="py-3 pr-4">Pantry items, grocery lists, meal plans, waste logs</td>
+                                <td className="py-3">Core service delivery</td>
+                              </tr>
+                              <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                                <td className="py-3 pr-4 font-medium">Communications</td>
+                                <td className="py-3 pr-4">Contact form submissions, support requests</td>
+                                <td className="py-3">Customer support</td>
+                              </tr>
+                              <tr>
+                                <td className="py-3 pr-4 font-medium">AI interactions</td>
+                                <td className="py-3 pr-4">Queries to the Nurexa AI assistant</td>
+                                <td className="py-3">Conversational AI responses</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-4">2.2 Data Collected Automatically</h3>
+                      <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                        <p>When you use the Service, we automatically collect:</p>
                         <ul className="list-disc pl-6 space-y-2">
-                          <li><strong>Account Information:</strong> Name, email address, password (encrypted)</li>
-                          <li><strong>Profile Information:</strong> Dietary preferences, allergies, cooking skill level</li>
-                          <li><strong>Food Data:</strong> Pantry inventory, shopping lists, meal preferences</li>
-                          <li><strong>Usage Data:</strong> Recipes viewed, features used, search queries</li>
-                          <li><strong>Communication:</strong> Support requests, feedback, survey responses</li>
+                          <li><strong>Technical data:</strong> IP address, browser type and version, device type, operating system</li>
+                          <li><strong>Usage data:</strong> Pages visited, features used, time spent, referring URL</li>
+                          <li><strong>Location data:</strong> Approximate location (city-level) derived from IP address, used for store recommendations. Precise GPS location is only collected with your explicit consent via your device's location permissions.</li>
                         </ul>
                       </div>
                     </div>
 
                     <div>
-                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-4">2.2 Automatically Collected Information</h3>
+                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-4">2.3 Special Category Data</h3>
                       <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                        <p>We automatically collect certain information when you use our Service:</p>
-                        <ul className="list-disc pl-6 space-y-2">
-                          <li><strong>Device Information:</strong> Device type, operating system, browser type</li>
-                          <li><strong>Usage Analytics:</strong> Pages visited, time spent, features used</li>
-                          <li><strong>Location Data:</strong> Approximate location for store recommendations (with consent)</li>
-                          <li><strong>Cookies and Tracking:</strong> Session data, preferences, analytics</li>
-                        </ul>
+                        <p>
+                          We may process data relating to your health where you voluntarily provide it (e.g., food allergies,
+                          dietary requirements for medical conditions). This constitutes special category data under UK GDPR
+                          Article 9. We process this data on the basis of your explicit consent (Article 9(2)(a)), which you
+                          provide when entering this information into the Service. You may withdraw this consent and delete
+                          this data at any time.
+                        </p>
                       </div>
                     </div>
                   </div>
                 </section>
 
-                {/* How We Use Information */}
+                {/* Lawful Basis for Processing */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
                     <Eye className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
-                    3. How We Use Your Information
+                    3. Lawful Basis for Processing
                   </h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    <p>We use your information for the following purposes:</p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li><strong>Service Delivery:</strong> Provide AI recommendations, manage your pantry, generate shopping lists</li>
-                      <li><strong>Personalization:</strong> Customize recipes and suggestions based on your preferences</li>
-                      <li><strong>Communication:</strong> Send service updates, notifications, and support responses</li>
-                      <li><strong>Improvement:</strong> Analyze usage patterns to enhance our AI models and features</li>
-                      <li><strong>Security:</strong> Protect against fraud, abuse, and unauthorized access</li>
-                      <li><strong>Legal Compliance:</strong> Meet regulatory requirements and respond to legal requests</li>
-                    </ul>
-                  </div>
-                </section>
-
-                {/* Legal Basis for Processing */}
-                <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">4. Legal Basis for Processing (UK GDPR)</h2>
-                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    <p>Under UK GDPR, we process your personal data based on:</p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li><strong>Consent:</strong> When you opt-in to marketing communications or location tracking</li>
-                      <li><strong>Contract Performance:</strong> To provide the services you've requested</li>
-                      <li><strong>Legitimate Interest:</strong> To improve our services and prevent fraud</li>
-                      <li><strong>Legal Obligation:</strong> To comply with applicable laws and regulations</li>
-                    </ul>
-                  </div>
-                </section>
-
-                {/* Information Sharing */}
-                <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">5. Information Sharing and Disclosure</h2>
-                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    <p>We do not sell your personal information. We may share your information in the following circumstances:</p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li><strong>Service Providers:</strong> Trusted third parties who assist in service delivery (hosting, analytics, payment processing)</li>
-                      <li><strong>Business Transfers:</strong> In connection with mergers, acquisitions, or asset sales</li>
-                      <li><strong>Legal Requirements:</strong> When required by law or to protect our rights and safety</li>
-                      <li><strong>Consent:</strong> When you explicitly consent to sharing</li>
-                      <li><strong>Aggregated Data:</strong> Anonymized, aggregated data that cannot identify you</li>
-                    </ul>
-                  </div>
-                </section>
-
-                {/* Data Security */}
-                <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
-                    <Lock className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
-                    6. Data Security
-                  </h2>
-                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    <p>We implement appropriate technical and organizational measures to protect your information:</p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li><strong>Encryption:</strong> Data encrypted in transit and at rest using industry-standard protocols</li>
-                      <li><strong>Access Controls:</strong> Strict access controls and authentication requirements</li>
-                      <li><strong>Regular Audits:</strong> Security assessments and vulnerability testing</li>
-                      <li><strong>Staff Training:</strong> Privacy and security training for all employees</li>
-                      <li><strong>Incident Response:</strong> Procedures for handling security incidents</li>
-                    </ul>
-                    <p className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4 dark:text-yellow-200">
-                      <strong>Note:</strong> While we strive to protect your information, no method of transmission over the internet
-                      or electronic storage is 100% secure. We cannot guarantee absolute security.
+                    <p>
+                      Under UK GDPR Article 6, we process your personal data on the following lawful bases:
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm border-collapse">
+                        <thead>
+                          <tr className="border-b border-neutral-200 dark:border-neutral-600">
+                            <th className="text-left py-3 pr-4 font-semibold text-neutral-900 dark:text-neutral-100">Lawful Basis</th>
+                            <th className="text-left py-3 pr-4 font-semibold text-neutral-900 dark:text-neutral-100">Processing Activity</th>
+                            <th className="text-left py-3 font-semibold text-neutral-900 dark:text-neutral-100">GDPR Article</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-neutral-700 dark:text-neutral-300">
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">Contract performance</td>
+                            <td className="py-3 pr-4">Providing the Service: pantry management, AI recommendations, meal planning, grocery lists</td>
+                            <td className="py-3">Art. 6(1)(b)</td>
+                          </tr>
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">Consent</td>
+                            <td className="py-3 pr-4">Marketing communications, precise location tracking, health-related dietary data, non-essential cookies</td>
+                            <td className="py-3">Art. 6(1)(a)</td>
+                          </tr>
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">Legitimate interest</td>
+                            <td className="py-3 pr-4">Service improvement, fraud prevention, security monitoring, analytics (with balancing test conducted)</td>
+                            <td className="py-3">Art. 6(1)(f)</td>
+                          </tr>
+                          <tr>
+                            <td className="py-3 pr-4 font-medium">Legal obligation</td>
+                            <td className="py-3 pr-4">Compliance with UK law, responding to lawful data requests from authorities</td>
+                            <td className="py-3">Art. 6(1)(c)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <p>
+                      Where we rely on legitimate interest, we have conducted a Legitimate Interest Assessment (LIA) to
+                      ensure our interests do not override your fundamental rights and freedoms. You may request a copy
+                      of our LIA by contacting privacy@nourishneural.co.uk.
                     </p>
                   </div>
                 </section>
 
-                {/* Data Retention */}
+                {/* AI and Automated Decision-Making */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">7. Data Retention</h2>
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Brain className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
+                    4. AI Processing and Automated Decision-Making
+                  </h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    <p>We retain your information for as long as necessary to:</p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li>Provide our services and maintain your account</li>
-                      <li>Comply with legal obligations</li>
-                      <li>Resolve disputes and enforce agreements</li>
-                      <li>Improve our AI models (anonymized data)</li>
+                    <p>
+                      Nourish Neural uses AI and machine learning to provide personalised recommendations. In compliance
+                      with UK GDPR Article 22, we provide the following information:
+                    </p>
+                    <ul className="list-disc pl-6 space-y-3">
+                      <li>
+                        <strong>Waste prediction:</strong> An ensemble of three machine learning models (Random Forest, Gradient Boosting,
+                        Neural Network) analyses 45 features including storage conditions, purchase dates, and food categories to predict
+                        waste risk. These predictions are advisory only and do not trigger any automated actions without your input.
+                      </li>
+                      <li>
+                        <strong>Recipe and meal recommendations:</strong> Based on your pantry contents, dietary preferences, and
+                        nutritional profile. You are always free to accept, modify, or reject any recommendation.
+                      </li>
+                      <li>
+                        <strong>Conversational AI (Nurexa):</strong> Processes your natural language queries to provide food management
+                        assistance. AI conversations are processed locally where possible (via Ollama) to minimise data transmission.
+                        Conversation data is retained only for the duration of your session unless you opt in to conversation history.
+                      </li>
                     </ul>
                     <p>
-                      When you delete your account, we will delete your personal information within 30 days, 
-                      except where retention is required by law.
+                      <strong>Your rights regarding automated processing:</strong>
                     </p>
+                    <ul className="list-disc pl-6 space-y-2">
+                      <li>You have the right to request human review of any AI-generated recommendation</li>
+                      <li>You have the right to obtain an explanation of how a prediction was made (feature importance and confidence scores are available in the AI Explainability section)</li>
+                      <li>You have the right to contest any AI output and express your point of view</li>
+                      <li>No decisions with legal or similarly significant effects are made by automated means alone</li>
+                    </ul>
                   </div>
                 </section>
 
-                {/* Your Rights */}
+                {/* Data Sharing */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
-                    <Users className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
-                    8. Your Privacy Rights
+                    <Server className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
+                    5. Data Sharing and Third-Party Processors
                   </h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    <p>Depending on your location, you may have the following rights:</p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li><strong>Access:</strong> Request copies of your personal information</li>
-                      <li><strong>Rectification:</strong> Correct inaccurate or incomplete information</li>
-                      <li><strong>Erasure:</strong> Request deletion of your personal information</li>
-                      <li><strong>Portability:</strong> Receive your data in a structured, machine-readable format</li>
-                      <li><strong>Restriction:</strong> Limit how we process your information</li>
-                      <li><strong>Objection:</strong> Object to processing based on legitimate interests</li>
-                      <li><strong>Withdraw Consent:</strong> Withdraw consent for consent-based processing</li>
-                    </ul>
                     <p>
-                      To exercise these rights, please contact us at <strong>privacy@nourishneural.co.uk</strong>.
-                      We will respond within 30 days.
+                      <strong>We do not sell your personal data.</strong> We share your data only with the following
+                      categories of recipients, each bound by data processing agreements:
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm border-collapse">
+                        <thead>
+                          <tr className="border-b border-neutral-200 dark:border-neutral-600">
+                            <th className="text-left py-3 pr-4 font-semibold text-neutral-900 dark:text-neutral-100">Processor</th>
+                            <th className="text-left py-3 pr-4 font-semibold text-neutral-900 dark:text-neutral-100">Purpose</th>
+                            <th className="text-left py-3 font-semibold text-neutral-900 dark:text-neutral-100">Location</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-neutral-700 dark:text-neutral-300">
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">Supabase</td>
+                            <td className="py-3 pr-4">Authentication, database hosting, cloud storage</td>
+                            <td className="py-3">EU (Frankfurt)</td>
+                          </tr>
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">Vercel</td>
+                            <td className="py-3 pr-4">Website hosting and content delivery</td>
+                            <td className="py-3">Global CDN (EU primary)</td>
+                          </tr>
+                          <tr>
+                            <td className="py-3 pr-4 font-medium">TomTom</td>
+                            <td className="py-3 pr-4">Store location and mapping services</td>
+                            <td className="py-3">Netherlands (EU)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <p>
+                      <strong>AI processing:</strong> The Ollama language model runs locally on our infrastructure. Your
+                      AI queries are not sent to external third-party AI providers (such as OpenAI or Google) unless we
+                      notify you in advance and obtain your consent.
+                    </p>
+                    <p>
+                      We may also disclose your data where required by law, regulation, court order, or governmental
+                      request, or where necessary to protect our rights, property, or safety or that of others.
                     </p>
                   </div>
                 </section>
@@ -231,36 +318,191 @@ export default function PrivacyPolicy() {
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
                     <Globe className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
-                    9. International Data Transfers
+                    6. International Data Transfers
                   </h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
-                      Your information may be transferred to and processed in countries other than your country of residence. 
-                      We ensure appropriate safeguards are in place, including:
+                      Your data is primarily stored and processed within the UK and European Economic Area (EEA). Where
+                      we transfer personal data outside the UK, we ensure appropriate safeguards are in place as required
+                      by UK GDPR Chapter V, including:
                     </p>
                     <ul className="list-disc pl-6 space-y-2">
-                      <li>Standard Contractual Clauses approved by the European Commission</li>
-                      <li>Adequacy decisions by relevant data protection authorities</li>
-                      <li>Certification schemes and codes of conduct</li>
-                      <li>Binding corporate rules for intra-group transfers</li>
+                      <li><strong>UK adequacy regulations:</strong> Transfers to countries deemed adequate by the UK Secretary of State</li>
+                      <li><strong>International Data Transfer Agreement (IDTA):</strong> The UK's replacement for Standard Contractual Clauses, approved by the ICO</li>
+                      <li><strong>UK Addendum to the EU SCCs:</strong> Where applicable for transfers via EU-based processors</li>
                     </ul>
+                    <p>
+                      You may request details of the specific safeguards applied to your data by contacting privacy@nourishneural.co.uk.
+                    </p>
                   </div>
                 </section>
 
-                {/* Cookies and Tracking */}
+                {/* Data Security */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">10. Cookies and Tracking Technologies</h2>
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Lock className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
+                    7. Data Security
+                  </h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
-                    <p>We use cookies and similar technologies to:</p>
+                    <p>
+                      We implement appropriate technical and organisational measures to protect your personal data
+                      against unauthorised or unlawful processing and against accidental loss, destruction, or damage,
+                      as required by UK GDPR Article 32:
+                    </p>
                     <ul className="list-disc pl-6 space-y-2">
-                      <li>Remember your preferences and settings</li>
-                      <li>Analyze usage patterns and improve our service</li>
-                      <li>Provide personalized content and recommendations</li>
-                      <li>Ensure security and prevent fraud</li>
+                      <li><strong>Encryption:</strong> TLS 1.2+ for data in transit; AES-256 for data at rest</li>
+                      <li><strong>Authentication:</strong> JWT tokens with secure expiry, bcrypt password hashing</li>
+                      <li><strong>Access controls:</strong> Row-Level Security (RLS) on all database tables ensures users can only access their own data</li>
+                      <li><strong>Rate limiting:</strong> Protection against brute-force attacks on authentication endpoints</li>
+                      <li><strong>Security headers:</strong> Helmet.js with Content Security Policy, X-Frame-Options, X-Content-Type-Options</li>
+                      <li><strong>Input validation:</strong> Server-side validation using Joi to prevent injection attacks</li>
+                      <li><strong>Regular updates:</strong> Dependencies monitored and updated for known vulnerabilities</li>
+                    </ul>
+                    <p className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4 dark:text-yellow-200">
+                      <strong>Note:</strong> No method of electronic storage or transmission is 100% secure. While we implement
+                      industry-standard safeguards, we cannot guarantee absolute security. In the event of a personal data breach,
+                      we will notify the ICO within 72 hours where required by UK GDPR Article 33, and affected individuals without
+                      undue delay where required by Article 34.
+                    </p>
+                  </div>
+                </section>
+
+                {/* Data Retention */}
+                <section className="mb-12">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Clock className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
+                    8. Data Retention
+                  </h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                    <p>
+                      We retain personal data only for as long as necessary to fulfil the purposes for which it was
+                      collected, in accordance with UK GDPR Article 5(1)(e) (storage limitation):
+                    </p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm border-collapse">
+                        <thead>
+                          <tr className="border-b border-neutral-200 dark:border-neutral-600">
+                            <th className="text-left py-3 pr-4 font-semibold text-neutral-900 dark:text-neutral-100">Data Type</th>
+                            <th className="text-left py-3 pr-4 font-semibold text-neutral-900 dark:text-neutral-100">Retention Period</th>
+                            <th className="text-left py-3 font-semibold text-neutral-900 dark:text-neutral-100">Reason</th>
+                          </tr>
+                        </thead>
+                        <tbody className="text-neutral-700 dark:text-neutral-300">
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">Account data</td>
+                            <td className="py-3 pr-4">Duration of account + 30 days</td>
+                            <td className="py-3">Service provision; grace period for reactivation</td>
+                          </tr>
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">Food and pantry data</td>
+                            <td className="py-3 pr-4">Duration of account + 30 days</td>
+                            <td className="py-3">Core service delivery</td>
+                          </tr>
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">AI conversation logs</td>
+                            <td className="py-3 pr-4">Session duration (unless history opted in)</td>
+                            <td className="py-3">Real-time AI response</td>
+                          </tr>
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">Contact form submissions</td>
+                            <td className="py-3 pr-4">12 months after resolution</td>
+                            <td className="py-3">Customer support records</td>
+                          </tr>
+                          <tr className="border-b border-neutral-100 dark:border-neutral-700">
+                            <td className="py-3 pr-4 font-medium">Server access logs</td>
+                            <td className="py-3 pr-4">90 days</td>
+                            <td className="py-3">Security monitoring</td>
+                          </tr>
+                          <tr>
+                            <td className="py-3 pr-4 font-medium">Anonymised analytics</td>
+                            <td className="py-3 pr-4">Indefinite</td>
+                            <td className="py-3">Service improvement (no personal data)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <p>
+                      When you delete your account, we will erase your personal data within 30 days. Anonymised,
+                      aggregated data (which cannot identify you) may be retained indefinitely for service improvement.
+                      We may retain certain data beyond these periods where required by law (e.g., for tax, legal,
+                      or regulatory purposes under the Limitation Act 1980).
+                    </p>
+                  </div>
+                </section>
+
+                {/* Your Rights */}
+                <section className="mb-12">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Users className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
+                    9. Your Data Protection Rights
+                  </h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                    <p>
+                      Under the UK GDPR, you have the following rights. These rights are not absolute and may be subject
+                      to certain exemptions under the Data Protection Act 2018:
+                    </p>
+                    <ul className="list-disc pl-6 space-y-3">
+                      <li><strong>Right of access (Article 15):</strong> You may request a copy of all personal data we hold about you. You can also export your data directly via the "My Data" tab in your Profile at any time.</li>
+                      <li><strong>Right to rectification (Article 16):</strong> You may request correction of inaccurate or incomplete personal data. You can update most data directly in your Profile settings.</li>
+                      <li><strong>Right to erasure (Article 17):</strong> You may request deletion of your personal data where there is no compelling reason for its continued processing. You can delete your account via Profile settings.</li>
+                      <li><strong>Right to restrict processing (Article 18):</strong> You may request that we limit how we process your data in certain circumstances (e.g., while we verify the accuracy of disputed data).</li>
+                      <li><strong>Right to data portability (Article 20):</strong> You may request your data in a structured, commonly used, machine-readable format (JSON). Use the data export feature in your Profile.</li>
+                      <li><strong>Right to object (Article 21):</strong> You may object to processing based on legitimate interests. We will cease processing unless we demonstrate compelling legitimate grounds.</li>
+                      <li><strong>Rights related to automated decision-making (Article 22):</strong> You may request human intervention in, and contest the result of, any automated decision-making. See Section 4 above.</li>
+                      <li><strong>Right to withdraw consent:</strong> Where processing is based on consent, you may withdraw consent at any time without affecting the lawfulness of processing carried out before withdrawal.</li>
                     </ul>
                     <p>
-                      You can control cookies through your browser settings. However, disabling cookies may affect 
-                      the functionality of our Service.
+                      <strong>How to exercise your rights:</strong> Email privacy@nourishneural.co.uk or use the self-service
+                      tools in your Profile. We will respond to your request within one month (extendable by two further months
+                      for complex requests, in which case we will inform you). We will not charge a fee unless the request
+                      is manifestly unfounded or excessive. We may request proof of identity before processing your request.
+                    </p>
+                  </div>
+                </section>
+
+                {/* Cookies and PECR */}
+                <section className="mb-12">
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
+                    <Cookie className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
+                    10. Cookies and Electronic Communications (PECR)
+                  </h2>
+                  <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
+                    <p>
+                      In compliance with the Privacy and Electronic Communications Regulations 2003 (PECR), we use the
+                      following categories of cookies and similar technologies:
+                    </p>
+
+                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mt-6 mb-3">Strictly Necessary Cookies (no consent required)</h3>
+                    <ul className="list-disc pl-6 space-y-2">
+                      <li><strong>Authentication token:</strong> JWT stored in localStorage to maintain your logged-in session</li>
+                      <li><strong>Service worker cache:</strong> PWA offline functionality (Workbox)</li>
+                      <li><strong>Security cookies:</strong> CSRF protection and rate limiting identifiers</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mt-6 mb-3">Functional Cookies (consent required)</h3>
+                    <ul className="list-disc pl-6 space-y-2">
+                      <li><strong>User preferences:</strong> Theme (light/dark mode), language, display settings</li>
+                      <li><strong>Session state:</strong> Last visited page, open tabs, form progress</li>
+                    </ul>
+
+                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mt-6 mb-3">Analytics Cookies (consent required)</h3>
+                    <ul className="list-disc pl-6 space-y-2">
+                      <li><strong>Usage analytics:</strong> Aggregated, anonymised data on feature usage and page visits</li>
+                    </ul>
+
+                    <p>
+                      We do not use advertising or tracking cookies. We do not engage in cross-site tracking or share
+                      cookie data with advertisers.
+                    </p>
+                    <p>
+                      You can manage cookies through your browser settings. Disabling strictly necessary cookies may
+                      prevent the Service from functioning correctly. For more information about cookies, visit
+                      aboutcookies.org or allaboutcookies.org.
+                    </p>
+                    <p>
+                      <strong>Electronic marketing:</strong> We will only send you marketing communications where you have
+                      given explicit opt-in consent in accordance with PECR Regulation 22. You may unsubscribe at any time
+                      using the link in any marketing email or by contacting us.
                     </p>
                   </div>
                 </section>
@@ -270,66 +512,86 @@ export default function PrivacyPolicy() {
                   <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">11. Children's Privacy</h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
-                      Nourish Neural is not intended for children under 16 years of age, in accordance with UK GDPR
-                      requirements. We do not knowingly collect personal information from children under 16. If we
-                      become aware that we have collected personal information from a child under 16, we will take
-                      steps to delete such information promptly.
+                      Nourish Neural is not directed at children under 16 years of age. In accordance with the UK GDPR
+                      (which sets the age of consent for data processing at 16 in the UK, as implemented by the Data
+                      Protection Act 2018, Section 9) and the ICO's Age Appropriate Design Code (Children's Code):
                     </p>
+                    <ul className="list-disc pl-6 space-y-2">
+                      <li>We do not knowingly collect personal data from children under 16 without verifiable parental or guardian consent</li>
+                      <li>If we become aware that we have collected personal data from a child under 16 without appropriate consent, we will take steps to delete that data promptly</li>
+                      <li>If you are a parent or guardian and believe your child has provided us with personal data, please contact us at privacy@nourishneural.co.uk</li>
+                    </ul>
                   </div>
                 </section>
 
                 {/* Third-Party Services */}
                 <section className="mb-12">
-                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">12. Third-Party Services</h2>
+                  <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">12. Third-Party Links and Services</h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
-                      Our Service may contain links to third-party websites or integrate with third-party services. 
-                      This Privacy Policy does not apply to those third parties. We encourage you to review their 
-                      privacy policies.
+                      The Service may contain links to third-party websites or integrate with third-party services.
+                      This Privacy Policy does not apply to those third parties. We encourage you to review their
+                      privacy policies before providing any personal data.
                     </p>
-                    <p>We integrate with the following services:</p>
-                    <ul className="list-disc pl-6 space-y-2">
-                      <li>Supabase (authentication, database, and cloud storage)</li>
-                      <li>Ollama (local AI language model processing)</li>
-                      <li>Google Maps Platform (store location services)</li>
-                    </ul>
+                    <p>
+                      We are not responsible for the privacy practices, content, or security of any third-party websites
+                      or services.
+                    </p>
                   </div>
                 </section>
 
-                {/* Changes to Privacy Policy */}
+                {/* Changes */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">13. Changes to This Privacy Policy</h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
-                      We may update this Privacy Policy from time to time. We will notify you of any material changes 
-                      by posting the new Privacy Policy on this page and updating the "Last updated" date.
+                      We may update this Privacy Policy to reflect changes in our practices, technology, legal
+                      requirements, or other factors. We will:
                     </p>
+                    <ul className="list-disc pl-6 space-y-2">
+                      <li>Update the "Last updated" date at the top of this page</li>
+                      <li>Notify you of material changes by email or through the Service at least 30 days before they take effect</li>
+                      <li>Where changes affect the lawful basis for processing or introduce new categories of data collection, we will seek fresh consent where required</li>
+                    </ul>
                     <p>
-                      We will also notify you via email or through the Service if the changes are significant. 
-                      Your continued use of the Service after such changes constitutes acceptance of the updated policy.
+                      Your continued use of the Service after changes take effect constitutes acceptance. If you do not
+                      agree, you should stop using the Service and delete your account.
                     </p>
                   </div>
                 </section>
 
-                {/* Contact Information */}
+                {/* Contact */}
                 <section className="mb-12">
                   <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6 flex items-center">
                     <Mail className="h-6 w-6 text-primary-600 dark:text-primary-400 mr-3" />
-                    14. Contact Us
+                    14. Contact Us and Complaints
                   </h2>
                   <div className="space-y-4 text-neutral-700 dark:text-neutral-300 leading-relaxed">
                     <p>
-                      If you have any questions about this Privacy Policy or our data practices, please contact us:
+                      If you have questions about this Privacy Policy, wish to exercise your data protection rights,
+                      or have a complaint about how we handle your data:
                     </p>
                     <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 dark:text-green-200">
-                      <p><strong>Data Protection Officer:</strong> privacy@nourishneural.co.uk</p>
-                      <p><strong>General Inquiries:</strong> support@nourishneural.co.uk</p>
-                      <p><strong>Address:</strong> Nourish Neural Privacy Team, London, United Kingdom</p>
+                      <p><strong>Data Protection Contact:</strong> privacy@nourishneural.co.uk</p>
+                      <p><strong>General Support:</strong> support@nourishneural.co.uk</p>
+                      <p><strong>Address:</strong> Nourish Neural, London, United Kingdom</p>
                     </div>
                     <p>
-                      You also have the right to lodge a complaint with the Information Commissioner's Office (ICO)
-                      at <strong>ico.org.uk</strong> if you believe we have not handled your personal information
-                      in accordance with applicable law.
+                      We aim to respond to all data protection queries within one month.
+                    </p>
+                    <p>
+                      <strong>Supervisory authority:</strong> You have the right to lodge a complaint with the
+                      Information Commissioner's Office (ICO) at any time:
+                    </p>
+                    <div className="bg-neutral-50 dark:bg-neutral-700 rounded-lg p-6">
+                      <p><strong>Information Commissioner's Office</strong></p>
+                      <p>Wycliffe House, Water Lane, Wilmslow, Cheshire SK9 5AF</p>
+                      <p>Telephone: 0303 123 1113</p>
+                      <p>Website: ico.org.uk</p>
+                    </div>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-4">
+                      We would appreciate the opportunity to address your concerns before you contact the ICO. However,
+                      this does not affect your right to lodge a complaint with the ICO at any time.
                     </p>
                   </div>
                 </section>
@@ -341,7 +603,7 @@ export default function PrivacyPolicy() {
             <div className="bg-neutral-50 dark:bg-neutral-900 px-8 py-6 border-t border-neutral-200 dark:border-neutral-700">
               <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
                 <p className="text-neutral-600 dark:text-neutral-400 text-sm">
-                  © 2026 Nourish Neural. All rights reserved.
+                  &copy; 2026 Nourish Neural. All rights reserved.
                 </p>
                 <div className="flex space-x-6">
                   <Link to="/terms" className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors">
