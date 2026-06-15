@@ -255,7 +255,7 @@ export default function BarcodeScanner({ isOpen, onClose, onProductFound }: Barc
       ctx.drawImage(img, 0, 0)
       URL.revokeObjectURL(url)
 
-      const result = reader.decodeFromCanvas(canvas)
+      const result = (reader as any).decodeFromCanvas(canvas)
       const barcode = result.getText()
       setScannedBarcode(barcode)
       setIsLookingUp(false)

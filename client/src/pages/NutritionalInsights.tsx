@@ -337,7 +337,7 @@ export default function NutritionalInsights() {
                             ))}
                           </Pie>
                           <Tooltip
-                            formatter={(value: number, name: string) => [`${value}%`, name]}
+                            formatter={(value: any, name: any) => [`${value}%`, name]}
                             contentStyle={{
                               backgroundColor: 'var(--tooltip-bg, #fff)',
                               border: '1px solid #e5e7eb',
@@ -434,7 +434,7 @@ export default function NutritionalInsights() {
                           animationDuration={1000}
                         />
                         <Tooltip
-                          formatter={(value: number) => [`${value}%`, 'Coverage']}
+                          formatter={(value: any) => [`${value}%`, 'Coverage']}
                           contentStyle={{
                             backgroundColor: 'var(--tooltip-bg, #fff)',
                             border: '1px solid #e5e7eb',

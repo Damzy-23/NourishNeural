@@ -1,35 +1,52 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Helmet } from 'react-helmet-async'
 import { WifiOff } from 'lucide-react'
 import { useAuth } from './hooks/useAuth'
 import Layout from './components/Layout'
-import LandingPage from './pages/LandingPage'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
-import ResetPassword from './pages/ResetPassword'
-import TermsOfService from './pages/TermsOfService'
-import PrivacyPolicy from './pages/PrivacyPolicy'
-import Support from './pages/Support'
-import Contact from './pages/Contact'
-import HowItWorks from './pages/HowItWorks'
-import AIExplainability from './pages/AIExplainability'
-import NutritionalInsights from './pages/NutritionalInsights'
-import PromptLab from './pages/PromptLab'
-import AIGovernance from './pages/AIGovernance'
-import AgentEvaluation from './pages/AgentEvaluation'
-import Dashboard from './pages/Dashboard'
-import GroceryLists from './pages/GroceryLists'
-import Pantry from './pages/Pantry'
-import Stores from './pages/Stores'
-import AIAssistant from './pages/AIAssistant'
-import Profile from './pages/Profile'
-import MealPlanCalendar from './pages/MealPlanCalendar'
-import Recipes from './pages/Recipes'
-import Challenges from './pages/Challenges'
-import AuthCallback from './pages/AuthCallback'
 import ProtectedRoute from './components/ProtectedRoute'
+
+const LandingPage = lazy(() => import('./pages/LandingPage'))
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
+const ResetPassword = lazy(() => import('./pages/ResetPassword'))
+const TermsOfService = lazy(() => import('./pages/TermsOfService'))
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'))
+const Support = lazy(() => import('./pages/Support'))
+const Contact = lazy(() => import('./pages/Contact'))
+const HowItWorks = lazy(() => import('./pages/HowItWorks'))
+const AIExplainability = lazy(() => import('./pages/AIExplainability'))
+const NutritionalInsights = lazy(() => import('./pages/NutritionalInsights'))
+const PromptLab = lazy(() => import('./pages/PromptLab'))
+const AIGovernance = lazy(() => import('./pages/AIGovernance'))
+const AgentEvaluation = lazy(() => import('./pages/AgentEvaluation'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const GroceryLists = lazy(() => import('./pages/GroceryLists'))
+const Pantry = lazy(() => import('./pages/Pantry'))
+const Stores = lazy(() => import('./pages/Stores'))
+const AIAssistant = lazy(() => import('./pages/AiAssistant'))
+const Profile = lazy(() => import('./pages/Profile'))
+const MealPlanCalendar = lazy(() => import('./pages/MealPlanCalendar'))
+const Recipes = lazy(() => import('./pages/Recipes'))
+const Challenges = lazy(() => import('./pages/Challenges'))
+const AuthCallback = lazy(() => import('./pages/AuthCallback'))
+const NotFound = lazy(() => import('./pages/NotFound'))
+
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="loading-dots">
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
+        <p className="mt-4 text-neutral-600">Loading...</p>
+      </div>
+    </div>
+  )
+}
 
 function App() {
   const { isLoading } = useAuth()
@@ -75,48 +92,50 @@ function App() {
         </div>
       )}
 
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/terms" element={<TermsOfService />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/support" element={<Support />} />
-        <Route path="/contact" element={<Contact />} />
-        <Route path="/how-it-works" element={<HowItWorks />} />
-        <Route path="/ai-explainability" element={<AIExplainability />} />
-        <Route path="/nutrition-insights" element={<NutritionalInsights />} />
-        <Route path="/prompt-lab" element={<PromptLab />} />
-        <Route path="/ai-governance" element={<AIGovernance />} />
-        <Route path="/agent-evaluation" element={<AgentEvaluation />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/support" element={<Support />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/ai-explainability" element={<AIExplainability />} />
+          <Route path="/nutrition-insights" element={<NutritionalInsights />} />
+          <Route path="/prompt-lab" element={<PromptLab />} />
+          <Route path="/ai-governance" element={<AIGovernance />} />
+          <Route path="/agent-evaluation" element={<AgentEvaluation />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
 
-        {/* Protected routes */}
-        <Route path="/app" element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Navigate to="/app/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="grocery-lists" element={<GroceryLists />} />
-          <Route path="pantry" element={<Pantry />} />
-          <Route path="stores" element={<Stores />} />
-          <Route path="ai-assistant" element={<AIAssistant />} />
-          <Route path="recipes" element={<Recipes />} />
-          <Route path="meal-plan" element={<MealPlanCalendar />} />
-          <Route path="challenges" element={<Challenges />} />
-          <Route path="profile" element={<Profile />} />
-        </Route>
+          {/* Protected routes */}
+          <Route path="/app" element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="/app/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="grocery-lists" element={<GroceryLists />} />
+            <Route path="pantry" element={<Pantry />} />
+            <Route path="stores" element={<Stores />} />
+            <Route path="ai-assistant" element={<AIAssistant />} />
+            <Route path="recipes" element={<Recipes />} />
+            <Route path="meal-plan" element={<MealPlanCalendar />} />
+            <Route path="challenges" element={<Challenges />} />
+            <Route path="profile" element={<Profile />} />
+          </Route>
 
-        {/* Catch all route */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          {/* 404 */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
     </>
   )
 }
 
-export default App 
+export default App

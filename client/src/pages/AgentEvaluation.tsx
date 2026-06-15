@@ -4,8 +4,6 @@ import {
   ArrowLeft,
   FlaskConical,
   CheckCircle2,
-  AlertTriangle,
-  Shield,
   Zap,
   Target,
   BarChart3,
@@ -22,8 +20,6 @@ import {
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,

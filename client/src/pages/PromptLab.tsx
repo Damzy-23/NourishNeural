@@ -432,7 +432,7 @@ export default function PromptLab() {
                             color: '#f3f4f6',
                             fontSize: '0.875rem',
                           }}
-                          formatter={(value: number) => [`${value}%`]}
+                          formatter={(value: any) => [`${value}%`]}
                         />
                         <Bar
                           dataKey="v1"

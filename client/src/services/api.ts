@@ -12,7 +12,7 @@ const getApiBaseUrl = () => {
     (window as any)?.Capacitor?.isNativePlatform?.() === true) {
     // Native mobile apps need the hardcoded IP of your PC since they aren't hosted on the dev server.
     // *NOTE*: Your PC Firewall must allow incoming connections on port 5000 for this to work.
-    return 'http://10.167.101.234:5000'
+    return (import.meta as any).env?.VITE_CAPACITOR_API_URL || 'http://localhost:5000'
   }
 
   // Web Browser (Localhost or Phone accessing via local IP 10.167.101.234:3050)
