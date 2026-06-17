@@ -777,32 +777,35 @@ app.use('*', (req, res) => {
 });
 
 // Start server
-async function startServer() {
-  try {
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Nourish Neural server running on port ${PORT}`);
-      console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-      console.log(`🔗 Health check: http://localhost:${PORT}/health`);
-      console.log(`📱 Mobile access: http://10.167.101.234:${PORT}`);
-      console.log(`🔑 Using Supabase Auth: ${process.env.SUPABASE_URL ? '✅' : '❌'}`);
-      console.log(`🎯 CORS enabled for: web + Capacitor native`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error);
-    process.exit(1);
+// Export for Vercel serverless — skip listen when imported as a module
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  async function startServer() {
+    try {
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`🚀 Nourish Neural server running on port ${PORT}`);
+        console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+        console.log(`🔗 Health check: http://localhost:${PORT}/health`);
+        console.log(`📱 Mobile access: http://10.167.101.234:${PORT}`);
+        console.log(`🔑 Using Supabase Auth: ${process.env.SUPABASE_URL ? '✅' : '❌'}`);
+        console.log(`🎯 CORS enabled for: web + Capacitor native`);
+      });
+    } catch (error) {
+      console.error('❌ Failed to start server:', error);
+      process.exit(1);
+    }
   }
+
+  process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Promise Rejection:', err);
+    process.exit(1);
+  });
+
+  process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+    process.exit(1);
+  });
+
+  startServer();
 }
-
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Promise Rejection:', err);
-  process.exit(1);
-});
-
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-  process.exit(1);
-});
-
-startServer();
