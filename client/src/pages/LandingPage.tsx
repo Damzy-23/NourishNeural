@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
-  ChevronLeft,
-  ChevronRight,
   CircleDashed,
   MessageSquare,
   Moon,
@@ -19,21 +17,7 @@ import {
   Waves,
   Cpu
 } from 'lucide-react'
-import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTheme } from '../contexts/ThemeContext'
-
-/* ─── Mobile detection hook ─── */
-function useIsMobile(breakpoint = 768) {
-  const [isMobile, setIsMobile] = useState(false)
-  useEffect(() => {
-    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`)
-    setIsMobile(mql.matches)
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
-    mql.addEventListener('change', handler)
-    return () => mql.removeEventListener('change', handler)
-  }, [breakpoint])
-  return isMobile
-}
 
 const MotionLink = motion(Link)
 
@@ -153,305 +137,8 @@ const quickLinks = [
   },
 ]
 
-/* ─── Slide labels for carousel dots ─── */
-const slideLabels = ['Home', 'Features', 'Journey', 'Ecosystem', 'Reviews', 'Join']
-
-/* ═══════════════════════════════════════════════════════════
-   MOBILE CAROUSEL SLIDES
-   Each slide is a self-contained full-viewport-width panel
-   ═══════════════════════════════════════════════════════════ */
-
-function MobileSlideHero() {
-  return (
-    <div className="flex flex-col justify-center min-h-[calc(100vh-8rem)] px-5 py-8 relative overflow-hidden">
-      <motion.div
-        className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      />
-      <motion.div
-        className="absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-accent-400/20 blur-3xl"
-        animate={{ y: [0, -16, 0] }}
-        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <div className="relative space-y-6">
-        <motion.div
-          className="inline-flex items-center space-x-2 rounded-full border border-primary-200/70 dark:border-primary-700/70 bg-white/80 dark:bg-neutral-800/80 px-3 py-1.5 text-xs font-semibold text-primary-700 dark:text-primary-300 shadow-soft"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Sparkles className="h-3.5 w-3.5" />
-          <span>AI-first household nourishment</span>
-        </motion.div>
-
-        <motion.h1
-          className="text-3xl font-bold leading-tight text-neutral-900 dark:text-neutral-100"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-        >
-          Reimagine how your kitchen thinks with <span className="gradient-text">Nourish Neural</span>.
-        </motion.h1>
-
-        <motion.p
-          className="text-base text-neutral-600 dark:text-neutral-300 leading-relaxed"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          A neural pantry that forecasts demand, optimises spend, and curates meals in real time.
-        </motion.p>
-
-        <motion.div
-          className="flex flex-col gap-3"
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-        >
-          <Link to="/register" className="btn btn-primary px-6 py-3 text-base shadow-large text-center">
-            Get Started Free
-          </Link>
-          <Link to="/login" className="btn btn-outline px-6 py-3 text-base text-center flex items-center justify-center">
-            Explore the Demo <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-2 gap-3 pt-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          {metrics.map((metric) => (
-            <div
-              key={metric.label}
-              className="rounded-xl border border-white/40 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-800/80 p-3 text-center shadow-soft"
-            >
-              <span className="text-xl font-bold text-neutral-900 dark:text-neutral-100">{metric.value}</span>
-              <p className="text-[11px] text-neutral-500 dark:text-neutral-400 mt-0.5">{metric.label}</p>
-            </div>
-          ))}
-        </motion.div>
-      </div>
-    </div>
-  )
-}
-
-function MobileSlideFeatures() {
-  return (
-    <div className="flex flex-col justify-center min-h-[calc(100vh-8rem)] px-5 py-8 bg-white dark:bg-neutral-900">
-      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary-600 dark:text-primary-400 mb-2">Capabilities</p>
-      <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">
-        Neural intelligence meets everyday kitchen flow.
-      </h2>
-      <div className="space-y-4 overflow-y-auto flex-1">
-        {features.map((feature) => (
-          <motion.div
-            key={feature.title}
-            className="rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5 shadow-soft"
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4 }}
-          >
-            <div className="flex items-start gap-4">
-              <div className={`shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${feature.tone}`}>
-                <feature.icon className="h-5 w-5 text-primary-600 dark:text-primary-400" />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-1">{feature.title}</h3>
-                <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">{feature.description}</p>
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function MobileSlideJourney() {
-  return (
-    <div className="flex flex-col justify-center min-h-[calc(100vh-8rem)] px-5 py-8 bg-neutral-50 dark:bg-neutral-800">
-      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent-600 dark:text-accent-400 mb-2">Flow</p>
-      <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">
-        Four graceful steps.
-      </h2>
-      <div className="space-y-4 flex-1">
-        {journey.map((item, index) => (
-          <motion.div
-            key={item.title}
-            className="flex items-start gap-4"
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.4, delay: index * 0.08 }}
-          >
-            <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-accent-500 text-white font-semibold text-sm shadow-soft">
-              {index + 1}
-            </div>
-            <div className="rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-4 shadow-soft flex-1">
-              <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-1">{item.title}</h3>
-              <p className="text-sm text-neutral-600 dark:text-neutral-300 leading-relaxed">{item.description}</p>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function MobileSlideEcosystem() {
-  return (
-    <div className="flex flex-col justify-center min-h-[calc(100vh-8rem)] px-5 py-8 bg-white dark:bg-neutral-900">
-      <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary-600 dark:text-primary-400 mb-2">Ecosystem</p>
-      <h2 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100 mb-6">
-        Tap into the neural workspace.
-      </h2>
-      <div className="space-y-4 flex-1">
-        {quickLinks.map((link) => (
-          <Link
-            key={link.label}
-            to={link.href}
-            className="flex items-start gap-4 rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5 shadow-soft active:scale-[0.98] transition-transform"
-          >
-            <div className="shrink-0 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500/15 to-accent-500/15 dark:from-primary-500/25 dark:to-accent-500/25 text-primary-600 dark:text-primary-400">
-              <link.icon className="h-5 w-5" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-base font-semibold text-neutral-900 dark:text-neutral-100 mb-0.5">{link.label}</h3>
-              <p className="text-sm text-neutral-600 dark:text-neutral-300">{link.description}</p>
-            </div>
-            <ArrowRight className="shrink-0 h-4 w-4 text-primary-500 mt-1" />
-          </Link>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function MobileSlideTestimonials() {
-  return (
-    <div className="flex flex-col justify-center min-h-[calc(100vh-8rem)] px-5 py-8 bg-neutral-950 text-white relative overflow-hidden">
-      <motion.div
-        className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(90,138,90,0.25),transparent_55%)]"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      />
-      <div className="relative">
-        <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary-200 mb-2">Social Proof</p>
-        <h2 className="text-2xl font-bold text-white mb-6">
-          Experts and households love Nourish Neural.
-        </h2>
-        <div className="space-y-4">
-          {testimonials.map((testimonial) => (
-            <motion.div
-              key={testimonial.name}
-              className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-lg"
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4 }}
-            >
-              <div className="flex items-center mb-3 text-primary-200">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="h-4 w-4 fill-current" />
-                ))}
-              </div>
-              <p className="text-neutral-100 text-sm leading-relaxed mb-3">"{testimonial.content}"</p>
-              <p className="text-sm font-semibold text-white">{testimonial.name}</p>
-              <p className="text-xs text-neutral-400">{testimonial.role}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function MobileSlideCTA() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-8rem)] px-5 py-8 bg-gradient-to-br from-primary-600 via-primary-700 to-accent-700 text-white text-center">
-      <motion.p
-        className="text-xs font-semibold uppercase tracking-[0.25em] text-primary-100 mb-3"
-        animate={{ opacity: [0.6, 1, 0.6] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-      >
-        Get Started
-      </motion.p>
-      <h2 className="text-2xl font-bold leading-tight mb-4">
-        Ready to infuse your household with culinary intelligence?
-      </h2>
-      <p className="text-base text-primary-100 mb-8 max-w-sm">
-        Join the beta to unlock predictive grocery planning, intelligent pantry insights, and sustainability analytics.
-      </p>
-      <div className="flex flex-col gap-3 w-full max-w-xs">
-        <Link
-          to="/register"
-          className="btn bg-white text-primary-700 hover:bg-white/90 px-8 py-3 text-base font-semibold shadow-large text-center rounded-xl"
-        >
-          Claim Your Access
-        </Link>
-        <Link
-          to="/login"
-          className="btn border border-white bg-transparent text-white hover:bg-white/10 px-8 py-3 text-base font-semibold text-center rounded-xl"
-        >
-          Log In
-        </Link>
-      </div>
-      <p className="text-xs text-primary-200 mt-8">
-        &copy; {new Date().getFullYear()} Nourish Neural. All rights reserved.
-      </p>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MAIN COMPONENT
-   ═══════════════════════════════════════════════════════════ */
-
 export default function LandingPage() {
   const { theme, toggleTheme } = useTheme()
-  const isMobile = useIsMobile()
-  const carouselRef = useRef<HTMLDivElement>(null)
-  const [activeSlide, setActiveSlide] = useState(0)
-
-  /* Track which slide is in view via IntersectionObserver */
-  const slideRefs = useRef<(HTMLDivElement | null)[]>([])
-  const setSlideRef = useCallback((index: number) => (el: HTMLDivElement | null) => {
-    slideRefs.current[index] = el
-  }, [])
-
-  useEffect(() => {
-    if (!isMobile) return
-    const observers: IntersectionObserver[] = []
-    slideRefs.current.forEach((el, i) => {
-      if (!el) return
-      const obs = new IntersectionObserver(
-        ([entry]) => { if (entry.isIntersecting) setActiveSlide(i) },
-        { root: carouselRef.current, threshold: 0.55 }
-      )
-      obs.observe(el)
-      observers.push(obs)
-    })
-    return () => observers.forEach(o => o.disconnect())
-  }, [isMobile])
-
-  const scrollToSlide = (index: number) => {
-    slideRefs.current[index]?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
-  }
-
-  const mobileSlides = [
-    MobileSlideHero,
-    MobileSlideFeatures,
-    MobileSlideJourney,
-    MobileSlideEcosystem,
-    MobileSlideTestimonials,
-    MobileSlideCTA,
-  ]
 
   return (
     <>
@@ -476,8 +163,7 @@ export default function LandingPage() {
                 />
                 <span className="text-xl font-bold tracking-tight text-neutral-900 dark:text-neutral-100">Nourish Neural</span>
               </Link>
-              {/* Desktop nav buttons */}
-              <div className="hidden md:flex items-center space-x-3">
+              <div className="flex items-center space-x-2 sm:space-x-3">
                 <motion.button
                   onClick={toggleTheme}
                   className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors"
@@ -494,647 +180,568 @@ export default function LandingPage() {
                 <Link to="/login" className="btn btn-ghost text-sm font-semibold">
                   Sign In
                 </Link>
-                <Link to="/register" className="btn btn-primary btn-sm md:btn">
+                <Link to="/register" className="btn btn-primary text-xs sm:text-sm px-3 sm:px-5 py-1.5 sm:py-2">
                   Join the Beta
-                </Link>
-              </div>
-              {/* Mobile nav buttons */}
-              <div className="flex md:hidden items-center space-x-2">
-                <motion.button
-                  onClick={toggleTheme}
-                  className="p-2 rounded-lg bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300"
-                  whileTap={{ scale: 0.9 }}
-                  aria-label="Toggle theme"
-                >
-                  {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-                </motion.button>
-                <Link to="/login" className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-                  Sign In
-                </Link>
-                <Link to="/register" className="btn btn-primary btn-sm text-xs px-3 py-1.5">
-                  Join
                 </Link>
               </div>
             </div>
           </nav>
         </header>
 
-        {/* ════════════════════════════════════════════
-            MOBILE CAROUSEL (< 768px only)
-            ════════════════════════════════════════════ */}
-        {isMobile && (
-          <div className="relative">
-            {/* Horizontal scroll-snap carousel */}
-            <div
-              ref={carouselRef}
-              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-              style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+        {/* Hero */}
+        <section className="relative overflow-hidden">
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.2, ease: 'easeOut' }}
+          />
+          <motion.div
+            className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-accent-400/20 blur-3xl"
+            animate={{ y: [0, -24, 0], rotate: [0, 8, -6, 0] }}
+            transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute -bottom-24 right-[-5%] h-80 w-80 rounded-full bg-primary-400/20 blur-3xl hidden sm:block"
+            animate={{ y: [0, 18, 0], scale: [1, 1.08, 1] }}
+            transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.8 }}
+          />
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-24">
+            <motion.div
+              className="grid gap-10 lg:gap-16 lg:grid-cols-[1.05fr_0.95fr] items-center"
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
             >
-              {mobileSlides.map((SlideComponent, i) => (
-                <div
-                  key={i}
-                  ref={setSlideRef(i)}
-                  className="w-screen shrink-0 snap-center"
-                >
-                  <SlideComponent />
-                </div>
-              ))}
-            </div>
-
-            {/* Dot indicators */}
-            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-full bg-black/50 dark:bg-white/20 backdrop-blur-md px-4 py-2.5">
-              {/* Left arrow */}
-              <button
-                onClick={() => scrollToSlide(Math.max(0, activeSlide - 1))}
-                className={`p-0.5 rounded-full transition-opacity ${activeSlide === 0 ? 'opacity-30 pointer-events-none' : 'opacity-80'}`}
-                aria-label="Previous slide"
-              >
-                <ChevronLeft className="h-4 w-4 text-white" />
-              </button>
-
-              {slideLabels.map((label, i) => (
-                <button
-                  key={label}
-                  onClick={() => scrollToSlide(i)}
-                  className="flex flex-col items-center gap-0.5 group"
-                  aria-label={`Go to ${label}`}
-                >
-                  <span
-                    className={`block rounded-full transition-all duration-300 ${
-                      i === activeSlide
-                        ? 'w-6 h-2 bg-white'
-                        : 'w-2 h-2 bg-white/40 group-hover:bg-white/60'
-                    }`}
-                  />
-                </button>
-              ))}
-
-              {/* Right arrow */}
-              <button
-                onClick={() => scrollToSlide(Math.min(mobileSlides.length - 1, activeSlide + 1))}
-                className={`p-0.5 rounded-full transition-opacity ${activeSlide === mobileSlides.length - 1 ? 'opacity-30 pointer-events-none' : 'opacity-80'}`}
-                aria-label="Next slide"
-              >
-                <ChevronRight className="h-4 w-4 text-white" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ════════════════════════════════════════════
-            DESKTOP LAYOUT (>= 768px) — unchanged
-            ════════════════════════════════════════════ */}
-        {!isMobile && (
-          <>
-            {/* Hero */}
-            <section className="relative overflow-hidden">
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-br from-primary-50 via-white to-accent-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 1.2, ease: 'easeOut' }}
-              />
-              <motion.div
-                className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-accent-400/20 blur-3xl"
-                animate={{ y: [0, -24, 0], rotate: [0, 8, -6, 0] }}
-                transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              <motion.div
-                className="absolute -bottom-24 right-[-5%] h-80 w-80 rounded-full bg-primary-400/20 blur-3xl"
-                animate={{ y: [0, 18, 0], scale: [1, 1.08, 1] }}
-                transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.8 }}
-              />
-              <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+              <motion.div className="space-y-6 sm:space-y-10" variants={staggerContainer}>
                 <motion.div
-                  className="grid gap-16 lg:grid-cols-[1.05fr_0.95fr] items-center"
-                  variants={staggerContainer}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.45 }}
-                >
-                  <motion.div className="space-y-10" variants={staggerContainer}>
-                    <motion.div
-                      className="inline-flex items-center space-x-3 rounded-full border border-primary-200/70 dark:border-primary-700/70 bg-white/80 dark:bg-neutral-800/80 px-4 py-2 text-sm font-semibold text-primary-700 dark:text-primary-300 shadow-soft"
-                      variants={fadeUp}
-                      transition={{ duration: 0.6 }}
-                    >
-                      <motion.span
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20 dark:from-primary-400/30 dark:to-accent-400/30"
-                        animate={{ rotate: [0, -8, 8, 0] }}
-                        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-                      >
-                        <Sparkles className="h-4 w-4 dark:text-primary-300" />
-                      </motion.span>
-                      <span>AI-first orchestration for household nourishment</span>
-                    </motion.div>
-                    <motion.div className="space-y-6" variants={fadeUp} transition={{ duration: 0.7 }}>
-                      <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold leading-tight text-balance text-neutral-900 dark:text-neutral-100">
-                        Reimagine how your kitchen thinks with <span className="gradient-text">Nourish Neural</span>.
-                      </h1>
-                      <p className="text-lg sm:text-xl text-neutral-700 dark:text-neutral-300 leading-relaxed max-w-2xl">
-                        Experience a neural pantry that forecasts demand, optimises spend, and curates meals in real time.
-                        Built atop EfficientNet, LSTM, and ensemble forecasting, Nourish Neural turns grocery chaos into calm.
-                      </p>
-                    </motion.div>
-                    <motion.div
-                      className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6"
-                      variants={fadeUp}
-                      transition={{ duration: 0.7, delay: 0.05 }}
-                    >
-                      <MotionLink
-                        to="/register"
-                        className="btn btn-primary btn-lg px-8 py-4 text-base sm:text-lg shadow-large"
-                        whileHover={{ y: -4, boxShadow: '0 24px 45px -20px rgba(90,138,90,0.6)' }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        Get Started Free
-                      </MotionLink>
-                      <MotionLink
-                        to="/login"
-                        className="btn btn-outline btn-lg px-8 py-4 text-base sm:text-lg hover:border-primary-400 hover:text-primary-600"
-                        whileHover={{ y: -3, backgroundColor: 'rgba(90,138,90,0.05)' }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        Explore the Demo
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </MotionLink>
-                    </motion.div>
-                    <motion.div
-                      className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 pt-4"
-                      variants={staggerContainer}
-                    >
-                      {metrics.map((metric, index) => (
-                        <motion.div
-                          key={metric.label}
-                          className="glass-card rounded-2xl border border-white/40 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-800/80 p-5 text-center shadow-soft"
-                          variants={scaleIn}
-                          transition={{ duration: 0.55, delay: index * 0.08 }}
-                          whileHover={{ y: -6, scale: 1.03 }}
-                        >
-                          <span className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">{metric.value}</span>
-                          <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 mt-1">{metric.label}</p>
-                        </motion.div>
-                      ))}
-                    </motion.div>
-                  </motion.div>
-                  <motion.div
-                    className="relative"
-                    variants={scaleIn}
-                    transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
-                  >
-                    <motion.div
-                      className="absolute inset-0 bg-gradient-to-br from-primary-400/30 via-accent-500/20 to-transparent blur-3xl"
-                      animate={{ scale: [1, 1.05, 1], opacity: [0.85, 1, 0.85] }}
-                      transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-                    />
-                    <motion.div
-                      className="relative rounded-[32px] border border-white/40 dark:border-neutral-700/60 bg-white/90 dark:bg-neutral-800/90 shadow-2xl shadow-primary-500/20 backdrop-blur-xl p-8 space-y-6"
-                      initial={{ opacity: 0, y: 24 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">Live Signal</p>
-                          <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Pantry Neural Graph</h3>
-                        </div>
-                        <motion.div
-                          className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500/10 dark:bg-primary-500/20"
-                          animate={{ rotate: [0, 12, 0] }}
-                          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-                        >
-                          <ShieldCheck className="h-10 w-10 text-primary-500 dark:text-primary-400" />
-                        </motion.div>
-                      </div>
-                      <motion.div
-                        className="grid gap-4 rounded-2xl bg-gradient-to-br from-primary-500/10 via-white/70 to-accent-500/10 dark:from-primary-500/20 dark:via-neutral-800/70 dark:to-accent-500/20 p-6"
-                        variants={staggerContainer}
-                      >
-                        <motion.div className="flex items-center justify-between" variants={fadeUp}>
-                          <div>
-                            <p className="text-sm text-neutral-500 dark:text-neutral-400">Confidence</p>
-                            <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">97.4%</p>
-                          </div>
-                          <span className="inline-flex items-center space-x-2 rounded-full bg-primary-500/10 dark:bg-primary-500/20 px-3 py-1 text-sm font-medium text-primary-600 dark:text-primary-400">
-                            <img src="/logo.png" alt="Nourish Neural" className="h-4 w-4" />
-                            <span>LSTM | EfficientNet Hybrid</span>
-                          </span>
-                        </motion.div>
-                        <motion.div className="grid grid-cols-3 gap-3 text-left text-sm" variants={staggerContainer}>
-                          <motion.div
-                            className="rounded-2xl border border-primary-100/60 dark:border-primary-700/60 bg-white/80 dark:bg-neutral-800/80 p-4 shadow-soft"
-                            variants={fadeUp}
-                            transition={{ duration: 0.5 }}
-                          >
-                            <p className="text-neutral-500 dark:text-neutral-400">Waste Forecast</p>
-                            <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">↓ 48%</p>
-                          </motion.div>
-                          <motion.div
-                            className="rounded-2xl border border-accent-100/60 dark:border-accent-700/60 bg-white/80 dark:bg-neutral-800/80 p-4 shadow-soft"
-                            variants={fadeUp}
-                            transition={{ duration: 0.5, delay: 0.08 }}
-                          >
-                            <p className="text-neutral-500 dark:text-neutral-400">Spend Optimised</p>
-                            <p className="text-lg font-semibold text-accent-600 dark:text-accent-400">£56 / wk</p>
-                          </motion.div>
-                          <motion.div
-                            className="rounded-2xl border border-primary-100/60 dark:border-primary-700/60 bg-white/80 dark:bg-neutral-800/80 p-4 shadow-soft"
-                            variants={fadeUp}
-                            transition={{ duration: 0.5, delay: 0.16 }}
-                          >
-                            <p className="text-neutral-500 dark:text-neutral-400">Freshness Score</p>
-                            <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">92 / 100</p>
-                          </motion.div>
-                        </motion.div>
-                      </motion.div>
-                      <motion.div
-                        className="rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white/70 dark:bg-neutral-800/70 p-5 space-y-3"
-                        initial={{ opacity: 0, y: 18 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.6, delay: 0.45 }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-300 uppercase tracking-wide">Upcoming automations</p>
-                          <span className="rounded-full bg-primary-500/10 dark:bg-primary-500/20 px-3 py-1 text-xs font-semibold text-primary-600 dark:text-primary-400">
-                            Real-time
-                          </span>
-                        </div>
-                        <div className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
-                          <p>• Auto-adjust meal plan to incorporate Nduja expiring in 2 days.</p>
-                          <p>• Send push alert: Waitrose vs Tesco price swing for oat milk.</p>
-                          <p>• Trigger low-waste recipe pack for Friday's family dinner.</p>
-                        </div>
-                      </motion.div>
-                    </motion.div>
-                  </motion.div>
-                </motion.div>
-              </div>
-            </section>
-
-            {/* Feature Grid */}
-            <section className="py-20 bg-white dark:bg-neutral-900">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid gap-12 lg:grid-cols-[0.65fr_1fr] items-start">
-                  <motion.div
-                    className="space-y-6"
-                    initial={{ opacity: 0, y: 32 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, ease: 'easeOut' }}
-                    viewport={{ once: true, amount: 0.4 }}
-                  >
-                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-600 dark:text-primary-400">Capabilities</p>
-                    <h2 className="text-3xl sm:text-4xl font-bold text-neutral-900 dark:text-neutral-100">
-                      Neural intelligence meets everyday kitchen flow.
-                    </h2>
-                    <p className="text-lg text-neutral-600 dark:text-neutral-300 leading-relaxed">
-                      Every layer of Nourish Neural is engineered for clarity. We fuse predictive analytics, pricing data,
-                      and behavior-aware nudges into a UI that mirrors premium food-tech experiences.
-                    </p>
-                  </motion.div>
-                  <motion.div
-                    className="grid gap-6 sm:grid-cols-2"
-                    variants={staggerContainer}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, amount: 0.35 }}
-                  >
-                    {features.map((feature, index) => (
-                      <motion.div
-                        key={feature.title}
-                        className="group rounded-3xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-8 shadow-soft transition-all duration-300"
-                        variants={fadeUp}
-                        transition={{ duration: 0.6, delay: index * 0.08 }}
-                        whileHover={{
-                          y: -10,
-                          boxShadow: '0 32px 60px -35px rgba(90, 138, 90, 0.45)'
-                        }}
-                      >
-                        <motion.div
-                          className={`mb-6 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${feature.tone}`}
-                          whileHover={{ scale: 1.08, rotate: 4 }}
-                          transition={{ type: 'spring', stiffness: 220, damping: 12 }}
-                        >
-                          <feature.icon className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-                        </motion.div>
-                        <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-3">{feature.title}</h3>
-                        <p className="text-neutral-600 dark:text-neutral-300 leading-relaxed">{feature.description}</p>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </div>
-              </div>
-            </section>
-
-            {/* Journey */}
-            <section className="py-20 bg-neutral-50 dark:bg-neutral-800">
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div
-                  className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 mb-16"
-                  initial={{ opacity: 0, y: 32 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  className="inline-flex items-center space-x-2 sm:space-x-3 rounded-full border border-primary-200/70 dark:border-primary-700/70 bg-white/80 dark:bg-neutral-800/80 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold text-primary-700 dark:text-primary-300 shadow-soft"
+                  variants={fadeUp}
                   transition={{ duration: 0.6 }}
-                  viewport={{ once: true, amount: 0.35 }}
                 >
-                  <div className="space-y-4">
-                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-accent-600 dark:text-accent-400">Flow</p>
-                    <h2 className="text-3xl md:text-4xl font-bold text-neutral-900 dark:text-neutral-100 text-balance">
-                      From sensing to orchestration in four graceful steps.
-                    </h2>
-                  </div>
-                  <p className="text-lg text-neutral-600 dark:text-neutral-300 max-w-xl">
-                    Our UI breaks complex machine learning outputs into digestible, glanceable micro-interactions so
-                    households can act in seconds—not hours.
+                  <motion.span
+                    className="inline-flex h-6 w-6 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500/20 to-accent-500/20 dark:from-primary-400/30 dark:to-accent-400/30"
+                    animate={{ rotate: [0, -8, 8, 0] }}
+                    transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <Sparkles className="h-3 w-3 sm:h-4 sm:w-4 dark:text-primary-300" />
+                  </motion.span>
+                  <span>AI-first orchestration for household nourishment</span>
+                </motion.div>
+                <motion.div className="space-y-4 sm:space-y-6" variants={fadeUp} transition={{ duration: 0.7 }}>
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-balance text-neutral-900 dark:text-neutral-100">
+                    Reimagine how your kitchen thinks with <span className="gradient-text">Nourish Neural</span>.
+                  </h1>
+                  <p className="text-base sm:text-lg md:text-xl text-neutral-700 dark:text-neutral-300 leading-relaxed max-w-2xl">
+                    Experience a neural pantry that forecasts demand, optimises spend, and curates meals in real time.
+                    Built atop EfficientNet, LSTM, and ensemble forecasting, Nourish Neural turns grocery chaos into calm.
                   </p>
                 </motion.div>
-                <div className="relative">
-                  <motion.div
-                    className="absolute inset-y-0 left-6 w-px bg-gradient-to-b from-primary-200 via-accent-200 to-transparent hidden sm:block"
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    transition={{ duration: 0.8 }}
-                    viewport={{ once: true }}
-                  />
-                  <motion.div
-                    className="space-y-8 sm:space-y-12"
-                    variants={staggerContainer}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, amount: 0.3 }}
-                  >
-                    {journey.map((item, index) => (
-                      <motion.div key={item.title} className="relative sm:pl-16" variants={fadeUp}>
-                        <div className="absolute left-0 top-2 hidden sm:block">
-                          <motion.div
-                            className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-accent-500 dark:from-primary-400 dark:to-accent-400 text-white font-semibold shadow-soft"
-                            animate={{ rotate: [0, 8, -8, 0] }}
-                            transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
-                          >
-                            {index + 1}
-                          </motion.div>
-                        </div>
-                        <motion.div
-                          className="rounded-3xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-8 shadow-soft"
-                          whileHover={{ y: -6, boxShadow: '0 28px 50px -30px rgba(224, 106, 30, 0.4)' }}
-                          transition={{ duration: 0.35 }}
-                        >
-                          <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-3">{item.title}</h3>
-                          <p className="text-neutral-600 dark:text-neutral-300 leading-relaxed">{item.description}</p>
-                        </motion.div>
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                </div>
-              </div>
-            </section>
-
-            {/* Quick Links */}
-            <section className="py-20 bg-white dark:bg-neutral-900">
-              <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
                 <motion.div
-                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12"
-                  initial={{ opacity: 0, y: 28 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                  viewport={{ once: true, amount: 0.3 }}
+                  className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
+                  variants={fadeUp}
+                  transition={{ duration: 0.7, delay: 0.05 }}
                 >
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-600 dark:text-primary-400">Ecosystem</p>
-                    <h2 className="text-3xl font-bold text-neutral-900 dark:text-neutral-100">Tap straight into the neural workspace.</h2>
-                  </div>
                   <MotionLink
                     to="/register"
-                    className="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700 dark:hover:text-primary-300"
-                    whileHover={{ x: 6 }}
+                    className="btn btn-primary px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg shadow-large text-center"
+                    whileHover={{ y: -4, boxShadow: '0 24px 45px -20px rgba(90,138,90,0.6)' }}
+                    whileTap={{ scale: 0.98 }}
                   >
-                    View platform tour
+                    Get Started Free
+                  </MotionLink>
+                  <MotionLink
+                    to="/login"
+                    className="btn btn-outline px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg hover:border-primary-400 hover:text-primary-600 text-center flex items-center justify-center"
+                    whileHover={{ y: -3, backgroundColor: 'rgba(90,138,90,0.05)' }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Explore the Demo
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </MotionLink>
                 </motion.div>
                 <motion.div
-                  className="grid gap-6 md:grid-cols-2"
+                  className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-6 pt-2 sm:pt-4"
                   variants={staggerContainer}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.3 }}
                 >
-                  {quickLinks.map((link, index) => (
-                    <MotionLink
-                      key={link.label}
-                      to={link.href}
-                      className="group rounded-3xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-8 shadow-soft"
-                      variants={fadeUp}
-                      transition={{ duration: 0.6, delay: index * 0.08 }}
-                      whileHover={{
-                        y: -8,
-                        boxShadow: '0 30px 55px -35px rgba(90, 138, 90, 0.45)'
-                      }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="flex items-center justify-between mb-6">
-                        <motion.div
-                          className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-500/15 to-accent-500/15 dark:from-primary-500/25 dark:to-accent-500/25 text-primary-600 dark:text-primary-400"
-                          whileHover={{ scale: 1.1 }}
-                        >
-                          <link.icon className="h-6 w-6" />
-                        </motion.div>
-                        <span className="inline-flex items-center rounded-full bg-primary-500/10 dark:bg-primary-500/20 px-4 py-1 text-xs font-semibold text-primary-600 dark:text-primary-400">
-                          Open Module
-                        </span>
-                      </div>
-                      <h3 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-3">{link.label}</h3>
-                      <p className="text-neutral-600 dark:text-neutral-300 leading-relaxed">{link.description}</p>
-                      <motion.div
-                        className="mt-6 inline-flex items-center text-sm font-semibold text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300"
-                        animate={{ x: [0, 4, 0] }}
-                        transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
-                      >
-                        Enter workspace
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </motion.div>
-                    </MotionLink>
-                  ))}
-                </motion.div>
-              </div>
-            </section>
-
-            {/* Testimonials */}
-            <section className="py-20 bg-neutral-950 text-white relative overflow-hidden">
-              <motion.div
-                className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(90,138,90,0.25),transparent_55%)]"
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                transition={{ duration: 1 }}
-              />
-              <motion.div
-                className="absolute -bottom-20 right-[-10%] h-80 w-80 rounded-full bg-accent-400/20 blur-3xl"
-                animate={{ y: [0, -18, 0], rotate: [0, -6, 6, 0] }}
-                transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-              />
-              <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-                <motion.div
-                  className="flex flex-col md:flex-row md:items-end md:justify-between gap-8 mb-12"
-                  initial={{ opacity: 0, y: 32 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6 }}
-                  viewport={{ once: true, amount: 0.35 }}
-                >
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-200">Social Proof</p>
-                    <h2 className="text-3xl font-bold text-white">Experts and households love Nourish Neural.</h2>
-                  </div>
-                  <p className="text-neutral-300 max-w-xl">
-                    Built with human-centred design and rigorous data science, our platform slots seamlessly into real kitchens.
-                  </p>
-                </motion.div>
-                <motion.div
-                  className="grid gap-6 md:grid-cols-3"
-                  variants={staggerContainer}
-                  initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, amount: 0.3 }}
-                >
-                  {testimonials.map((testimonial, index) => (
+                  {metrics.map((metric, index) => (
                     <motion.div
-                      key={testimonial.name}
-                      className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-lg shadow-soft"
-                      variants={fadeUp}
-                      transition={{ duration: 0.65, delay: index * 0.12 }}
-                      whileHover={{
-                        y: -6,
-                        boxShadow: '0 32px 60px -35px rgba(90, 138, 90, 0.45)'
-                      }}
+                      key={metric.label}
+                      className="glass-card rounded-2xl border border-white/40 dark:border-neutral-700/60 bg-white/80 dark:bg-neutral-800/80 p-3 sm:p-5 text-center shadow-soft"
+                      variants={scaleIn}
+                      transition={{ duration: 0.55, delay: index * 0.08 }}
+                      whileHover={{ y: -6, scale: 1.03 }}
                     >
-                      <motion.div
-                        className="flex items-center mb-4 text-primary-200"
-                        animate={{ scale: [1, 1.08, 1], opacity: [0.9, 1, 0.9] }}
-                        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-                      >
-                        <Star className="h-5 w-5 fill-current" />
-                        <Star className="h-5 w-5 fill-current" />
-                        <Star className="h-5 w-5 fill-current" />
-                        <Star className="h-5 w-5 fill-current" />
-                        <Star className="h-5 w-5 fill-current" />
-                      </motion.div>
-                      <p className="text-neutral-100 leading-relaxed mb-6">"{testimonial.content}"</p>
-                      <div>
-                        <p className="text-lg font-semibold text-white">{testimonial.name}</p>
-                        <p className="text-sm text-neutral-300">{testimonial.role}</p>
-                      </div>
+                      <span className="text-xl sm:text-2xl font-bold text-neutral-900 dark:text-neutral-100">{metric.value}</span>
+                      <p className="text-[11px] sm:text-sm text-neutral-600 dark:text-neutral-400 mt-0.5 sm:mt-1">{metric.label}</p>
                     </motion.div>
                   ))}
                 </motion.div>
-              </div>
-            </section>
-
-            {/* Final CTA */}
-            <section className="py-20 bg-gradient-to-br from-primary-600 via-primary-700 to-accent-700 text-white">
+              </motion.div>
               <motion.div
-                className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8"
-                initial={{ opacity: 0, y: 36 }}
+                className="relative hidden lg:block"
+                variants={scaleIn}
+                transition={{ duration: 0.8, delay: 0.15, ease: 'easeOut' }}
+              >
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-br from-primary-400/30 via-accent-500/20 to-transparent blur-3xl"
+                  animate={{ scale: [1, 1.05, 1], opacity: [0.85, 1, 0.85] }}
+                  transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+                />
+                <motion.div
+                  className="relative rounded-[32px] border border-white/40 dark:border-neutral-700/60 bg-white/90 dark:bg-neutral-800/90 shadow-2xl shadow-primary-500/20 backdrop-blur-xl p-8 space-y-6"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.7, delay: 0.3, ease: 'easeOut' }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm uppercase tracking-wide text-primary-600 dark:text-primary-400 font-semibold">Live Signal</p>
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-neutral-100">Pantry Neural Graph</h3>
+                    </div>
+                    <motion.div
+                      className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-500/10 dark:bg-primary-500/20"
+                      animate={{ rotate: [0, 12, 0] }}
+                      transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <ShieldCheck className="h-10 w-10 text-primary-500 dark:text-primary-400" />
+                    </motion.div>
+                  </div>
+                  <motion.div
+                    className="grid gap-4 rounded-2xl bg-gradient-to-br from-primary-500/10 via-white/70 to-accent-500/10 dark:from-primary-500/20 dark:via-neutral-800/70 dark:to-accent-500/20 p-6"
+                    variants={staggerContainer}
+                  >
+                    <motion.div className="flex items-center justify-between" variants={fadeUp}>
+                      <div>
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">Confidence</p>
+                        <p className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">97.4%</p>
+                      </div>
+                      <span className="inline-flex items-center space-x-2 rounded-full bg-primary-500/10 dark:bg-primary-500/20 px-3 py-1 text-sm font-medium text-primary-600 dark:text-primary-400">
+                        <img src="/logo.png" alt="Nourish Neural" className="h-4 w-4" />
+                        <span>LSTM | EfficientNet Hybrid</span>
+                      </span>
+                    </motion.div>
+                    <motion.div className="grid grid-cols-3 gap-3 text-left text-sm" variants={staggerContainer}>
+                      <motion.div
+                        className="rounded-2xl border border-primary-100/60 dark:border-primary-700/60 bg-white/80 dark:bg-neutral-800/80 p-4 shadow-soft"
+                        variants={fadeUp}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <p className="text-neutral-500 dark:text-neutral-400">Waste Forecast</p>
+                        <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">↓ 48%</p>
+                      </motion.div>
+                      <motion.div
+                        className="rounded-2xl border border-accent-100/60 dark:border-accent-700/60 bg-white/80 dark:bg-neutral-800/80 p-4 shadow-soft"
+                        variants={fadeUp}
+                        transition={{ duration: 0.5, delay: 0.08 }}
+                      >
+                        <p className="text-neutral-500 dark:text-neutral-400">Spend Optimised</p>
+                        <p className="text-lg font-semibold text-accent-600 dark:text-accent-400">£56 / wk</p>
+                      </motion.div>
+                      <motion.div
+                        className="rounded-2xl border border-primary-100/60 dark:border-primary-700/60 bg-white/80 dark:bg-neutral-800/80 p-4 shadow-soft"
+                        variants={fadeUp}
+                        transition={{ duration: 0.5, delay: 0.16 }}
+                      >
+                        <p className="text-neutral-500 dark:text-neutral-400">Freshness Score</p>
+                        <p className="text-lg font-semibold text-primary-600 dark:text-primary-400">92 / 100</p>
+                      </motion.div>
+                    </motion.div>
+                  </motion.div>
+                  <motion.div
+                    className="rounded-2xl border border-neutral-200 dark:border-neutral-700 bg-white/70 dark:bg-neutral-800/70 p-5 space-y-3"
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.45 }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-300 uppercase tracking-wide">Upcoming automations</p>
+                      <span className="rounded-full bg-primary-500/10 dark:bg-primary-500/20 px-3 py-1 text-xs font-semibold text-primary-600 dark:text-primary-400">
+                        Real-time
+                      </span>
+                    </div>
+                    <div className="space-y-2 text-sm text-neutral-700 dark:text-neutral-300">
+                      <p>• Auto-adjust meal plan to incorporate Nduja expiring in 2 days.</p>
+                      <p>• Send push alert: Waitrose vs Tesco price swing for oat milk.</p>
+                      <p>• Trigger low-waste recipe pack for Friday's family dinner.</p>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Feature Grid */}
+        <section className="py-12 sm:py-20 bg-white dark:bg-neutral-900">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-8 sm:gap-12 lg:grid-cols-[0.65fr_1fr] items-start">
+              <motion.div
+                className="space-y-4 sm:space-y-6"
+                initial={{ opacity: 0, y: 32 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.7 }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
                 viewport={{ once: true, amount: 0.4 }}
               >
-                <motion.p
-                  className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-100"
-                  animate={{ opacity: [0.6, 1, 0.6] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-                >
-                  Get Started
-                </motion.p>
-                <h2 className="text-3xl sm:text-4xl font-bold leading-tight">
-                  Ready to infuse your household with culinary intelligence?
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-600 dark:text-primary-400">Capabilities</p>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900 dark:text-neutral-100">
+                  Neural intelligence meets everyday kitchen flow.
                 </h2>
-                <p className="text-lg sm:text-xl text-primary-100">
-                  Join the Nourish Neural beta to unlock predictive grocery planning, intelligent pantry insights, and
-                  sustainability analytics in one polished workspace.
+                <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                  Every layer of Nourish Neural is engineered for clarity. We fuse predictive analytics, pricing data,
+                  and behavior-aware nudges into a UI that mirrors premium food-tech experiences.
                 </p>
-                <div className="flex flex-col sm:flex-row sm:justify-center gap-4 sm:gap-6">
-                  <MotionLink
-                    to="/register"
-                    className="btn bg-white text-primary-700 hover:bg-white/90 btn-lg px-10 py-4 text-lg font-semibold shadow-large"
-                    whileHover={{ y: -4, boxShadow: '0 32px 55px -35px rgba(255,255,255,0.45)' }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Claim Your Access
-                  </MotionLink>
-                  <MotionLink
-                    to="/login"
-                    className="btn btn-outline border-white bg-transparent text-white hover:bg-white/10 btn-lg px-10 py-4 text-lg font-semibold"
-                    whileHover={{ y: -3, backgroundColor: 'rgba(255,255,255,0.08)' }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Log In
-                  </MotionLink>
-                </div>
               </motion.div>
-            </section>
-
-            {/* Footer */}
-            <footer className="bg-neutral-950 dark:bg-neutral-950 text-neutral-200 dark:text-neutral-200 py-14">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid gap-10 md:grid-cols-5">
-                  <div className="space-y-4">
-                    <div className="flex items-center space-x-3">
-                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl overflow-hidden">
-                        <img src="/logo.png" alt="Nourish Neural" className="h-9 w-9" />
-                      </span>
-                      <span className="text-lg font-semibold text-neutral-100 dark:text-neutral-100">Nourish Neural</span>
-                    </div>
-                    <p className="text-sm text-neutral-400 dark:text-neutral-400 leading-relaxed">
-                      Culinary intelligence for modern households—predictive, sustainable, and unapologetically beautiful.
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400 mb-4">Platform</h3>
-                    <ul className="space-y-2 text-sm text-neutral-400 dark:text-neutral-400">
-                      <li><Link to="/app/dashboard" className="hover:text-white dark:hover:text-white transition-colors">Dashboard</Link></li>
-                      <li><Link to="/app/grocery-lists" className="hover:text-white dark:hover:text-white transition-colors">Grocery Intelligence</Link></li>
-                      <li><Link to="/app/pantry" className="hover:text-white dark:hover:text-white transition-colors">Neural Pantry</Link></li>
-                      <li><Link to="/app/ai-assistant" className="hover:text-white dark:hover:text-white transition-colors">Culinary Copilot</Link></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400 mb-4">Explore</h3>
-                    <ul className="space-y-2 text-sm text-neutral-400 dark:text-neutral-400">
-                      <li><Link to="/how-it-works" className="hover:text-white dark:hover:text-white transition-colors">How It Works</Link></li>
-                      <li><Link to="/ai-explainability" className="hover:text-white dark:hover:text-white transition-colors">AI Explainability</Link></li>
-                      <li><Link to="/nutrition-insights" className="hover:text-white dark:hover:text-white transition-colors">Nutrition Insights</Link></li>
-                      <li><Link to="/prompt-lab" className="hover:text-white dark:hover:text-white transition-colors">Prompt Lab</Link></li>
-                      <li><Link to="/ai-governance" className="hover:text-white dark:hover:text-white transition-colors">AI Governance</Link></li>
-                      <li><Link to="/agent-evaluation" className="hover:text-white dark:hover:text-white transition-colors">Agent Evaluation</Link></li>
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400 mb-4">Company</h3>
-                    <ul className="space-y-2 text-sm text-neutral-400 dark:text-neutral-400">
-                      <li><Link to="/terms" className="hover:text-white dark:hover:text-white transition-colors">Terms</Link></li>
-                      <li><Link to="/privacy" className="hover:text-white dark:hover:text-white transition-colors">Privacy</Link></li>
-                      <li><Link to="/support" className="hover:text-white dark:hover:text-white transition-colors">Support</Link></li>
-                      <li><Link to="/contact" className="hover:text-white dark:hover:text-white transition-colors">Contact</Link></li>
-                    </ul>
-                  </div>
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400">Stay in the loop</h3>
-                    <p className="text-sm text-neutral-400 dark:text-neutral-400">
-                      Request early access updates, release notes, and culinary intelligence research.
-                    </p>
-                    <Link
-                      to="/register"
-                      className="inline-flex items-center rounded-full bg-white/10 dark:bg-white/10 px-4 py-2 text-sm font-semibold text-white dark:text-white hover:bg-white/20 dark:hover:bg-white/20 transition-colors"
+              <motion.div
+                className="grid gap-4 sm:gap-6 sm:grid-cols-2"
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.2 }}
+              >
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={feature.title}
+                    className="group rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5 sm:p-8 shadow-soft transition-all duration-300"
+                    variants={fadeUp}
+                    transition={{ duration: 0.6, delay: index * 0.08 }}
+                    whileHover={{
+                      y: -10,
+                      boxShadow: '0 32px 60px -35px rgba(90, 138, 90, 0.45)'
+                    }}
+                  >
+                    <motion.div
+                      className={`mb-4 sm:mb-6 inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br ${feature.tone}`}
+                      whileHover={{ scale: 1.08, rotate: 4 }}
+                      transition={{ type: 'spring', stiffness: 220, damping: 12 }}
                     >
-                      Join beta waitlist
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                  </div>
-                </div>
-                <div className="border-t border-white/10 dark:border-white/10 mt-10 pt-6 text-center text-sm text-neutral-500 dark:text-neutral-500">
-                  &copy; {new Date().getFullYear()} Nourish Neural. All rights reserved.
-                </div>
+                      <feature.icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-primary-400" />
+                    </motion.div>
+                    <h3 className="text-base sm:text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2 sm:mb-3">{feature.title}</h3>
+                    <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-300 leading-relaxed">{feature.description}</p>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Journey */}
+        <section className="py-12 sm:py-20 bg-neutral-50 dark:bg-neutral-800">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 sm:gap-10 mb-10 sm:mb-16"
+              initial={{ opacity: 0, y: 32 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true, amount: 0.35 }}
+            >
+              <div className="space-y-3 sm:space-y-4">
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-accent-600 dark:text-accent-400">Flow</p>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-neutral-900 dark:text-neutral-100 text-balance">
+                  From sensing to orchestration in four graceful steps.
+                </h2>
               </div>
-            </footer>
-          </>
-        )}
+              <p className="text-base sm:text-lg text-neutral-600 dark:text-neutral-300 max-w-xl">
+                Our UI breaks complex machine learning outputs into digestible, glanceable micro-interactions so
+                households can act in seconds—not hours.
+              </p>
+            </motion.div>
+            <div className="relative">
+              <motion.div
+                className="absolute inset-y-0 left-6 w-px bg-gradient-to-b from-primary-200 via-accent-200 to-transparent hidden sm:block"
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{ duration: 0.8 }}
+                viewport={{ once: true }}
+              />
+              <motion.div
+                className="space-y-6 sm:space-y-12"
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.2 }}
+              >
+                {journey.map((item, index) => (
+                  <motion.div key={item.title} className="relative sm:pl-16" variants={fadeUp}>
+                    <div className="absolute left-0 top-2 hidden sm:block">
+                      <motion.div
+                        className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-accent-500 dark:from-primary-400 dark:to-accent-400 text-white font-semibold shadow-soft"
+                        animate={{ rotate: [0, 8, -8, 0] }}
+                        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+                      >
+                        {index + 1}
+                      </motion.div>
+                    </div>
+                    <motion.div
+                      className="rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5 sm:p-8 shadow-soft"
+                      whileHover={{ y: -6, boxShadow: '0 28px 50px -30px rgba(224, 106, 30, 0.4)' }}
+                      transition={{ duration: 0.35 }}
+                    >
+                      <div className="flex items-center gap-3 sm:block">
+                        <div className="flex sm:hidden h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-accent-500 text-white text-sm font-semibold">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <h3 className="text-base sm:text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-1 sm:mb-3">{item.title}</h3>
+                          <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-300 leading-relaxed">{item.description}</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+          </div>
+        </section>
+
+        {/* Quick Links */}
+        <section className="py-12 sm:py-20 bg-white dark:bg-neutral-900">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 sm:gap-8 mb-8 sm:mb-12"
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true, amount: 0.3 }}
+            >
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-600 dark:text-primary-400">Ecosystem</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-neutral-900 dark:text-neutral-100">Tap straight into the neural workspace.</h2>
+              </div>
+              <MotionLink
+                to="/register"
+                className="inline-flex items-center text-primary-600 dark:text-primary-400 font-semibold hover:text-primary-700 dark:hover:text-primary-300"
+                whileHover={{ x: 6 }}
+              >
+                View platform tour
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </MotionLink>
+            </motion.div>
+            <motion.div
+              className="grid gap-4 sm:gap-6 md:grid-cols-2"
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+            >
+              {quickLinks.map((link, index) => (
+                <MotionLink
+                  key={link.label}
+                  to={link.href}
+                  className="group rounded-2xl sm:rounded-3xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 p-5 sm:p-8 shadow-soft"
+                  variants={fadeUp}
+                  transition={{ duration: 0.6, delay: index * 0.08 }}
+                  whileHover={{
+                    y: -8,
+                    boxShadow: '0 30px 55px -35px rgba(90, 138, 90, 0.45)'
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="flex items-center justify-between mb-4 sm:mb-6">
+                    <motion.div
+                      className="inline-flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary-500/15 to-accent-500/15 dark:from-primary-500/25 dark:to-accent-500/25 text-primary-600 dark:text-primary-400"
+                      whileHover={{ scale: 1.1 }}
+                    >
+                      <link.icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    </motion.div>
+                    <span className="inline-flex items-center rounded-full bg-primary-500/10 dark:bg-primary-500/20 px-3 sm:px-4 py-1 text-xs font-semibold text-primary-600 dark:text-primary-400">
+                      Open Module
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-xl font-semibold text-neutral-900 dark:text-neutral-100 mb-2 sm:mb-3">{link.label}</h3>
+                  <p className="text-sm sm:text-base text-neutral-600 dark:text-neutral-300 leading-relaxed">{link.description}</p>
+                  <motion.div
+                    className="mt-4 sm:mt-6 inline-flex items-center text-sm font-semibold text-primary-600 dark:text-primary-400 group-hover:text-primary-700 dark:group-hover:text-primary-300"
+                    animate={{ x: [0, 4, 0] }}
+                    transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    Enter workspace
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </motion.div>
+                </MotionLink>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="py-12 sm:py-20 bg-neutral-950 text-white relative overflow-hidden">
+          <motion.div
+            className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(90,138,90,0.25),transparent_55%)]"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+          />
+          <motion.div
+            className="absolute -bottom-20 right-[-10%] h-80 w-80 rounded-full bg-accent-400/20 blur-3xl hidden sm:block"
+            animate={{ y: [0, -18, 0], rotate: [0, -6, 6, 0] }}
+            transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div
+              className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 sm:gap-8 mb-8 sm:mb-12"
+              initial={{ opacity: 0, y: 32 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true, amount: 0.35 }}
+            >
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-200">Social Proof</p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white">Experts and households love Nourish Neural.</h2>
+              </div>
+              <p className="text-sm sm:text-base text-neutral-300 max-w-xl">
+                Built with human-centred design and rigorous data science, our platform slots seamlessly into real kitchens.
+              </p>
+            </motion.div>
+            <motion.div
+              className="grid gap-4 sm:gap-6 md:grid-cols-3"
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.2 }}
+            >
+              {testimonials.map((testimonial, index) => (
+                <motion.div
+                  key={testimonial.name}
+                  className="rounded-2xl sm:rounded-3xl border border-white/10 bg-white/5 p-5 sm:p-8 backdrop-blur-lg shadow-soft"
+                  variants={fadeUp}
+                  transition={{ duration: 0.65, delay: index * 0.12 }}
+                  whileHover={{
+                    y: -6,
+                    boxShadow: '0 32px 60px -35px rgba(90, 138, 90, 0.45)'
+                  }}
+                >
+                  <motion.div
+                    className="flex items-center mb-3 sm:mb-4 text-primary-200"
+                    animate={{ scale: [1, 1.08, 1], opacity: [0.9, 1, 0.9] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+                  >
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
+                    <Star className="h-4 w-4 sm:h-5 sm:w-5 fill-current" />
+                  </motion.div>
+                  <p className="text-sm sm:text-base text-neutral-100 leading-relaxed mb-4 sm:mb-6">"{testimonial.content}"</p>
+                  <div>
+                    <p className="text-base sm:text-lg font-semibold text-white">{testimonial.name}</p>
+                    <p className="text-xs sm:text-sm text-neutral-300">{testimonial.role}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="py-12 sm:py-20 bg-gradient-to-br from-primary-600 via-primary-700 to-accent-700 text-white">
+          <motion.div
+            className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6 sm:space-y-8"
+            initial={{ opacity: 0, y: 36 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            viewport={{ once: true, amount: 0.4 }}
+          >
+            <motion.p
+              className="text-sm font-semibold uppercase tracking-[0.3em] text-primary-100"
+              animate={{ opacity: [0.6, 1, 0.6] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              Get Started
+            </motion.p>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold leading-tight">
+              Ready to infuse your household with culinary intelligence?
+            </h2>
+            <p className="text-base sm:text-lg md:text-xl text-primary-100">
+              Join the Nourish Neural beta to unlock predictive grocery planning, intelligent pantry insights, and
+              sustainability analytics in one polished workspace.
+            </p>
+            <div className="flex flex-col sm:flex-row sm:justify-center gap-3 sm:gap-6">
+              <MotionLink
+                to="/register"
+                className="btn bg-white text-primary-700 hover:bg-white/90 px-8 sm:px-10 py-3 sm:py-4 text-base sm:text-lg font-semibold shadow-large text-center"
+                whileHover={{ y: -4, boxShadow: '0 32px 55px -35px rgba(255,255,255,0.45)' }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Claim Your Access
+              </MotionLink>
+              <MotionLink
+                to="/login"
+                className="btn btn-outline border-white bg-transparent text-white hover:bg-white/10 px-8 sm:px-10 py-3 sm:py-4 text-base sm:text-lg font-semibold text-center"
+                whileHover={{ y: -3, backgroundColor: 'rgba(255,255,255,0.08)' }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Log In
+              </MotionLink>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-neutral-950 dark:bg-neutral-950 text-neutral-200 dark:text-neutral-200 py-10 sm:py-14">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid gap-8 sm:gap-10 grid-cols-2 md:grid-cols-5">
+              <div className="space-y-4 col-span-2 md:col-span-1">
+                <div className="flex items-center space-x-3">
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-2xl overflow-hidden">
+                    <img src="/logo.png" alt="Nourish Neural" className="h-9 w-9" />
+                  </span>
+                  <span className="text-lg font-semibold text-neutral-100 dark:text-neutral-100">Nourish Neural</span>
+                </div>
+                <p className="text-sm text-neutral-400 dark:text-neutral-400 leading-relaxed">
+                  Culinary intelligence for modern households—predictive, sustainable, and unapologetically beautiful.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400 mb-3 sm:mb-4">Platform</h3>
+                <ul className="space-y-2 text-sm text-neutral-400 dark:text-neutral-400">
+                  <li><Link to="/app/dashboard" className="hover:text-white dark:hover:text-white transition-colors">Dashboard</Link></li>
+                  <li><Link to="/app/grocery-lists" className="hover:text-white dark:hover:text-white transition-colors">Grocery Intelligence</Link></li>
+                  <li><Link to="/app/pantry" className="hover:text-white dark:hover:text-white transition-colors">Neural Pantry</Link></li>
+                  <li><Link to="/app/ai-assistant" className="hover:text-white dark:hover:text-white transition-colors">Culinary Copilot</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400 mb-3 sm:mb-4">Explore</h3>
+                <ul className="space-y-2 text-sm text-neutral-400 dark:text-neutral-400">
+                  <li><Link to="/how-it-works" className="hover:text-white dark:hover:text-white transition-colors">How It Works</Link></li>
+                  <li><Link to="/ai-explainability" className="hover:text-white dark:hover:text-white transition-colors">AI Explainability</Link></li>
+                  <li><Link to="/nutrition-insights" className="hover:text-white dark:hover:text-white transition-colors">Nutrition Insights</Link></li>
+                  <li><Link to="/prompt-lab" className="hover:text-white dark:hover:text-white transition-colors">Prompt Lab</Link></li>
+                  <li><Link to="/ai-governance" className="hover:text-white dark:hover:text-white transition-colors">AI Governance</Link></li>
+                  <li><Link to="/agent-evaluation" className="hover:text-white dark:hover:text-white transition-colors">Agent Evaluation</Link></li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400 mb-3 sm:mb-4">Company</h3>
+                <ul className="space-y-2 text-sm text-neutral-400 dark:text-neutral-400">
+                  <li><Link to="/terms" className="hover:text-white dark:hover:text-white transition-colors">Terms</Link></li>
+                  <li><Link to="/privacy" className="hover:text-white dark:hover:text-white transition-colors">Privacy</Link></li>
+                  <li><Link to="/support" className="hover:text-white dark:hover:text-white transition-colors">Support</Link></li>
+                  <li><Link to="/contact" className="hover:text-white dark:hover:text-white transition-colors">Contact</Link></li>
+                </ul>
+              </div>
+              <div className="col-span-2 md:col-span-1">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-neutral-400 dark:text-neutral-400 mb-3 sm:mb-4">Stay in the loop</h3>
+                <p className="text-sm text-neutral-400 dark:text-neutral-400 mb-3">
+                  Request early access updates, release notes, and culinary intelligence research.
+                </p>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center rounded-full bg-white/10 dark:bg-white/10 px-4 py-2 text-sm font-semibold text-white dark:text-white hover:bg-white/20 dark:hover:bg-white/20 transition-colors"
+                >
+                  Join beta waitlist
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+            <div className="border-t border-white/10 dark:border-white/10 mt-8 sm:mt-10 pt-6 text-center text-sm text-neutral-500 dark:text-neutral-500">
+              &copy; {new Date().getFullYear()} Nourish Neural. All rights reserved.
+            </div>
+          </div>
+        </footer>
       </div>
     </>
   )
